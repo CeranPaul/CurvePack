@@ -1,3 +1,3 @@
 # CurvePack
 
-A description of this package.
+An accumulation of routines used in making models for 3D printing.
