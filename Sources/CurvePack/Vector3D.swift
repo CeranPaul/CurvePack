@@ -146,6 +146,7 @@ public struct Vector3D: Equatable {
     /// - See: 'testBuiltFrom' under Vector3DTests
     public static func built(from: Point3D, towards: Point3D, unit: Bool = false) -> Vector3D {
         
+        // Should a guard statement be added for CoincidentPoints?
         var deltaX = towards.x - from.x
         var deltaY = towards.y - from.y
         var deltaZ = towards.z - from.z
@@ -167,6 +168,7 @@ public struct Vector3D: Equatable {
         
         return Vector3D(i: deltaX, j: deltaY, k: deltaZ)
     }
+    
     
     /// Standard definition of dot product
     /// - Parameters:

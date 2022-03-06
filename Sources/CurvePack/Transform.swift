@@ -95,6 +95,7 @@ public struct Transform: Equatable   {
         r = deltaY
         s = deltaZ
         t = 1.0
+        
     }
     
     /// Construct a matrix to do scaling
@@ -121,6 +122,7 @@ public struct Transform: Equatable   {
         r = 0.0
         s = 0.0
         t = 1.0
+        
     }
 
     /// Construct a matrix for rotation around a single axis
@@ -198,6 +200,7 @@ public struct Transform: Equatable   {
                     s = 0.0
                     t = 1.0
         }
+        
     }
     
     /// Create a transform from orthogonal vectors
@@ -240,9 +243,9 @@ public struct Transform: Equatable   {
                 
     }
     
+    
     /// Generate a Transform to rotate and translate from a local CSYS TO the global coordinate system.
-    /// Should this become a method of Transform?
-    /// - See: 'testGenToGlobal' under CoordinateSystemTests for a partial set of tests
+    /// - See: 'testGenToGlobal' under TransformTests for a partial set of tests
     public static func genToGlobal(csys: CoordinateSystem) throws -> Transform   {
         
         let rotate = try Transform(localX: csys.getAxisX(), localY: csys.getAxisY(), localZ: csys.getAxisZ())
@@ -254,7 +257,7 @@ public struct Transform: Equatable   {
     }
     
     /// Generate a Transform to get points FROM the global CSYS.
-    /// Should this become a method of Transform?
+    /// - See: 'testGenFromGlobal' under TransformTests for a partial set of tests
     public static func genFromGlobal(csys: CoordinateSystem) -> Transform   {
         
         // Construct the transpose of the 3 x 3
@@ -391,6 +394,7 @@ public func == (lhs: Transform, rhs: Transform) -> Bool  {
     let row4Flag = p && r && s && t
     
     return row1Flag && row2Flag && row3Flag && row4Flag
+    
 }
 
 
@@ -401,6 +405,7 @@ public func == (lhs: Transform, rhs: Transform) -> Bool  {
 /// - Parameters:
 ///   - pre: Row matrix of length 4
 ///   - rhs: Transform
+///   Returns: RowMtx4
 /// - See:
 public func * (pre: RowMtx4, mtx: Transform) -> RowMtx4   {
     
@@ -414,6 +419,7 @@ public func * (pre: RowMtx4, mtx: Transform) -> RowMtx4   {
     let res4 = pre.a * mtx.d + pre.b * mtx.h + pre.c * mtx.n + pre.d * mtx.t
     
     return RowMtx4.init(valOne: res1, valTwo: res2, valThree: res3, valFour: res4)
+    
 }
 
 
@@ -426,6 +432,7 @@ public func * (pre: RowMtx4, mtx: Transform) -> RowMtx4   {
 /// - Parameters:
 ///   - lhs: First transform
 ///   - rhs: Second transform
+///   Returns: Combined transform
 /// - See:
 public func * (lhs: Transform, rhs: Transform) -> Transform   {
 
@@ -467,4 +474,5 @@ public func * (lhs: Transform, rhs: Transform) -> Transform   {
     
     
     return Transform(a: resA, b: resB, c: resC, d: resD, e: resE, f: resF, g: resG, h: resH, j: resJ, k: resK, m: resM, n: resN, p: resP, r: resR, s: resS, t: resT)
+    
 }

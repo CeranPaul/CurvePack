@@ -215,7 +215,7 @@ class CoordinateSystemTests: XCTestCase {
         
         let sqrt22 = sqrt(2.0) / 2.0
         
-        let axis1 = Vector3D(i: sqrt22, j: sqrt22, k: 0.0)
+//        let axis1 = Vector3D(i: sqrt22, j: sqrt22, k: 0.0)
         let axis2 = Vector3D(i: -sqrt22, j: sqrt22, k: 0.0)
         let axis3 = Vector3D(i: 0.0, j: 0.0, k: 1.0)
         
