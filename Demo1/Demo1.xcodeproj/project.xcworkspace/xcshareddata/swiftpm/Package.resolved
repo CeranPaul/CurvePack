@@ -1,0 +1,16 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "CurvePack",
+        "repositoryURL": "https://github.com/CeranPaul/CurvePack",
+        "state": {
+          "branch": null,
+          "revision": "5d830e5f0557b748e0d2cb6a9ed70e05338d15f2",
+          "version": "1.0.0"
+        }
+      }
+    ]
+  },
+  "version": 1
+}
