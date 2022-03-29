@@ -27,7 +27,7 @@ public struct Arc: PenCurve, Equatable   {
     /// Limited to be bettween 0.0 and 1.0
     public var trimParameters: ClosedRange<Double>
     
-    /// The enum that hints at the meaning of the curve
+    /// The String that hints at the meaning of the curve
     public var usage: String
     
     
@@ -418,7 +418,7 @@ public struct Arc: PenCurve, Equatable   {
     
         
     /// Same start and end, but different direction. Used to align members of a Loop
-    /// - See: 'testReverse' under ArcTests
+    /// - See: 'testReverse' under ArcTests.
     public mutating func reverse() -> Void  {
         
         let oldFinish = self.getOtherEnd()
@@ -445,6 +445,7 @@ public struct Arc: PenCurve, Equatable   {
     /// - Throws:
     ///   - NegativeAccuracyError for a goofy input.
     /// - Returns: 0, 1, or 2 points
+    /// - See: 'testIntersect' under ArcTests for a few tests.
     public func intersect(ray: Line, accuracy: Double = Point3D.Epsilon) throws -> [Point3D]   {
         
         guard accuracy > 0.0 else { throw NegativeAccuracyError(acc: accuracy) }
