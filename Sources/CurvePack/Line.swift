@@ -131,16 +131,10 @@ public struct Line: Equatable {
     /// - See: 'testIsCoincident' under LineTests
     public static func isCoincident(straightA: Line, pip: Point3D) -> Bool   {
         
-        var bridgeVector = Vector3D.built(from: straightA.origin, towards: pip)
+        let vectorDiff = straightA.resolveRelativeVec(yonder: pip)
+        let flag = vectorDiff.perp.length() < Point3D.Epsilon
         
-        if bridgeVector.isZero() { return true }
-        
-        bridgeVector.normalize()   // The zero length check above should keep this safe
-        
-        let same = bridgeVector == straightA.direction
-        let opp = Vector3D.isOpposite(lhs: straightA.direction, rhs: bridgeVector)
-        
-        return same || opp
+        return flag
     }
     
 

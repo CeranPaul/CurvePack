@@ -375,6 +375,52 @@ class CubicTests: XCTestCase {
         let whacks = try! rolling.intersect(ray: high, accuracy: 0.001)
         XCTAssertEqual(2, whacks.count)
 
+        
+        let lowerLeft = Point3D(x: -1.20, y: -1.0, z: 1.25)
+        let controlA = Point3D(x: -0.60, y: 2.5, z: 1.25)
+        let controlB = Point3D(x: 2.25, y: 0.8, z: 1.25)
+        let upperRight = Point3D(x: 3.8, y: 4.0, z: 1.25)
+        
+        let wave = try! Cubic(ptA: lowerLeft, controlA: controlA, controlB: controlB, ptB: upperRight)
+        
+        let scissorA1 = Point3D(x: -2.0, y: -1.5, z: 1.25)
+        let scissorA2 = Point3D(x: 3.5, y: 4.75, z: 1.25)
+        
+        
+        var traj = Vector3D.built(from: scissorA1, towards: scissorA2, unit: true)
+        
+        var zorro = try! Line(spot: scissorA1, arrow: traj)
+        
+        let nicksA = try! wave.intersect(ray: zorro, accuracy: Point3D.Epsilon)
+        
+        XCTAssertEqual(2, nicksA.count)
+
+
+        let scissorB1 = Point3D(x: -1.5, y: 2.8, z: 1.25)
+        let scissorB2 = Point3D(x: 3.5, y: 0.875, z: 1.25)
+        
+        
+        traj = Vector3D.built(from: scissorB1, towards: scissorB2, unit: true)
+        
+        zorro = try! Line(spot: scissorB1, arrow: traj)
+        
+        let nicksB = try! wave.intersect(ray: zorro, accuracy: Point3D.Epsilon)
+        
+        XCTAssertEqual(1, nicksB.count)
+
+
+        let scissorC1 = Point3D(x: -1.5, y: -0.65, z: 1.25)
+        let scissorC2 = Point3D(x: 4.15, y: 4.05, z: 1.25)
+        
+        
+        traj = Vector3D.built(from: scissorC1, towards: scissorC2, unit: true)
+        
+        zorro = try! Line(spot: scissorC1, arrow: traj)
+        
+        let nicksC = try! wave.intersect(ray: zorro, accuracy: Point3D.Epsilon)
+        
+        XCTAssertEqual(3, nicksC.count)
+
     }
     
     func testRefine()   {

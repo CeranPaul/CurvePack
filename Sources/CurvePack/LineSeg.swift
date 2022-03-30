@@ -299,48 +299,44 @@ public struct LineSeg: PenCurve, Equatable {
     /// - Parameters:
     ///   - ray:  The Line to be used for intersecting
     ///   - accuracy:  How close is close enough?
+    /// - Throws:
+    ///     - CoincidentLinesError if the input lies on top
     /// - Returns: Possibly empty Array of points common to both curves
     /// - See: 'testIntersectLine' under LineSegTests
-    public func intersect(ray: Line, accuracy: Double = Point3D.Epsilon) -> [Point3D]   {
-        
-        /// The return array
-        var crossings = [Point3D]()
+    public func intersect(ray: Line, accuracy: Double = Point3D.Epsilon) throws -> [Point3D]   {
         
         /// Line built from this segment
         let unbounded = try! Line(spot: self.getOneEnd(), arrow: self.getDirection())
         
-        if Line.isParallel(straightA: unbounded, straightB: ray)   {   // Deal with parallel lines
+        guard !Line.isParallel(straightA: unbounded, straightB: ray)  else  { throw ParallelLinesError(enil: ray) }
+        
+           // The first guard statement should keep execution from ever reaching here
+        guard !Line.isCoincident(straightA: unbounded, straightB: ray)  else  { throw CoincidentLinesError(enil: ray) }
+        
+        
+        /// The return array
+        var crossings = [Point3D]()
+        
+        /// Intersection of the two lines
+        let collision = try! Line.intersectTwo(straightA: unbounded, straightB: ray)
+        
+        /// Vector from segment origin towards intersection. Possible to be zero length.
+        let rescue = Vector3D.built(from: self.getOneEnd(), towards: collision, unit: true)
+        
+        if rescue.isZero()   {   // Intersection at first end.
+            crossings.append(collision)
+            return crossings
+        }
+        
+        let sameDir = Vector3D.dotProduct(lhs: self.getDirection(), rhs: rescue)
+        
+        if sameDir > 0.0   {
             
-            if Line.isCoincident(straightA: unbounded, straightB: ray)   {   // Coincident lines
+            let dist = Point3D.dist(pt1: self.getOneEnd(), pt2: collision)
+            
+            if (self.getLength() - dist) > -1.0 * Point3D.Epsilon   {
                 
-                crossings.append(self.getOneEnd())
-                crossings.append(self.getOtherEnd())
-                
-            }
-            
-        }  else  {   // Not parallel lines
-            
-            /// Intersection of the two lines
-            let collision = try! Line.intersectTwo(straightA: unbounded, straightB: ray)
-            
-            /// Vector from segment origin towards intersection. Possible to be zero length.
-            let rescue = Vector3D.built(from: self.getOneEnd(), towards: collision, unit: true)
-            
-            if rescue.isZero()   {   // Intersection at first end.
                 crossings.append(collision)
-                return crossings                
-            }
-            
-            let sameDir = Vector3D.dotProduct(lhs: self.getDirection(), rhs: rescue)
-            
-            if sameDir > 0.0   {
-                
-                let dist = Point3D.dist(pt1: self.getOneEnd(), pt2: collision)
-                
-                if (self.getLength() - dist) > -1.0 * Point3D.Epsilon   {
-                    
-                    crossings.append(collision)
-                }
             }
         }
         
