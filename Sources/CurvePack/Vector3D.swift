@@ -187,20 +187,18 @@ public struct Vector3D: Equatable {
     ///   - lhs:  One Vector
     ///   - rhs:  Another Vector
     /// - Throws:
-    ///   - ZeroVectorError if either of the inputs are zero.  Untested!
+    ///   - ZeroVectorError if either of the inputs are zero.
     ///   - IdenticalVectorError if the inputs are identical or opposite.
     ///   - IdenticalVectorError if the inputs are scaled versions of each other.
     /// - See: 'testCross' under Vector3DTests
     public static func crossProduct(lhs: Vector3D, rhs: Vector3D) throws -> Vector3D   {
         
-        // TODO: Add test cases to verify that these guard statements work.
         guard(!lhs.isZero()) else {  throw ZeroVectorError(dir: lhs)  }
         guard(!rhs.isZero()) else {  throw ZeroVectorError(dir: rhs)  }
         
         guard(lhs != rhs) else { throw IdenticalVectorError(dir: lhs)}
         guard(!Vector3D.isOpposite(lhs: lhs, rhs: rhs)) else { throw IdenticalVectorError(dir: lhs)}
         
-        // TODO: Add a more appropriate error type
         let flag1 = try Vector3D.isScaled(lhs: lhs, rhs: rhs)
         guard(!flag1) else {throw IdenticalVectorError(dir: lhs)}
         

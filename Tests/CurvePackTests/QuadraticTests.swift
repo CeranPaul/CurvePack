@@ -149,7 +149,24 @@ class QuadraticTests: XCTestCase {
    }
     
     
-    func testPerch() throws {
+    func testSetIntent()   {
+        
+        let alameda = Point3D(x: 1.5, y: 1.0, z: 0.0)
+        let pike = Point3D(x: 0.85, y: 0.25, z: 0.0)
+        let union = Point3D(x: 1.30, y: 1.26, z: 0.0)
+        
+        /// The sample quadratic
+        var satur = try! Quadratic(ptA: alameda, controlA: union, ptB: pike)
+        
+        XCTAssert(satur.usage == "Ordinary")
+        
+        satur.setIntent(purpose: "Selected")
+        XCTAssert(satur.usage == "Selected")
+        
+    }
+    
+
+   func testPerch() throws {
         
         let alameda = Point3D(x: 1.5, y: 1.0, z: 0.0)
         let pike = Point3D(x: 0.85, y: 0.25, z: 0.0)

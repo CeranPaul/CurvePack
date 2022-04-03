@@ -237,7 +237,8 @@ class LineSegTests: XCTestCase {
         let crater = try! plateau.intersect(ray: shot)
         
         XCTAssert(crater.count == 1)
-        XCTAssertEqual(crater.first!, target)
+        let pip = Point3D(x: crater.first!.x, y: crater.first!.y, z: crater.first!.z)
+        XCTAssertEqual(pip, target)
         
         
            // Case of being outside the range of the segment

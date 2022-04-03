@@ -204,16 +204,13 @@ public struct Arc: PenCurve, Equatable   {
     /// Fetch the location of an end
     /// - See: 'getOtherEnd()'
     public func getOneEnd() -> Point3D   {
-        return self.startPt   // Doesn't need transformation, becuase it is regurgitating an input.
+        return try! pointAt(t: self.trimParameters.lowerBound)
     }
     
     /// Fetch the location of the opposite end
     /// - See: 'getOneEnd()'
     public func getOtherEnd() -> Point3D   {
-        
-        let localPt = self.pointAtAngle(theta: self.sweepAngle)
-        let globalEnd = localPt.transform(xirtam: self.toGlobal)   // Needs transformation because it is calculated in the local system.
-        return globalEnd
+        return try! pointAt(t: self.trimParameters.upperBound)
     }
     
     public func getRadius() -> Double   {
@@ -265,12 +262,23 @@ public struct Arc: PenCurve, Equatable   {
     /// Return a point based on its parameter, as contrasted to its angle.
     /// - Parameters:
     ///   - t: Parameter
+    ///   - ignoreTrim: Flag to not limit usage to trimmed parameters
     /// - Returns: A point in the global CSYS
+    /// - Throws:
+    ///     - ParameterRangeError if the input is lame
     /// - See: 'testPointAt' under ArcTests
-    public func pointAt(t: Double) throws -> Point3D   {
+    public func pointAt(t: Double, ignoreTrim: Bool = false) throws -> Point3D   {
         
-        guard t >= 0.0 else { throw ParameterRangeError(parA: t) }
-        guard t <= 1.0 else { throw ParameterRangeError(parA: t) }
+        if ignoreTrim   {
+            
+            /// The entire possible parameter range.
+            let wholeSheBang = ClosedRange<Double>(uncheckedBounds: (lower: 0.0, upper: 1.0))
+            
+            guard wholeSheBang.contains(t) else { throw ParameterRangeError(parA: t) }
+            
+        }  else  {
+            guard self.trimParameters.contains(t) else { throw ParameterRangeError(parA: t) }
+        }
         
         let ratioedAngle = self.sweepAngle * t
         let localPt = self.pointAtAngle(theta: ratioedAngle)
@@ -279,6 +287,7 @@ public struct Arc: PenCurve, Equatable   {
         return globalPt
     }
     
+    // TODO: Add 'tangentAt' function
     
     /// Figure the arc length
     /// - See: 'testGetLength' under ArcTests
@@ -316,6 +325,40 @@ public struct Arc: PenCurve, Equatable   {
         }
 
         return brick
+    }
+    
+    
+    /// Use a different portion of the curve
+    /// - Parameters:
+    ///   - lowParameter:  New parameter value.  Checked to be 0 < t < 1 and less than the upper bound.
+    /// - Throws:
+    ///     - ParameterRangeError if the input is lame
+    mutating public func trimFront(lowParameter: Double) throws   {
+        
+        guard lowParameter >= 0.0  else  { throw ParameterRangeError(parA: lowParameter)}
+        
+        guard lowParameter < self.trimParameters.upperBound  else { throw ParameterRangeError(parA: lowParameter) }
+        
+        
+        self.trimParameters = ClosedRange<Double>(uncheckedBounds: (lower: lowParameter, upper: self.trimParameters.upperBound))
+        
+    }
+    
+    
+    /// Use a different portion of the curve
+    /// - Parameters:
+    ///   - highParameter:  New parameter value.  Checked to be 0 < t < 1 and less than the upper bound.
+    /// - Throws:
+    ///     - ParameterRangeError if the input is lame
+    mutating public func trimBack(highParameter: Double) throws   {
+        
+        guard highParameter <= 1.0  else  { throw ParameterRangeError(parA: highParameter)}
+        
+        guard highParameter > self.trimParameters.lowerBound  else { throw ParameterRangeError(parA: highParameter) }
+        
+        
+        self.trimParameters = ClosedRange<Double>(uncheckedBounds: (lower: self.trimParameters.lowerBound, upper: highParameter ))
+        
     }
     
     
@@ -411,7 +454,12 @@ public struct Arc: PenCurve, Equatable   {
         let freshStart = self.startPt.transform(xirtam: xirtam)
         
         
-        let fresh = try Arc(ctr: freshCtr, axis: freshDir, start: freshStart, sweep: self.sweepAngle)
+        var fresh = try Arc(ctr: freshCtr, axis: freshDir, start: freshStart, sweep: self.sweepAngle)
+        
+        try! fresh.trimFront(lowParameter: self.trimParameters.lowerBound)   // Transfer the limits
+        try! fresh.trimBack(highParameter: self.trimParameters.upperBound)
+        
+        fresh.setIntent(purpose: self.usage)   // Copy setting instead of having the default
         
         return fresh
     }
@@ -446,12 +494,12 @@ public struct Arc: PenCurve, Equatable   {
     ///   - NegativeAccuracyError for a goofy input.
     /// - Returns: 0, 1, or 2 points
     /// - See: 'testIntersect' under ArcTests for a few tests.
-    public func intersect(ray: Line, accuracy: Double = Point3D.Epsilon) throws -> [Point3D]   {
+    public func intersect(ray: Line, accuracy: Double = Point3D.Epsilon) throws -> [PointCrv]   {
         
         guard accuracy > 0.0 else { throw NegativeAccuracyError(acc: accuracy) }
                     
         /// Intersection points. The return array.
-        var crossings = [Point3D]()
+        var crossings = [PointCrv]()
         
         /// Variable for comparison with the trigonometric results
         var sweepRange: ClosedRange<Double>
@@ -517,7 +565,8 @@ public struct Arc: PenCurve, Equatable   {
         }
         
         var keepFlag = isCrossing(theta1)
-        if keepFlag { crossings.append(possible1) }
+        let crossPt = PointCrv(x: possible1.x, y: possible1.y, z: possible1.z, t: theta1 / self.sweepAngle)
+        if keepFlag { crossings.append(crossPt) }
 
         
         jump = jump.reverse()
@@ -527,7 +576,8 @@ public struct Arc: PenCurve, Equatable   {
         let theta2 = atan2(poss2Loc.y, poss2Loc.x)   // Be careful with the range of the result!
         
         keepFlag = isCrossing(theta2)
-        if keepFlag { crossings.append(possible2) }
+        let crossPt2 = PointCrv(x: possible2.x, y: possible2.y, z: possible2.z, t: theta2 / self.sweepAngle)
+        if keepFlag { crossings.append(crossPt2) }
 
         return crossings
     }

@@ -53,7 +53,7 @@ public struct Quadratic: PenCurve   {
     /// There are checks here for input points that should be added!
     /// - Throws:
     ///     - CoincidentPointsError if the inputs are lame
-    /// - See: 'testSumsBezier' under CubicTests
+    /// - See: 'testConstructorA' under QuadraticTests
     public init(ptA: Point3D, controlA: Point3D, ptB: Point3D) throws   {
         
         let pool = [ptA, controlA, ptB]
@@ -94,6 +94,7 @@ public struct Quadratic: PenCurve   {
     /// - Throws:
     ///     - ParameterRangeError if the 'betaFraction' input is lame
     ///     - CoincidentPointsError if the inputs are not unique
+    /// - See: 'testConstructorB' under QuadraticTests
     public init(ptA: Point3D, beta: Point3D, betaFraction: Double, ptC: Point3D) throws   {
         
         self.trimParameters = ClosedRange<Double>(uncheckedBounds: (lower: 0.0, upper: 1.0))
@@ -157,12 +158,22 @@ public struct Quadratic: PenCurve   {
     /// Some notations show "u" as the parameter, instead of "t"
     /// - Parameters:
     ///   - t:  Curve parameter value.  Assumed 0 < t < 1.
+    ///   - ignoreTrim: Flag to not limit usage to trimmed parameters
     /// - Returns: Point location at the parameter value
     /// - Throws:
     ///     - ParameterRangeError if the input is lame
-    public func pointAt(t: Double) throws -> Point3D {
+    public func pointAt(t: Double, ignoreTrim: Bool = false) throws -> Point3D {
         
-        guard self.trimParameters.contains(t) else { throw ParameterRangeError(parA: t) }
+        if ignoreTrim   {
+            
+            /// The entire possible parameter range.
+            let wholeSheBang = ClosedRange<Double>(uncheckedBounds: (lower: 0.0, upper: 1.0))
+            
+            guard wholeSheBang.contains(t) else { throw ParameterRangeError(parA: t) }
+            
+        }  else  {
+            guard self.trimParameters.contains(t) else { throw ParameterRangeError(parA: t) }
+        }
         
         let t2 = t * t
 
@@ -177,19 +188,19 @@ public struct Quadratic: PenCurve   {
     
     
     /// Attach new meaning to the curve.
-    /// - See: 'testSetIntent' under CubicTests
+    /// - See: 'testSetIntent' under QuadraticTests
     public mutating func setIntent(purpose: String) -> Void  {
         self.usage = purpose
     }
     
     
     public func getOneEnd() -> Point3D {
-        return ptAlpha
+        return try! pointAt(t: self.trimParameters.lowerBound)
     }
     
     
     public func getOtherEnd() -> Point3D {
-        return ptOmega
+        return try! pointAt(t: self.trimParameters.upperBound)
     }
     
     
@@ -209,6 +220,8 @@ public struct Quadratic: PenCurve   {
     }
     
     
+    /// Approximate the length with 100 segments.
+    /// - Returns: Double
     public func getLength() -> Double {
         
         let dots = self.dice(pieces: 100)
@@ -229,14 +242,23 @@ public struct Quadratic: PenCurve   {
     /// Some notations show "u" as the parameter, instead of "t".
     /// - Parameters:
     ///   - t:  Curve parameter value.  Checked to be 0 < t < 1.
+    ///   - ignoreTrim: Flag to not limit usage to trimmed parameters
     /// - Returns:  Non-normalized vector
     /// - Throws:
     ///     - ParameterRangeError if the input is lame
-    public func tangentAt(t: Double) throws -> Vector3D   {
+    public func tangentAt(t: Double, ignoreTrim: Bool = false) throws -> Vector3D   {
         
-        let absoluteRange = ClosedRange<Double>(uncheckedBounds: (lower: 0.0, upper: 1.0))
+        if ignoreTrim   {
+            
+            /// The entire possible parameter range.
+            let absoluteRange = ClosedRange<Double>(uncheckedBounds: (lower: 0.0, upper: 1.0))
+
+            guard absoluteRange.contains(t) else { throw ParameterRangeError(parA: t) }
+            
+        }  else  {
+            guard self.trimParameters.contains(t) else { throw ParameterRangeError(parA: t) }
+        }
         
-        guard absoluteRange.contains(t) else { throw ParameterRangeError(parA: t) }
         
         // This is the component matrix differentiated once
         let myI = 2.0 * ax * t + bx
@@ -247,7 +269,42 @@ public struct Quadratic: PenCurve   {
     }
     
     
+    /// Use a different portion of the curve
+    /// - Parameters:
+    ///   - lowParameter:  New parameter value.  Checked to be 0 < t < 1 and less than the upper bound.
+    /// - Throws:
+    ///     - ParameterRangeError if the input is lame
+    mutating public func trimFront(lowParameter: Double) throws   {
+        
+        guard lowParameter >= 0.0  else  { throw ParameterRangeError(parA: lowParameter)}
+        
+        guard lowParameter < self.trimParameters.upperBound  else { throw ParameterRangeError(parA: lowParameter) }
+        
+        
+        self.trimParameters = ClosedRange<Double>(uncheckedBounds: (lower: lowParameter, upper: self.trimParameters.upperBound))
+        
+    }
+    
+    
+    /// Use a different portion of the curve
+    /// - Parameters:
+    ///   - highParameter:  New parameter value.  Checked to be 0 < t < 1 and greater than the lower bound.
+    /// - Throws:
+    ///     - ParameterRangeError if the input is lame
+    mutating public func trimBack(highParameter: Double) throws   {
+        
+        guard highParameter <= 1.0  else  { throw ParameterRangeError(parA: highParameter)}
+        
+        guard highParameter > self.trimParameters.lowerBound  else { throw ParameterRangeError(parA: highParameter) }
+        
+        
+        self.trimParameters = ClosedRange<Double>(uncheckedBounds: (lower: self.trimParameters.lowerBound, upper: highParameter ))
+        
+    }
+    
+    
     /// Check whether a point is or isn't perched on the curve.
+    ///  What's the right thing to do here for a trimmed curve?
     /// - Parameters:
     ///   - speck:  Point near the curve.
     /// - Returns: Flag, and optional parameter value
@@ -303,7 +360,7 @@ public struct Quadratic: PenCurve   {
     /// - Throws:
     ///     - ConvergenceError when a range can't be refined closely enough in 8 iterations.
     ///     - ParameterRangeError when a range is off the curve.
-    private func convergeMinDist(speck: Point3D, span: ClosedRange<Double>, curve: PenCurve, layersRemaining: Int) throws -> Double   {
+    private func convergeMinDist(speck: Point3D, span: ClosedRange<Double>, curve: Quadratic, layersRemaining: Int) throws -> Double   {
         
         if layersRemaining == 0  { throw ConvergenceError(tnuoc: 0) }   // Safety valve
         
@@ -338,7 +395,7 @@ public struct Quadratic: PenCurve   {
         var range: ClosedRange<Double>
         var dist: Double
         
-        init(egnar: ClosedRange<Double>, curve: PenCurve, awaySpeck: Point3D)   {
+        init(egnar: ClosedRange<Double>, curve: Quadratic, awaySpeck: Point3D)   {
             
             self.range = egnar
             
@@ -348,7 +405,7 @@ public struct Quadratic: PenCurve   {
             
         }
         
-        public func getBridgeDist(curve: PenCurve) -> Double   {
+        public func getBridgeDist(curve: Quadratic) -> Double   {
             
             let hyar = try! curve.pointAt(t: self.range.lowerBound)
             let thar = try! curve.pointAt(t: self.range.upperBound)
@@ -539,7 +596,7 @@ public struct Quadratic: PenCurve   {
     /// - Returns: Array of points common to both curves
     /// - SeeAlso:  crossing()
     /// - See: 'testIntLine1' and 'testIntLine2' under CubicTests
-    public func intersect(ray: Line, accuracy: Double = Point3D.Epsilon) throws -> [Point3D] {
+    public func intersect(ray: Line, accuracy: Double = Point3D.Epsilon) throws -> [PointCrv] {
         
         guard accuracy > 0.0 else { throw NegativeAccuracyError(acc: accuracy) }
         
@@ -549,7 +606,7 @@ public struct Quadratic: PenCurve   {
         //TODO: Don't forget the nearly tangent case and comparing tangent vectors.
         
         /// The return array
-        var crossings = [Point3D]()
+        var crossings = [PointCrv]()
         
         /// Interval in parameter space for hunting
         let shebang = ClosedRange<Double>(uncheckedBounds: (lower: 0.0, upper: 1.0))
@@ -601,11 +658,12 @@ public struct Quadratic: PenCurve   {
     
     /// Recursive function to get close enough to the intersection point.
     /// The hazard here for an infinite loop is if the span input doesn't contain a crossing.
-    func converge(ray: Line, span: ClosedRange<Double>, accuracy: Double, layersRemaining: Int) throws -> Point3D?   {
+    func converge(ray: Line, span: ClosedRange<Double>, accuracy: Double, layersRemaining: Int) throws -> PointCrv?   {
         
         if layersRemaining == 0  { throw ConvergenceError(tnuoc: 0) }   // Safety valve
         
-        var collide: Point3D?
+        var collide: PointCrv?
+        var orthog: Point3D
         
         let bittyspans = Quadratic.diceRange(pristine: span, chunks: 5)
         
@@ -617,17 +675,20 @@ public struct Quadratic: PenCurve   {
 
             if proj == 0.0   {     // I wonder how frequently this will get run?
                 if Line.isCoincident(straightA: ray, pip: low)   {
-                    return low
+                    collide = PointCrv(x: low.x, y: low.y, z: low.z, t: onebitty.lowerBound)
+                    return collide
                 }  else  {
-                    return high
-                }
+                    collide = PointCrv(x: high.x, y: high.y, z: high.z, t: onebitty.upperBound)
+                    return collide                }
             }
             
             if proj < 0.0   {
                 let sep = Point3D.dist(pt1: low, pt2: high)
                 
                 if sep < accuracy   {
-                    collide = Point3D.midway(alpha: low, beta: high)
+                    orthog = Point3D.midway(alpha: low, beta: high)
+                    let param = (onebitty.lowerBound + onebitty.upperBound) / 2.0
+                    collide = PointCrv(x: orthog.x, y: orthog.y, z: orthog.z, t: param)
                     break
                 }  else  {
                     collide = try converge(ray: ray, span: onebitty, accuracy: accuracy, layersRemaining: layersRemaining - 1)
@@ -693,6 +754,57 @@ public struct Quadratic: PenCurve   {
     }
     
     
+    /// Incomplete!
+    public mutating func reverse() {
+        
+//        let midway = try! self.pointAt(t: 0.5, ignoreTrim: true)
+        
+        // TODO: Will need a 'gencoeff' routine similar to Cubic
+        
+    }
+    
+
+    /// Untested version
+    /// - Parameters:
+    ///   - xirtam: Martix to rotate, translate, and scale.
+    /// - Returns: New Quadratic
+    public func transform(xirtam: Transform) throws -> PenCurve {
+        
+        let midway = try! self.pointAt(t: 0.5, ignoreTrim: true)
+        let freshMidway = midway.transform(xirtam: xirtam)
+        
+        var moved = try! Quadratic(ptA: self.ptAlpha.transform(xirtam: xirtam), beta: freshMidway, betaFraction: 0.5, ptC: self.ptOmega.transform(xirtam: xirtam))
+        
+        try! moved.trimFront(lowParameter: self.trimParameters.lowerBound)   // Transfer the limits
+        try! moved.trimBack(highParameter: self.trimParameters.upperBound)
+        
+        moved.setIntent(purpose: self.usage)   // Copy setting instead of having the default
+        
+        return moved
+    }
+    
+    
+    /// Break the curve up into segments independent of crown.
+    /// - Parameters:
+    ///   - pieces:  Desired number of blocks
+    /// - Returns: Array of Point3D.
+    /// - SeeAlso: 'diceRange' and 'approximate'
+    public func dice(pieces: Int) -> [Point3D]   {
+        
+        let interval = (self.trimParameters.upperBound - self.trimParameters.lowerBound) / Double(pieces)
+        
+        /// The array to be returned
+        var pearls = [Point3D]()
+        
+        for g in stride(from: self.trimParameters.lowerBound, through: self.trimParameters.upperBound, by: interval)   {
+            let pip = try! self.pointAt(t: g)
+            pearls.append(pip)
+        }
+        
+        return pearls
+    }
+    
+
     public func draw(context: CGContext, tform: CGAffineTransform, allowableCrown: Double) throws {
                 
         guard allowableCrown > 0.0 else { throw NegativeAccuracyError(acc: allowableCrown) }
@@ -718,49 +830,6 @@ public struct Quadratic: PenCurve   {
         
         context.strokePath()
 
-    }
-    
-    /// Incomplete!
-    public mutating func reverse() {
-        let bubble = self.ptOmega
-        self.ptOmega = self.ptAlpha
-        self.ptAlpha = bubble
-    }
-    
-
-    /// Untested version
-    /// - Parameters:
-    ///   - xirtam: Martix to rotate, translate, and scale.
-    /// - Returns: New Quadratic
-    public func transform(xirtam: Transform) throws -> PenCurve {
-        
-        let midway = try! self.pointAt(t: 0.5)
-        let freshMidway = midway.transform(xirtam: xirtam)
-        
-        let moved = try! Quadratic(ptA: self.ptAlpha.transform(xirtam: xirtam), beta: freshMidway, betaFraction: 0.5, ptC: self.ptOmega.transform(xirtam: xirtam))
-        
-        return moved
-    }
-    
-    
-    /// Break the curve up into segments independent of crown.
-    /// - Parameters:
-    ///   - pieces:  Desired number of blocks
-    /// - Returns: Array of Point3D.
-    /// - SeeAlso: 'diceRange' and 'approximate'
-    public func dice(pieces: Int) -> [Point3D]   {
-        
-        let interval = (self.trimParameters.upperBound - self.trimParameters.lowerBound) / Double(pieces)
-        
-        /// The array to be returned
-        var pearls = [Point3D]()
-        
-        for g in stride(from: self.trimParameters.lowerBound, through: self.trimParameters.upperBound, by: interval)   {
-            let pip = try! self.pointAt(t: g)
-            pearls.append(pip)
-        }
-        
-        return pearls
     }
     
 }

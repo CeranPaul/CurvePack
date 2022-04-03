@@ -223,7 +223,7 @@ public struct Cubic: PenCurve   {
         
         self.trimParameters = ClosedRange<Double>(uncheckedBounds: (lower: 0.0, upper: 1.0))
         
-        guard self.trimParameters.contains(betaFraction) else { throw ParameterRangeError(parA: betaFraction) }
+        guard self.trimParameters.contains(betaFraction) else { throw ParameterRangeError(parA: betaFraction) }     // Why?
         guard self.trimParameters.contains(gammaFraction) else { throw ParameterRangeError(parA: gammaFraction) }
         
         let pool = [alpha, beta, gamma, delta]
@@ -469,28 +469,41 @@ public struct Cubic: PenCurve   {
         return try! self.pointAt(t: finishParam)
     }
     
-    /// Needs some range checks relative to the other trim
-    public mutating func setLowerTrim (freshT: Double) throws -> Void   {
+    /// Use a different portion of the curve
+    /// - Parameters:
+    ///   - lowParameter:  New parameter value.  Checked to be 0 < t < 1 and less than the upper bound.
+    /// - Throws:
+    ///     - ParameterRangeError if the input is lame
+    mutating public func trimFront(lowParameter: Double) throws   {
         
-        guard freshT >= 0.0 else { throw ParameterRangeError(parA: freshT) }
-        guard freshT <= 1.0 else { throw ParameterRangeError(parA: freshT) }
-
-        let freshBounds = ClosedRange<Double>(uncheckedBounds: (lower: freshT, upper: self.trimParameters.upperBound))
-        self.trimParameters = freshBounds
+        guard lowParameter >= 0.0  else  { throw ParameterRangeError(parA: lowParameter)}
         
-    }
-    
-    /// Needs some range checks relative to the other trim
-    public mutating func setUpperTrim (freshT: Double) throws -> Void   {
+        guard lowParameter < self.trimParameters.upperBound  else { throw ParameterRangeError(parA: lowParameter) }
         
-        guard freshT >= 0.0 else { throw ParameterRangeError(parA: freshT) }
-        guard freshT <= 1.0 else { throw ParameterRangeError(parA: freshT) }
-
-        let freshBounds = ClosedRange<Double>(uncheckedBounds: (lower: self.trimParameters.lowerBound, upper: freshT))
-        self.trimParameters = freshBounds
+        
+        self.trimParameters = ClosedRange<Double>(uncheckedBounds: (lower: lowParameter, upper: self.trimParameters.upperBound))
         
     }
     
+    
+    /// Use a different portion of the curve
+    /// - Parameters:
+    ///   - highParameter:  New parameter value.  Checked to be 0 < t < 1 and less than the upper bound.
+    /// - Throws:
+    ///     - ParameterRangeError if the input is lame
+    mutating public func trimBack(highParameter: Double) throws   {
+        
+        guard highParameter <= 1.0  else  { throw ParameterRangeError(parA: highParameter)}
+        
+        guard highParameter > self.trimParameters.lowerBound  else { throw ParameterRangeError(parA: highParameter) }
+        
+        
+        self.trimParameters = ClosedRange<Double>(uncheckedBounds: (lower: self.trimParameters.lowerBound, upper: highParameter ))
+        
+    }
+    
+    
+
     /// Supply the point on the curve for the input parameter value.
     /// Some notations show "u" as the parameter, instead of "t"
     /// - Parameters:
@@ -499,11 +512,18 @@ public struct Cubic: PenCurve   {
     /// - Throws:
     ///     - ParameterRangeError if the input is lame
     /// - See: 'testPointAt' under CubicTests
-    public func pointAt(t: Double) throws -> Point3D   {
+    public func pointAt(t: Double, ignoreTrim: Bool = false) throws -> Point3D   {
         
-        let absoluteRange = ClosedRange<Double>(uncheckedBounds: (lower: 0.0, upper: 1.0))
-        
-        guard absoluteRange.contains(t) else { throw ParameterRangeError(parA: t) }
+        if ignoreTrim   {
+            
+            /// The entire possible parameter range.
+            let wholeSheBang = ClosedRange<Double>(uncheckedBounds: (lower: 0.0, upper: 1.0))
+            
+            guard wholeSheBang.contains(t) else { throw ParameterRangeError(parA: t) }
+            
+        }  else  {
+            guard self.trimParameters.contains(t) else { throw ParameterRangeError(parA: t) }
+        }
         
         let t2 = t * t
         let t3 = t2 * t
@@ -525,11 +545,18 @@ public struct Cubic: PenCurve   {
     /// - Throws:
     ///     - ParameterRangeError if the input is lame
     /// - See: 'testTangentAt' under CubicTests
-    public func tangentAt(t: Double) throws -> Vector3D   {
+    public func tangentAt(t: Double, ignoreTrim: Bool = false) throws -> Vector3D   {
         
-        let absoluteRange = ClosedRange<Double>(uncheckedBounds: (lower: 0.0, upper: 1.0))
-        
-        guard absoluteRange.contains(t) else { throw ParameterRangeError(parA: t) }
+        if ignoreTrim   {
+            
+            /// The entire possible parameter range.
+            let wholeSheBang = ClosedRange<Double>(uncheckedBounds: (lower: 0.0, upper: 1.0))
+            
+            guard wholeSheBang.contains(t) else { throw ParameterRangeError(parA: t) }
+            
+        }  else  {
+            guard self.trimParameters.contains(t) else { throw ParameterRangeError(parA: t) }
+        }
         
         let t2 = t * t
         
@@ -650,7 +677,7 @@ public struct Cubic: PenCurve   {
         /// - Throws:
         ///     - ConvergenceError when a range can't be refined closely enough in 8 iterations.
         ///     - ParameterRangeError when a range is off the curve.
-        private func convergeMinDist(speck: Point3D, span: ClosedRange<Double>, curve: PenCurve, layersRemaining: Int) throws -> Double   {
+        private func convergeMinDist(speck: Point3D, span: ClosedRange<Double>, curve: Cubic, layersRemaining: Int) throws -> Double   {
             
             if layersRemaining == 0  { throw ConvergenceError(tnuoc: 0) }   // Safety valve
             
@@ -685,7 +712,7 @@ public struct Cubic: PenCurve   {
             var range: ClosedRange<Double>
             var dist: Double
             
-            init(egnar: ClosedRange<Double>, curve: PenCurve, awaySpeck: Point3D)   {
+            init(egnar: ClosedRange<Double>, curve: Cubic, awaySpeck: Point3D)   {
                 
                 self.range = egnar
                 
@@ -695,7 +722,7 @@ public struct Cubic: PenCurve   {
                 
             }
             
-            public func getBridgeDist(curve: PenCurve) -> Double   {
+            public func getBridgeDist(curve: Cubic) -> Double   {
                 
                 let hyar = try! curve.pointAt(t: self.range.lowerBound)
                 let thar = try! curve.pointAt(t: self.range.upperBound)
@@ -750,8 +777,9 @@ public struct Cubic: PenCurve   {
 
         
         var fresh = try! Cubic(alpha: tAlpha, beta: beta, betaFraction: t1, gamma: gamma, gammaFraction: t2, delta: tOmega)
-        try! fresh.setLowerTrim(freshT: self.trimParameters.lowerBound)   // Transfer the limits
-        try! fresh.setUpperTrim(freshT: self.trimParameters.upperBound)
+        try! fresh.trimFront(lowParameter: self.trimParameters.lowerBound)   // Transfer the limits
+        try! fresh.trimBack(highParameter: self.trimParameters.upperBound)
+        
         fresh.setIntent(purpose: self.usage)   // Copy setting instead of having the default
         
         return fresh
@@ -921,14 +949,14 @@ public struct Cubic: PenCurve   {
     /// - Returns: Array of points common to both curves - though for now it will return only the first one
     /// - SeeAlso:  crossing()
     /// - See: 'testIntLine1' and 'testIntLine2' under CubicTests
-    public func intersect(ray: Line, accuracy: Double = Point3D.Epsilon) throws -> [Point3D] {
+    public func intersect(ray: Line, accuracy: Double = Point3D.Epsilon) throws -> [PointCrv] {
         
         guard accuracy > 0.0 else { throw NegativeAccuracyError(acc: accuracy) }
                     
         //TODO: Don't forget the nearly tangent case and comparing tangent vectors.
         
         /// The return array
-        var crossings = [Point3D]()
+        var crossings = [PointCrv]()
         
         /// Interval in parameter space for hunting
         let shebang = ClosedRange<Double>(uncheckedBounds: (lower: 0.0, upper: 1.0))
@@ -980,12 +1008,13 @@ public struct Cubic: PenCurve   {
     
     /// Recursive function to get close enough to the intersection point.
     /// The hazard here for an infinite loop is if the span input doesn't contain a crossing.
-    func converge(ray: Line, span: ClosedRange<Double>, accuracy: Double, layersRemaining: Int) throws -> Point3D?   {
+    func converge(ray: Line, span: ClosedRange<Double>, accuracy: Double, layersRemaining: Int) throws -> PointCrv?   {
         
         if layersRemaining == 0  { throw ConvergenceError(tnuoc: 0) }   // Safety valve
         
-        var collide: Point3D?
-        
+        var collide: PointCrv?
+        var orthog: Point3D
+
         let bittyspans = chopRange(pristine: span, chunks: 5)
         
         for onebitty in bittyspans   {
@@ -996,9 +1025,11 @@ public struct Cubic: PenCurve   {
 
             if proj == 0.0   {     // I wonder how frequently this will get run?
                 if Line.isCoincident(straightA: ray, pip: low)   {
-                    return low
+                    collide = PointCrv(x: low.x, y: low.y, z: low.z, t: onebitty.lowerBound)
+                    return collide
                 }  else  {
-                    return high
+                    collide = PointCrv(x: high.x, y: high.y, z: high.z, t: onebitty.upperBound)
+                    return collide
                 }
             }
             
@@ -1006,7 +1037,9 @@ public struct Cubic: PenCurve   {
                 let sep = Point3D.dist(pt1: low, pt2: high)
                 
                 if sep < accuracy   {
-                    collide = Point3D.midway(alpha: low, beta: high)
+                    orthog = Point3D.midway(alpha: low, beta: high)
+                    let param = (onebitty.lowerBound + onebitty.upperBound) / 2.0
+                    collide = PointCrv(x: orthog.x, y: orthog.y, z: orthog.z, t: param)
                     break
                 }  else  {
                     collide = try converge(ray: ray, span: onebitty, accuracy: accuracy, layersRemaining: layersRemaining - 1)

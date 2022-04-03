@@ -48,14 +48,14 @@ public struct LineSeg: PenCurve, Equatable {
     /// - SeeAlso: 'getOtherEnd()'
     /// - See: 'testFidelity' under LineSegTests
     public func getOneEnd() -> Point3D   {
-        return endAlpha
+        return try! pointAt(t: self.trimParameters.lowerBound)
     }
     
     /// Fetch the location of the opposite end
     /// - SeeAlso: 'getOneEnd()'
     /// - See: 'testFidelity' under LineSegTests
     public func getOtherEnd() -> Point3D   {
-        return endOmega
+        return try! pointAt(t: self.trimParameters.upperBound)
     }
     
     
@@ -94,6 +94,11 @@ public struct LineSeg: PenCurve, Equatable {
         let tOmega = endOmega.transform(xirtam: xirtam)
         
         var transformed = try LineSeg(end1: tAlpha, end2: tOmega)   // Will generate a new extent
+        
+        try! transformed.trimFront(lowParameter: self.trimParameters.lowerBound)   // Transfer the limits
+        try! transformed.trimBack(highParameter: self.trimParameters.upperBound)
+        
+
         transformed.setIntent(purpose: self.usage)   // Copy setting instead of having the default
         
         return transformed
@@ -126,15 +131,25 @@ public struct LineSeg: PenCurve, Equatable {
         return mirroredLineSeg
     }
     
+    
     /// Find the point along this line segment specified by the parameter 't'
     /// Checks that  0 < t < 1
     /// - Throws:
     ///     - ParameterRangeError if the input is lame
     /// - Returns: New Point3D
     /// - See: 'testPointAt' under LineSegTests
-    public func pointAt(t: Double) throws -> Point3D  {
+    public func pointAt(t: Double, ignoreTrim: Bool = false) throws -> Point3D  {
         
-        guard self.trimParameters.contains(t) else { throw ParameterRangeError(parA: t) }
+        if ignoreTrim   {
+            
+            /// The entire possible parameter range.
+            let wholeSheBang = ClosedRange<Double>(uncheckedBounds: (lower: 0.0, upper: 1.0))
+            
+            guard wholeSheBang.contains(t) else { throw ParameterRangeError(parA: t) }
+            
+        }  else  {
+            guard self.trimParameters.contains(t) else { throw ParameterRangeError(parA: t) }
+        }
         
 
         let wholeVector = Vector3D.built(from: self.endAlpha, towards: self.endOmega, unit: false)
@@ -179,6 +194,41 @@ public struct LineSeg: PenCurve, Equatable {
         
         return (false, nil)
     }
+    
+    
+    /// Use a different portion of the curve
+    /// - Parameters:
+    ///   - lowParameter:  New parameter value.  Checked to be 0 < t < 1 and less than the upper bound.
+    /// - Throws:
+    ///     - ParameterRangeError if the input is lame
+    mutating public func trimFront(lowParameter: Double) throws   {
+        
+        guard lowParameter >= 0.0  else  { throw ParameterRangeError(parA: lowParameter)}
+        
+        guard lowParameter < self.trimParameters.upperBound  else { throw ParameterRangeError(parA: lowParameter) }
+        
+        
+        self.trimParameters = ClosedRange<Double>(uncheckedBounds: (lower: lowParameter, upper: self.trimParameters.upperBound))
+        
+    }
+    
+    
+    /// Use a different portion of the curve
+    /// - Parameters:
+    ///   - highParameter:  New parameter value.  Checked to be 0 < t < 1 and less than the upper bound.
+    /// - Throws:
+    ///     - ParameterRangeError if the input is lame
+    mutating public func trimBack(highParameter: Double) throws   {
+        
+        guard highParameter <= 1.0  else  { throw ParameterRangeError(parA: highParameter)}
+        
+        guard highParameter > self.trimParameters.lowerBound  else { throw ParameterRangeError(parA: highParameter) }
+        
+        
+        self.trimParameters = ClosedRange<Double>(uncheckedBounds: (lower: self.trimParameters.lowerBound, upper: highParameter ))
+        
+    }
+    
     
     /// Plot the line segment.  This will be called by the UIView 'drawRect' function.
     /// Part of PenCurve protocol.
@@ -263,9 +313,18 @@ public struct LineSeg: PenCurve, Equatable {
     /// - Returns:
     ///   - tan:  Non-normalized vector
     /// - See: 'testTangent' under LineSegTests
-    public func tangentAt(t: Double) throws -> Vector3D   {
+    public func tangentAt(t: Double, ignoreTrim: Bool = false) throws -> Vector3D   {
         
-        guard self.trimParameters.contains(t) else { throw ParameterRangeError(parA: t) }
+        if ignoreTrim   {
+            
+            /// The entire possible parameter range.
+            let wholeSheBang = ClosedRange<Double>(uncheckedBounds: (lower: 0.0, upper: 1.0))
+            
+            guard wholeSheBang.contains(t) else { throw ParameterRangeError(parA: t) }
+            
+        }  else  {
+            guard self.trimParameters.contains(t) else { throw ParameterRangeError(parA: t) }
+        }
         
         let along = Vector3D.built(from: self.endAlpha, towards: self.endOmega)
         return along
@@ -303,7 +362,7 @@ public struct LineSeg: PenCurve, Equatable {
     ///     - CoincidentLinesError if the input lies on top
     /// - Returns: Possibly empty Array of points common to both curves
     /// - See: 'testIntersectLine' under LineSegTests
-    public func intersect(ray: Line, accuracy: Double = Point3D.Epsilon) throws -> [Point3D]   {
+    public func intersect(ray: Line, accuracy: Double = Point3D.Epsilon) throws -> [PointCrv]   {
         
         /// Line built from this segment
         let unbounded = try! Line(spot: self.getOneEnd(), arrow: self.getDirection())
@@ -315,7 +374,7 @@ public struct LineSeg: PenCurve, Equatable {
         
         
         /// The return array
-        var crossings = [Point3D]()
+        var crossings = [PointCrv]()
         
         /// Intersection of the two lines
         let collision = try! Line.intersectTwo(straightA: unbounded, straightB: ray)
@@ -324,7 +383,8 @@ public struct LineSeg: PenCurve, Equatable {
         let rescue = Vector3D.built(from: self.getOneEnd(), towards: collision, unit: true)
         
         if rescue.isZero()   {   // Intersection at first end.
-            crossings.append(collision)
+            let frontPt = PointCrv(x: self.getOneEnd().x, y: self.getOneEnd().y, z: self.getOneEnd().z, t: self.trimParameters.lowerBound)
+            crossings.append(frontPt)
             return crossings
         }
         
@@ -336,7 +396,8 @@ public struct LineSeg: PenCurve, Equatable {
             
             if (self.getLength() - dist) > -1.0 * Point3D.Epsilon   {
                 
-                crossings.append(collision)
+                let crossPt = PointCrv(x: collision.x, y: collision.y, z: collision.z, t: dist / self.getLength())
+                crossings.append(crossPt)
             }
         }
         
