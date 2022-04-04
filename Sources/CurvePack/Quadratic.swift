@@ -153,7 +153,35 @@ public struct Quadratic: PenCurve   {
         
     }
     
+    
+    /// Copy constructor
+    /// - Parameters:
+    ///   - sourceCurve: Quadratic to be duplicated
+    public init(sourceCurve: Quadratic)   {
+        
+        self.ptAlpha = try! sourceCurve.pointAt(t: 0.0, ignoreTrim: true)
+        self.ptOmega = try! sourceCurve.pointAt(t: 1.0, ignoreTrim: true)
+        
+        // Set the curve coefficients
+        self.ax = sourceCurve.ax
+        self.bx = sourceCurve.bx
+        self.cx = sourceCurve.cx
+        self.ay = sourceCurve.ay
+        self.by = sourceCurve.by
+        self.cy = sourceCurve.cy
+        self.az = sourceCurve.az
+        self.bz = sourceCurve.bz
+        self.cz = sourceCurve.cz
 
+
+        self.usage = sourceCurve.usage
+        
+        self.trimParameters = ClosedRange<Double>(uncheckedBounds: (lower: 0.0, upper: 1.0))
+        
+    }
+    
+    
+    
     /// Supply the point on the curve for the input parameter value.
     /// Some notations show "u" as the parameter, instead of "t"
     /// - Parameters:
@@ -274,6 +302,7 @@ public struct Quadratic: PenCurve   {
     ///   - lowParameter:  New parameter value.  Checked to be 0 < t < 1 and less than the upper bound.
     /// - Throws:
     ///     - ParameterRangeError if the input is lame
+    /// - See: 'testTrimFront' under QuadraticTests
     mutating public func trimFront(lowParameter: Double) throws   {
         
         guard lowParameter >= 0.0  else  { throw ParameterRangeError(parA: lowParameter)}
@@ -291,6 +320,7 @@ public struct Quadratic: PenCurve   {
     ///   - highParameter:  New parameter value.  Checked to be 0 < t < 1 and greater than the lower bound.
     /// - Throws:
     ///     - ParameterRangeError if the input is lame
+    /// - See: 'testTrimBack' under QuadraticTests
     mutating public func trimBack(highParameter: Double) throws   {
         
         guard highParameter <= 1.0  else  { throw ParameterRangeError(parA: highParameter)}
@@ -548,11 +578,11 @@ public struct Quadratic: PenCurve   {
         /// Collection of points to be returned
         var chain = [Point3D]()
         
-        var currentT = 0.0   // Starting value
+        var currentT = self.trimParameters.lowerBound   // Starting value
         let startPoint = try self.pointAt(t: currentT)
         chain.append(startPoint)
         
-        while currentT < 1.0   {
+        while currentT < self.trimParameters.upperBound   {
             let primoT = try findStep(allowableCrown: allowableCrown, currentT: currentT, increasing: true)
             let milestone = try self.pointAt(t: primoT)
             chain.append(milestone)

@@ -188,6 +188,106 @@ class QuadraticTests: XCTestCase {
     }
     
     
+    func testCopyCon()   {
+        
+        let aardvark = Point3D(x: 5.0, y: 4.5, z: 0.5)
+                
+        let monkey = Point3D(x: 6.75, y: 3.75, z: 0.5)
+        let zebra = Point3D(x: 5.25, y: 1.5, z: 0.5)
+        
+        /// The test subject
+        let zooTrail = try! Quadratic(ptA: aardvark, controlA: monkey, ptB: zebra)
+        
+        let zooPath = Quadratic(sourceCurve: zooTrail)
+        
+        let pipTA = try! zooTrail.pointAt(t: 0.23)
+        let pipPA = try! zooPath.pointAt(t: 0.23)
+        
+        XCTAssert(pipPA == pipTA)
+        
+    }
+    
+    
+    func testTrimFront()   {
+        
+        let aardvark = Point3D(x: 5.0, y: 4.5, z: 0.5)
+                
+        let monkey = Point3D(x: 6.75, y: 3.75, z: 0.5)
+        let zebra = Point3D(x: 5.25, y: 1.5, z: 0.5)
+        
+        /// The test subject
+        var zooTrail = try! Quadratic(ptA: aardvark, controlA: monkey, ptB: zebra)
+        
+        let pristineLength = zooTrail.getLength()
+        
+        XCTAssertNoThrow( try zooTrail.trimFront(lowParameter: 0.17))
+        
+        XCTAssertThrowsError( try zooTrail.trimFront(lowParameter: -0.05))
+        
+        
+        try! zooTrail.trimFront(lowParameter: 0.11)
+        
+        let trimmedLength = zooTrail.getLength()
+        
+        XCTAssert(pristineLength > trimmedLength)
+        
+        try! zooTrail.trimFront(lowParameter: 0.08)
+
+        let trimmedLength2 = zooTrail.getLength()
+
+        XCTAssert(trimmedLength < trimmedLength2)
+        
+    }
+    
+    
+    func testTrimBack()   {
+        
+        let aardvark = Point3D(x: 5.0, y: 4.5, z: 0.5)
+                
+        let monkey = Point3D(x: 6.75, y: 3.75, z: 0.5)
+        let zebra = Point3D(x: 5.25, y: 1.5, z: 0.5)
+        
+        /// The test subject
+        var zooTrail = try! Quadratic(ptA: aardvark, controlA: monkey, ptB: zebra)
+        
+        let pristineLength = zooTrail.getLength()
+        
+        XCTAssertNoThrow( try zooTrail.trimBack(highParameter: 0.90))
+        
+        XCTAssertThrowsError( try zooTrail.trimBack(highParameter: 1.05))
+        
+        
+        try! zooTrail.trimBack(highParameter: 0.93)
+        
+        let trimmedLength = zooTrail.getLength()
+        
+        XCTAssert(pristineLength > trimmedLength)
+        
+        try! zooTrail.trimBack(highParameter: 0.95)
+
+        let trimmedLength2 = zooTrail.getLength()
+
+        XCTAssert(trimmedLength < trimmedLength2)
+        
+    }
+    
+    
+    func testTrimOverlap()   {
+        
+        let aardvark = Point3D(x: 5.0, y: 4.5, z: 0.5)
+                
+        let monkey = Point3D(x: 6.75, y: 3.75, z: 0.5)
+        let zebra = Point3D(x: 5.25, y: 1.5, z: 0.5)
+        
+        /// The test subject
+        var zooTrail = try! Quadratic(ptA: aardvark, controlA: monkey, ptB: zebra)
+        
+        try! zooTrail.trimBack(highParameter: 0.60)
+        
+        XCTAssertThrowsError(try zooTrail.trimFront(lowParameter: 0.62))
+
+    }
+        
     func testIntersect()   {
         
         let topRight = Point3D(x: 5.0, y: 4.5, z: 0.5)
