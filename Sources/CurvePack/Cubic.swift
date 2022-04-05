@@ -850,7 +850,7 @@ public struct Cubic: PenCurve   {
         var bucketZ = [Double]()
 
         for u in 1...limit   {
-            let pip = try! self.pointAt(t: Double(u) * step)
+            let pip = try! self.pointAt(t: self.trimParameters.lowerBound + Double(u) * step)
             bucketX.append(pip.x)
             bucketY.append(pip.y)
             bucketZ.append(pip.z)
