@@ -842,7 +842,7 @@ public struct Cubic: PenCurve   {
         /// Number of check points along the curve
         let pieces = 15
         
-        let step = 1.0 / Double(pieces)
+        let step = (self.trimParameters.upperBound - self.trimParameters.lowerBound) / Double(pieces)
         let limit = pieces - 1
         
         var bucketX = [Double]()
