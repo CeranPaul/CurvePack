@@ -562,7 +562,7 @@ public struct Quadratic: PenCurve   {
         let factor = 1.60
         
         /// Change in parameter - constantly refined.
-        var step = 1.0 - currentT
+        var step = self.trimParameters.upperBound - currentT
         
         if !increasing   {
             step = -0.9999 * currentT   // I don't remember why that couldn't be -1.0
@@ -581,13 +581,13 @@ public struct Quadratic: PenCurve   {
             
             if increasing   {
                 trialT = currentT + step
-                if currentT > (1.0 - step)   {   // Prevent parameter value > 1.0
-                    trialT = 1.0
+                if currentT > (self.trimParameters.upperBound - step)   {   // Prevent parameter value > 1.0
+                    trialT = self.trimParameters.upperBound
                 }
             }  else {
                 trialT = currentT - step
                 if currentT < step   {   // Prevent parameter value < 0.0
-                    trialT = 0.0
+                    trialT = self.trimParameters.lowerBound
                 }
             }
             

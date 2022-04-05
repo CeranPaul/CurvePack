@@ -541,6 +541,7 @@ public struct Cubic: PenCurve   {
     /// Some notations show "u" as the parameter, instead of "t".
     /// - Parameters:
     ///   - t:  Curve parameter value.  Checked to be 0 < t < 1.
+    ///   - ignoreTrim: Whether or not to check against the boundaries for a trimmed curve.
     /// - Returns:  Non-normalized vector
     /// - Throws:
     ///     - ParameterRangeError if the input is lame

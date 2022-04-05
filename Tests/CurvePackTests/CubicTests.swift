@@ -147,6 +147,24 @@ class CubicTests: XCTestCase {
             XCTFail()
         }
         
+        let alpha = Point3D(x: 2.3, y: 1.5, z: 0.7)
+        let alSlope = Vector3D(i: 0.866, j: 0.5, k: 0.0)
+        
+        let beta = Point3D(x: 3.1, y: 1.6, z: 0.7)
+        let betSlope = Vector3D(i: 0.866, j: -0.5, k: 0.0)
+        
+        var bump = try! Cubic(ptA: alpha, slopeA: alSlope, ptB: beta, slopeB: betSlope)
+        
+        try! bump.trimFront(lowParameter: 0.15)
+        try! bump.trimBack(highParameter: 0.75)
+        
+        XCTAssertThrowsError(try bump.tangentAt(t: 0.12))
+        
+        XCTAssertNoThrow(try bump.tangentAt(t: 0.12, ignoreTrim: true))
+
+        XCTAssertThrowsError(try bump.tangentAt(t: 2.12, ignoreTrim: true))
+
+
     }
     
     func testSetIntent()   {
