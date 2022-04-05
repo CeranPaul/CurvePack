@@ -798,11 +798,11 @@ public struct Cubic: PenCurve   {
         let tOmega = self.ptOmega.transform(xirtam: xirtam)
         
         let t1 = 0.33
-        let betaLoc = try! self.pointAt(t: t1)
+        let betaLoc = try! self.pointAt(t: t1, ignoreTrim: true)
         let beta = betaLoc.transform(xirtam: xirtam)
 
         let t2 = 0.67
-        let gammaLoc = try! self.pointAt(t: t2)
+        let gammaLoc = try! self.pointAt(t: t2, ignoreTrim: true)
         let gamma = gammaLoc.transform(xirtam: xirtam)
 
         
