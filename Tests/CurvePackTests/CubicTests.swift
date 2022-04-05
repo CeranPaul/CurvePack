@@ -201,6 +201,71 @@ class CubicTests: XCTestCase {
         XCTAssertEqual(beta.z, sumZ, accuracy: 0.0001)
     }
     
+    func testCoeffConstruct()   {
+        
+        let upCorner = Point3D(x: -1.0, y: 0.5, z: 0.5)
+        let upWave = Point3D(x: 0.0, y: 1.75, z: 0.5)
+        let downWave = Point3D(x: 1.0, y: 2.25, z: 0.5)
+        let beach = Point3D(x: 3.0, y: 4.5, z: 0.5)
+        
+        let wave = try! Cubic(alpha: upCorner, beta: upWave, betaFraction: 0.3, gamma: downWave, gammaFraction: 0.5, delta: beach)
+       
+        let dupeWave = Cubic(ax: wave.ax, bx: wave.bx, cx: wave.cx, dx: wave.dx, ay: wave.ay, by: wave.by, cy: wave.cy, dy: wave.dy, az: wave.az, bz: wave.bz, cz: wave.cz, dz: wave.dz)
+        
+        var yin = try! wave.pointAt(t: 0.04)
+        var yang = try! dupeWave.pointAt(t: 0.04)
+        
+        XCTAssert(yang == yin)
+
+        yin = try! wave.pointAt(t: 0.47)
+        yang = try! dupeWave.pointAt(t: 0.47)
+        
+        XCTAssert(yang == yin)
+        
+        yin = try! wave.pointAt(t: 0.71)
+        yang = try! dupeWave.pointAt(t: 0.71)
+        
+        XCTAssert(yang == yin)
+
+        yin = try! wave.pointAt(t: 0.98)
+        yang = try! dupeWave.pointAt(t: 0.98)
+        
+        XCTAssert(yang == yin)
+        
+    }
+    
+    func testApproximate()   {
+        
+        let upCorner = Point3D(x: -1.0, y: 0.5, z: 0.5)
+        let upWave = Point3D(x: 0.0, y: 1.75, z: 0.5)
+        let downWave = Point3D(x: 1.0, y: 2.25, z: 0.5)
+        let beach = Point3D(x: 3.0, y: 4.5, z: 0.5)
+        
+        var wave = try! Cubic(alpha: upCorner, beta: upWave, betaFraction: 0.3, gamma: downWave, gammaFraction: 0.5, delta: beach)
+        
+        let maxPts = try! wave.approximate(allowableCrown: 0.003)
+        
+        let notSoMany = try! wave.approximate(allowableCrown: 0.010)
+        
+        XCTAssert(maxPts.count > notSoMany.count)
+        
+        
+        try! wave.trimFront(lowParameter: 0.10)
+        
+        let frontShave = try! wave.approximate(allowableCrown: 0.003)
+        
+        XCTAssert(maxPts.count > frontShave.count)
+        
+        
+        try! wave.trimBack(highParameter: 0.73)
+        
+        let backShave = try! wave.approximate(allowableCrown: 0.003)
+        
+        XCTAssert(backShave.count < frontShave.count)
+        
+    }
+    
+    
     func testTransform100()   {
         
         let pt1 = Point3D(x: 2.0, y: 0.5, z: 4.0)

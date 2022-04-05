@@ -83,7 +83,6 @@ public struct Quadratic: PenCurve   {
         
     }
     
-
     /// Build from two end points and a mid point.
     /// Needed for transforms and offsets
     /// - Parameters:
@@ -119,7 +118,7 @@ public struct Quadratic: PenCurve   {
         
         let betaFraction2 = betaFraction * betaFraction
         let row2 = SIMD3<Double>(betaFraction2, betaFraction, 1.0)
-                
+        
         let row3 = SIMD3<Double>(1.0, 1.0, 1.0)
         
         /// Intermediate collection for building the matrix
@@ -180,6 +179,50 @@ public struct Quadratic: PenCurve   {
         
     }
     
+    
+    /// Generate the coefficients for the three polynomials. Used in function 'reverse'.
+    private mutating func genCoeff(ptA: Point3D, beta: Point3D, betaFraction: Double, ptC: Point3D) {
+        
+        // Rearrange coordinates into an array
+        let rowX = SIMD3<Double>(ptA.x, beta.x, ptC.x)
+        let rowY = SIMD3<Double>(ptA.y, beta.y, ptC.y)
+        let rowZ = SIMD3<Double>(ptA.z, beta.z, ptC.z)
+        
+        // Build a 3x3 of parameter values to various powers
+        let row1 = SIMD3<Double>(0.0, 0.0, 1.0)
+        
+        let betaFraction2 = betaFraction * betaFraction
+        let row2 = SIMD3<Double>(betaFraction2, betaFraction, 1.0)
+        
+        let row3 = SIMD3<Double>(1.0, 1.0, 1.0)
+        
+        /// Intermediate collection for building the matrix
+        var partial: [SIMD3<Double>]
+        partial = [row1, row2, row3]
+        
+        /// Matrix of t from several points raised to various powers
+        let tPowers = double3x3(partial)
+        
+        let trans = tPowers.transpose   // simd representation is different than what I had in college
+        
+        /// Inverse of the above matrix
+        let nvers = trans.inverse
+        
+        let coeffX = nvers * rowX
+        let coeffY = nvers * rowY
+        let coeffZ = nvers * rowZ
+        
+        // Set the curve coefficients
+        self.ax = coeffX[0]
+        self.bx = coeffX[1]
+        self.cx = coeffX[2]
+        self.ay = coeffY[0]
+        self.by = coeffY[1]
+        self.cy = coeffY[2]
+        self.az = coeffZ[0]
+        self.bz = coeffZ[1]
+        self.cz = coeffZ[2]
+    }
     
     
     /// Supply the point on the curve for the input parameter value.
@@ -784,12 +827,21 @@ public struct Quadratic: PenCurve   {
     }
     
     
-    /// Incomplete!
+    /// Needed for aligning a curve in a Loop
     public mutating func reverse() {
         
-//        let midway = try! self.pointAt(t: 0.5, ignoreTrim: true)
+        let freshOmega = self.ptAlpha
+        let freshAlpha = self.ptOmega
         
-        // TODO: Will need a 'gencoeff' routine similar to Cubic
+        self.ptAlpha = freshAlpha
+        self.ptOmega = freshOmega
+        
+        let midway = try! self.pointAt(t: 0.5, ignoreTrim: true)
+        
+        genCoeff(ptA: freshAlpha, beta: midway, betaFraction: 0.5, ptC: freshOmega)
+        
+        self.ptAlpha = freshAlpha
+        self.ptOmega = freshOmega
         
     }
     
@@ -798,12 +850,12 @@ public struct Quadratic: PenCurve   {
     /// - Parameters:
     ///   - xirtam: Martix to rotate, translate, and scale.
     /// - Returns: New Quadratic
-    public func transform(xirtam: Transform) throws -> PenCurve {
+    public func transform(xirtam: Transform) -> PenCurve {
         
         let midway = try! self.pointAt(t: 0.5, ignoreTrim: true)
         let freshMidway = midway.transform(xirtam: xirtam)
         
-        var moved = try! Quadratic(ptA: self.ptAlpha.transform(xirtam: xirtam), beta: freshMidway, betaFraction: 0.5, ptC: self.ptOmega.transform(xirtam: xirtam))
+        var moved = try! Quadratic(ptA: self.ptAlpha.transform(xirtam: xirtam), beta: freshMidway, betaFraction: 0.5, ptC: self.ptOmega.transform(xirtam: xirtam))     // Known good points
         
         try! moved.trimFront(lowParameter: self.trimParameters.lowerBound)   // Transfer the limits
         try! moved.trimBack(highParameter: self.trimParameters.upperBound)

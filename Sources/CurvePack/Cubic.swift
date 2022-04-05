@@ -289,7 +289,7 @@ public struct Cubic: PenCurve   {
     }
     
     
-    /// Build from a location, it's tangency, and two other locations.
+    /// Build from a location, it's tangency, and two other locations. For a spline.
     /// The intent is that only alpha through beta will get used.
     public init(alpha: Point3D, alphaPrime: Vector3D, beta: Point3D, betaFraction: Double, gamma: Point3D)  {
         
@@ -758,6 +758,36 @@ public struct Cubic: PenCurve   {
     }
     
     
+    /// Generate the plane that the curve lies in, if possible.
+    /// - Returns: Optional Plane
+    public func genPlane() -> Plane?   {
+        
+        let mid = try! self.pointAt(t: 0.53, ignoreTrim: true)
+        
+        let linFlag = Point3D.isThreeLinear(alpha: self.ptAlpha, beta: mid, gamma: self.ptOmega)
+        
+        if !linFlag   {
+            
+            /// Trial plane
+            let flat = try! Plane(alpha: self.ptAlpha, beta: mid, gamma: self.ptOmega)   // Points are unique and non-linear
+            
+            for g in stride(from: 0.1, through: 0.9, by: 0.10)   {
+                
+                let pip = try! self.pointAt(t: g, ignoreTrim: true)   // Values of 'g' are in range
+                
+                let flatFlag = try! Plane.isCoincident(flat: flat, pip: pip)    // Default value for accuracy is positive
+                
+                if !flatFlag { return nil }   // Bail on any point out of plane
+            }
+            
+            return flat   // Nine points along the curve were on the plane.
+        }
+        
+        return nil
+    }
+    
+    
+    
     /// Create a new curve translated, scaled, and rotated by the matrix.
     /// - Parameters:
     ///   - xirtam: Matrix containing translation, rotation, and scaling to be applied
@@ -1202,7 +1232,7 @@ public struct Cubic: PenCurve   {
         return deviation
     }
     
-    /// Calculate deviation from a LineSeg
+    /// Calculate deviation from a LineSeg. Also used by Quadratic and Involute.
     /// - Parameters:
     ///   - dots:  Array of Point3D.  Order is assumed.
     /// - Throws:

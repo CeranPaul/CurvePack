@@ -352,5 +352,61 @@ class QuadraticTests: XCTestCase {
 
     }
 
+    
+    func testReverse()   {
+        
+        let aardvark = Point3D(x: 5.0, y: 4.5, z: 0.5)
+                
+        let monkey = Point3D(x: 6.75, y: 3.75, z: 0.5)
+        let zebra = Point3D(x: 5.25, y: 1.5, z: 0.5)
+        
+        /// The test subject
+        var zooTrail = try! Quadratic(ptA: aardvark, controlA: monkey, ptB: zebra)
+        
+        let pen = try! zooTrail.pointAt(t: 0.45)
+        let cage = try! zooTrail.pointAt(t: 0.96)
+        let aviary = try! zooTrail.pointAt(t: 0.07)
+        
+        zooTrail.reverse()
+        
+        let penRev = try! zooTrail.pointAt(t: 0.55)
+        
+        XCTAssertEqual(pen, penRev)
+        
+        let cageRev = try! zooTrail.pointAt(t: 0.04)
+        
+        XCTAssertEqual(cage, cageRev)
+        
+        let aviaryRev = try! zooTrail.pointAt(t: 0.93)
+        
+        XCTAssertEqual(aviary, aviaryRev)
+        
+    }
 
+    
+    func testTransform()   {
+        
+        let aardvark = Point3D(x: 5.0, y: 4.5, z: 0.5)
+                
+        let monkey = Point3D(x: 6.75, y: 3.75, z: 0.5)
+        let zebra = Point3D(x: 5.25, y: 1.5, z: 0.5)
+        
+        /// The test subject
+        let zooTrail = try! Quadratic(ptA: aardvark, controlA: monkey, ptB: zebra)
+
+        
+        let swingZ = Transform(rotationAxis: Axis.z, angleRad: Double.pi / 2.0)
+        
+        let zooPath = zooTrail.transform(xirtam: swingZ)
+        
+        let pristine = try! zooTrail.pointAt(t: 0.31)
+        
+        let swung = try! zooPath.pointAt(t: 0.31, ignoreTrim: true)   // Compiler was having a fit about the second parameter.
+
+        XCTAssertEqual(swung.x, -1.0 * pristine.y, accuracy: Point3D.Epsilon)
+        XCTAssertEqual(swung.y, pristine.x, accuracy: Point3D.Epsilon)
+        XCTAssertEqual(swung.z, pristine.z, accuracy: Point3D.Epsilon)
+        
+    }
+    
 }
