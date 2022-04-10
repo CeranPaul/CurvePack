@@ -380,6 +380,8 @@ public struct Quadratic: PenCurve   {
     ///  What's the right thing to do here for a trimmed curve?
     /// - Parameters:
     ///   - speck:  Point near the curve.
+    /// - Throws:
+    ///     - ParameterRangeError for a bad parameter near the end of this code
     /// - Returns: Flag, and optional parameter value
     /// - See: 'testPerch' under QuadraticTests
     public func isCoincident(speck: Point3D, accuracy: Double = Point3D.Epsilon) throws -> (flag: Bool, param: Double?)   {
@@ -581,7 +583,7 @@ public struct Quadratic: PenCurve   {
             
             if increasing   {
                 trialT = currentT + step
-                if currentT > (self.trimParameters.upperBound - step)   {   // Prevent parameter value > 1.0
+                if currentT > (self.trimParameters.upperBound - step)   {   // Prevent parameter value > upperBound
                     trialT = self.trimParameters.upperBound
                 }
             }  else {

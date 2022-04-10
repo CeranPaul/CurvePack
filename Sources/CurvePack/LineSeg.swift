@@ -167,7 +167,8 @@ public struct LineSeg: PenCurve, Equatable {
     ///   - speck:  Point near the curve.
     /// - Returns: Flag, and optional parameter value
     /// - See: 'testPerch' under LineSegTests
-    public func isCoincident(speck: Point3D, accuracy: Double = Point3D.Epsilon) throws -> (flag: Bool, param: Double?)   {
+    ///  I don't understand why removing 'throws' from the signature doesn't cause a compiler error
+    public func isCoincident(speck: Point3D, accuracy: Double = Point3D.Epsilon) -> (flag: Bool, param: Double?)   {
         
            // Shortcuts!
         if speck == self.endAlpha   { return (true, self.trimParameters.lowerBound) }

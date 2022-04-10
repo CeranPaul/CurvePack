@@ -317,33 +317,34 @@ class LineSegTests: XCTestCase {
         
         let t1 = Point3D(x: 5.0, y: 5.0, z: 5.0)
         
-        var sitRep = try! contrail.isCoincident(speck: t1)
+        var sitRep = contrail.isCoincident(speck: t1)
         XCTAssertFalse(sitRep.flag)
         
         
         let t2 = Point3D(x: 5.0, y: 3.65, z: 3.65)
         
-        sitRep = try! contrail.isCoincident(speck: t2)
+        sitRep = contrail.isCoincident(speck: t2)
         XCTAssert(sitRep.flag)
 
         let t3 = Point3D(x: 5.0, y: 2.5, z: 4.1)
         
-        sitRep = try! contrail.isCoincident(speck: t3)
+        sitRep = contrail.isCoincident(speck: t3)
         XCTAssertFalse(sitRep.flag)
         
         
         let t4 = Point3D(x: 5.0, y: 0.5, z: 0.5)
         
-        sitRep = try! contrail.isCoincident(speck: t4)
+        sitRep = contrail.isCoincident(speck: t4)
         XCTAssertFalse(sitRep.flag)
         
-        sitRep = try! contrail.isCoincident(speck: ptA)
+        sitRep = contrail.isCoincident(speck: ptA)
         XCTAssert(sitRep.flag)
 
-        sitRep = try! contrail.isCoincident(speck: ptB)
+        sitRep = contrail.isCoincident(speck: ptB)
         XCTAssert(sitRep.flag)
 
     }
+    
     
     func testCrown()   {
         
