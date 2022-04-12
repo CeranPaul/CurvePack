@@ -351,6 +351,39 @@ public struct Cubic: PenCurve   {
                 
     }
     
+    /// Copy constructor
+    /// - Parameters:
+    ///   - sourceCurve: Cubic to be duplicated
+    /// - Returns: New Cubic that is not trimmed
+    public init(sourceCurve: Cubic)   {
+        
+        self.ptAlpha = try! sourceCurve.pointAt(t: 0.0, ignoreTrim: true)
+        self.ptOmega = try! sourceCurve.pointAt(t: 1.0, ignoreTrim: true)
+        
+        // Set the curve coefficients
+        self.ax = sourceCurve.ax
+        self.bx = sourceCurve.bx
+        self.cx = sourceCurve.cx
+        self.dx = sourceCurve.dx
+        self.ay = sourceCurve.ay
+        self.by = sourceCurve.by
+        self.cy = sourceCurve.cy
+        self.dy = sourceCurve.dy
+        self.az = sourceCurve.az
+        self.bz = sourceCurve.bz
+        self.cz = sourceCurve.cz
+        self.dz = sourceCurve.dz
+
+
+        self.usage = sourceCurve.usage
+        
+        self.trimParameters = ClosedRange<Double>(uncheckedBounds: (lower: 0.0, upper: 1.0))
+        
+    }
+    
+    
+
+    
     
     /// Generate the 12 coefficiients that define the curve
     private mutating func genCoeff(alpha: Point3D, beta: Point3D, betaFraction: Double, gamma: Point3D, gammaFraction: Double, delta: Point3D) -> Void   {
