@@ -9,7 +9,7 @@
 import Foundation
 
 /// A 'brick' aligned with the coordinate axes to envelop some geometry.  Useful for scaling and intersections.
-/// Does not allow 0.0 thicknesses
+/// Some constructors fill in for 0.0 thicknesses
 public struct OrthoVol   {
     
     fileprivate var rangeX: ClosedRange<Double>
@@ -130,6 +130,7 @@ public struct OrthoVol   {
     
     
     /// Find the enclosing volume for an Array of points
+    /// Does NOT enforce a minimum thickness on a linear or planar cloud!
     /// - Parameters:
     ///   - spots: Point cloud
     public init(spots: [Point3D]) {

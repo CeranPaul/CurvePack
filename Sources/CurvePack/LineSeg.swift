@@ -254,6 +254,8 @@ public struct LineSeg: PenCurve, Equatable {
     
     
     /// Find the position of a point relative to the LineSeg
+    /// - Parameters:
+    ///   - speck:  Point of interest
     /// - Returns: Tuple of vectors - one along the seg, other perp to it
     /// - See: 'testResolveRelative' under LineSegTests
     public func resolveRelativeVec(speck: Point3D) -> (along: Vector3D, perp: Vector3D)   {
@@ -284,7 +286,6 @@ public struct LineSeg: PenCurve, Equatable {
         
         return (a, b)
     }
-    // TODO: Write tests for the above inside LineSegTests
     
     
     /// Calculate length.

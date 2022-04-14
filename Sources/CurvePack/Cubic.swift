@@ -291,7 +291,20 @@ public struct Cubic: PenCurve   {
     
     /// Build from a location, it's tangency, and two other locations. For a spline.
     /// The intent is that only alpha through beta will get used.
-    public init(alpha: Point3D, alphaPrime: Vector3D, beta: Point3D, betaFraction: Double, gamma: Point3D)  {
+    /// - Throws:
+    ///     - ParameterRangeError if one of the fractions is lame
+    ///     - CoincidentPointsError if they are not unique
+    public init(alpha: Point3D, alphaPrime: Vector3D, beta: Point3D, betaFraction: Double, gamma: Point3D) throws  {
+        
+        let pool = [alpha, beta, gamma]
+        
+        guard Point3D.isUniquePool(flock: pool)  else  { throw CoincidentPointsError(dupePt: alpha) }
+        
+        
+        let wholeRange = ClosedRange<Double>(uncheckedBounds: (lower: 0.0, upper: 1.0))
+        
+        guard wholeRange.contains(betaFraction)  else  { throw ParameterRangeError(parA: betaFraction) }
+        
         
         // Rearrange coordinates into an array
         let rowX = SIMD4<Double>(alpha.x, alphaPrime.i, beta.x, gamma.x)
@@ -351,7 +364,7 @@ public struct Cubic: PenCurve   {
                 
     }
     
-    /// Copy constructor
+    /// Copy constructor. Trim parameters are NOT duplicated.
     /// - Parameters:
     ///   - sourceCurve: Cubic to be duplicated
     /// - Returns: New Cubic that is not trimmed
@@ -570,6 +583,7 @@ public struct Cubic: PenCurve   {
         return Point3D(x: myX, y: myY, z: myZ)
     }
     
+    
     /// Differentiate to find the tangent vector for the input parameter.
     /// Some notations show "u" as the parameter, instead of "t".
     /// - Parameters:
@@ -605,6 +619,7 @@ public struct Cubic: PenCurve   {
     
     /// Report the length of the entire curve.
     /// Perhaps should depend on allowableCrown.
+    /// - Returns: Double
     public func getLength() -> Double   {
         
         // Points every 0.01 in parameter space
@@ -622,153 +637,128 @@ public struct Cubic: PenCurve   {
     }
     
 
-    /// Break into 20 pieces and sum up the distances
-    /// Shouldn't be used anywhere
-    /// - Parameters:
-    ///   - t:  Optional curve parameter value.  Assumed 0 < t < 1.
-    /// - Throws:
-    ///     - ParameterRangeError if the input is lame
-    /// - Returns: Double that is an approximate length
-    public func findLength(t: Double = 1.0) throws -> Double   {
-        
-        guard self.trimParameters.contains(t) else { throw ParameterRangeError(parA: t) }
-        
-
-        let pieces = 20
-        let step = t / Double(pieces)
-        
-        var prevPoint = try! self.pointAt(t: 0.0)
-        
-        /// Running total
-        var length = 0.0
-        
-        for g in 1...pieces   {
-            
-            let pip = try! self.pointAt(t: Double(g) * step)
-            let hop = Point3D.dist(pt1: prevPoint, pt2: pip)
-            length += hop
-            
-            prevPoint = pip
-        }
-        
-        return length
-    }
-    
     
     /// Check whether a point is or isn't perched on the curve.
+    ///  Part of the PenCurve protocol.
     /// - Parameters:
     ///   - speck:  Point near the curve.
+    ///   - accuracy: The small distance that defines "equal" points. Should be positive.
+    /// - Throws:
+    ///     - ConvergenceError if eight iterations are not sufficient
     /// - Returns: Flag, and optional parameter value
     /// - See: 'testPerch' under CubicTests
     public func isCoincident(speck: Point3D, accuracy: Double = Point3D.Epsilon) throws -> (flag: Bool, param: Double?)   {
-            
-               // Shortcuts!
-            if speck == self.ptAlpha   { return (true, self.trimParameters.lowerBound) }
-            if speck == self.ptOmega   { return (true, self.trimParameters.upperBound) }
-            
-            /// True length along the curve
-            let curveLength = self.getLength()
-            
-            /// Points along the curve
-            let crumbs = self.diceRange(pristine: self.trimParameters, chunks: 40)
-            
-            /// Distances to the target point (and parameter ranges)
-            let seps = crumbs.map( { rangeDist(egnar: $0, curve: self, awaySpeck: speck) } )
-            
-            /// Ranges whose midpoint is close enough to be of interest.
-            let moreScrutiny = seps.filter( { $0.dist < curveLength / 4.0 } )
-            
-            /// Whether or not speck is too far away
-            if moreScrutiny.count == 0   { return (false, nil) }
-            
-            
-            let rankedRanges = moreScrutiny.sorted(by: { $0.dist < $1.dist } )
-
-            /// Range of parameter to use for a refined check on the closest range
-            let startSpan = rankedRanges[0].range
-
-    //        let startSpan = moreScrutiny.min { a,b in a.dist < b.dist }
-            
-            /// Parameter for the curve point that is nearest
-            var nearCurveParam: Double
-            
-            nearCurveParam = try convergeMinDist(speck: speck, span: startSpan, curve: self, layersRemaining: 8)
-            
-            let nearCurvePoint = try self.pointAt(t: nearCurveParam)
-            let flag = Point3D.dist(pt1: nearCurvePoint, pt2: speck) < accuracy
-            
-            return (flag, nearCurveParam)
-        }
+        
+        // Shortcuts!
+        if speck == self.ptAlpha   { return (true, self.trimParameters.lowerBound) }
+        if speck == self.ptOmega   { return (true, self.trimParameters.upperBound) }
         
         
-        /// Recursively converge to a parameter value where speck is closest.
-        /// - Parameters:
-        ///   - speck: Target point
-        ///   - span: Parameter range to work in
-        ///   - curve: Curve to check against
-        ///   - layersRemaining: Iterations left before ending the effort
-        /// - Returns: Parameter value for the curve point closest to speck
-        /// - Throws:
-        ///     - ConvergenceError when a range can't be refined closely enough in 8 iterations.
-        ///     - ParameterRangeError when a range is off the curve.
-        private func convergeMinDist(speck: Point3D, span: ClosedRange<Double>, curve: Cubic, layersRemaining: Int) throws -> Double   {
-            
-            if layersRemaining == 0  { throw ConvergenceError(tnuoc: 0) }   // Safety valve
-            
-            /// Parameter value to be returned
-            var closest: Double
-            
-            /// Smaller ranges within the second passed parameter
-            let bittyspans = self.diceRange(pristine: span, chunks: 5)
-            
-            /// Distances from the middle of each of the smaller ranges.
-            let trips = bittyspans.map( { rangeDist(egnar: $0, curve: curve, awaySpeck: speck) } )
-            
-            /// Sorted version
-            let sorTrips = trips.sorted(by: { $0.dist < $1.dist })
-            
-            /// rangeDist with the smallest distance
-            let shrimp = sorTrips[0]
-            
-            if shrimp.getBridgeDist(curve: curve) < Point3D.Epsilon  {
-                closest = (shrimp.range.lowerBound + shrimp.range.upperBound) / 2.0
-                return closest
-            }  else  {
-                closest = try convergeMinDist(speck: speck, span: shrimp.range, curve: curve, layersRemaining: layersRemaining - 1)
-            }
-            
+        /// Itty-bitty ranges along the curve
+        let smallRanges = self.diceRange(pristine: self.trimParameters, chunks: 40)
+        
+        /// Distances to the target point (and parameter ranges)
+        let seps = smallRanges.map( { rangeDist(egnar: $0, curve: self, awaySpeck: speck) } )
+        
+        /// True length along the curve
+        let curveLength = self.getLength()
+        
+        /// Ranges whose midpoint is close enough to be of interest.
+        let rangesOfInterest = seps.filter( { $0.dist < curveLength / 4.0 } )
+        
+        /// Exit if the speck isn't close to any range
+        if rangesOfInterest.count == 0   { return (false, nil) }
+        
+        
+        /// Ranges to speck in increasing order
+        let rankedRanges = rangesOfInterest.sorted(by: { $0.dist < $1.dist } )
+        
+        /// Range of parameter to use for a refined check on the closest range
+        let closestSpan = rankedRanges[0].range
+        
+        /// Parameter for the curve point that is nearest
+        let closestParam = try convergeMinDist(speck: speck, span: closestSpan, curve: self, layersRemaining: 8)
+        
+        let closestPoint = try self.pointAt(t: closestParam)
+        let flag = Point3D.dist(pt1: closestPoint, pt2: speck) < accuracy
+        
+        return (flag, closestParam)
+    }
+    
+    
+    /// Recursively converge to a parameter value where speck is closest.
+    /// - Parameters:
+    ///   - speck: Target point
+    ///   - span: Parameter range to work in
+    ///   - curve: Curve to check against
+    ///   - layersRemaining: Iterations left before ending the effort
+    /// - Returns: Parameter value for the curve point closest to speck
+    /// - Throws:
+    ///     - ConvergenceError when a range can't be refined closely enough in 8 iterations.
+    ///     - ParameterRangeError when a range is off the curve.
+    private func convergeMinDist(speck: Point3D, span: ClosedRange<Double>, curve: Cubic, layersRemaining: Int) throws -> Double   {
+        
+        if layersRemaining == 0  { throw ConvergenceError(tnuoc: 0) }   // Safety valve
+        
+        /// Parameter value to be returned
+        var closest: Double
+        
+        /// Smaller ranges within the second passed parameter
+        let bittyspans = self.diceRange(pristine: span, chunks: 5)
+        
+        /// Ranges and distances from the middle of each of the smaller ranges.
+        let trips = bittyspans.map( { rangeDist(egnar: $0, curve: curve, awaySpeck: speck) } )
+        
+        /// Sorted version
+        let sorTrips = trips.sorted(by: { $0.dist < $1.dist })
+        
+        /// rangeDist with the smallest distance
+        let shrimp = sorTrips[0]
+        
+        if shrimp.getBridgeDist(curve: curve) < Point3D.Epsilon  {
+            closest = (shrimp.range.lowerBound + shrimp.range.upperBound) / 2.0
             return closest
+        }  else  {
+            closest = try convergeMinDist(speck: speck, span: shrimp.range, curve: curve, layersRemaining: layersRemaining - 1)
         }
-
         
-        public struct rangeDist   {
+        return closest
+    }
+    
+    
+    /// For use in 'isCoincident'
+    private struct rangeDist   {
+        
+        /// Parameter range on the Cubic
+        var range: ClosedRange<Double>
+        var dist: Double
+        
+        init(egnar: ClosedRange<Double>, curve: Cubic, awaySpeck: Point3D)   {
             
-            var range: ClosedRange<Double>
-            var dist: Double
+            self.range = egnar
             
-            init(egnar: ClosedRange<Double>, curve: Cubic, awaySpeck: Point3D)   {
-                
-                self.range = egnar
-                
-                let middleParam = (egnar.lowerBound + egnar.upperBound) / 2.0
-                let onCurve = try! curve.pointAt(t: middleParam)
-                self.dist = Point3D.dist(pt1: onCurve, pt2: awaySpeck)
-                
-            }
+            let middleParam = (egnar.lowerBound + egnar.upperBound) / 2.0
+            let onCurve = try! curve.pointAt(t: middleParam)   // Since the range is well-behaved
+            self.dist = Point3D.dist(pt1: onCurve, pt2: awaySpeck)
             
-            public func getBridgeDist(curve: Cubic) -> Double   {
-                
-                let hyar = try! curve.pointAt(t: self.range.lowerBound)
-                let thar = try! curve.pointAt(t: self.range.upperBound)
-                
-                return Point3D.dist(pt1: hyar, pt2: thar)
-            }
         }
         
         
+        // Find the span across the parameter range
+        func getBridgeDist(curve: Cubic) -> Double   {
+            
+            let hyar = try! curve.pointAt(t: self.range.lowerBound)
+            let thar = try! curve.pointAt(t: self.range.upperBound)
+            
+            return Point3D.dist(pt1: hyar, pt2: thar)
+        }
+    }
+    
+    
     /// Split a range into pieces
     /// - Parameters:
     ///   - pristine: Original parameter range
+    ///   - chunks: Desired number of pieces
     /// - Returns: Array of equal smaller ranges
     /// - SeeAlso: dice
     public func diceRange(pristine: ClosedRange<Double>, chunks: Int) -> [ClosedRange<Double>]   {
@@ -796,14 +786,14 @@ public struct Cubic: PenCurve   {
     /// - Returns: Optional Plane
     public func genPlane() -> Plane?   {
         
-        let mid = try! self.pointAt(t: 0.53, ignoreTrim: true)
+        let midPoint = try! self.pointAt(t: 0.53, ignoreTrim: true)
         
-        let linFlag = Point3D.isThreeLinear(alpha: self.ptAlpha, beta: mid, gamma: self.ptOmega)
+        let linearFlag = Point3D.isThreeLinear(alpha: self.ptAlpha, beta: midPoint, gamma: self.ptOmega)
         
-        if !linFlag   {
+        if !linearFlag   {
             
             /// Trial plane
-            let flat = try! Plane(alpha: self.ptAlpha, beta: mid, gamma: self.ptOmega)   // Points are unique and non-linear
+            let flat = try! Plane(alpha: self.ptAlpha, beta: midPoint, gamma: self.ptOmega)   // Points are unique and non-linear
             
             for g in stride(from: 0.1, through: 0.9, by: 0.10)   {
                 
@@ -871,6 +861,7 @@ public struct Cubic: PenCurve   {
     /// Calculate the proper surrounding box
     /// Increase the number of intermediate points as necessary
     /// This same techniques could be used for other parametric curves
+    /// - Returns: OrthoVol
     public func getExtent() -> OrthoVol   {
         
         /// Number of check points along the curve
@@ -962,12 +953,12 @@ public struct Cubic: PenCurve   {
     }
     
     
+    //TODO: Make this produce something useful.
     /// Find the position of a point relative to the curve and its origin.
     /// Useless result at the moment.
     /// - Parameters:
     ///   - speck:  Point near the curve.
     /// - Returns: Tuple of Vector components relative to the origin
-    /// - SeeAlso:  resolveRelativeNum()
     public func resolveRelativeVec(speck: Point3D) -> (along: Vector3D, perp: Vector3D)   {
         
         let alongVector = Vector3D(i: 1.0, j: 0.0, k: 0.0)
@@ -1272,15 +1263,17 @@ public struct Cubic: PenCurve   {
     /// - Throws:
     ///     - TinyArrayError if less than three points are passed in
     ///     - CoincidentPointsError if first and last points are not different
-    /// - Returns: Maximum separation.
+    /// - Returns: Largest separation.
     public static func crownCalcs(dots: [Point3D]) throws -> Double   {
         
         guard dots.count > 2 else { throw TinyArrayError(tnuoc: dots.count)}
         
-        let baseline = try LineSeg(end1: dots.first!, end2: dots.last!)
+        /// Chord between the first and last points of the input Array.
+        let baseline = try LineSeg(end1: dots.first!, end2: dots.last!)   // The guard statement ensures that there will be three or more values.
         
+        /// Separation values from the chord line
         let seps = dots.map( { baseline.resolveRelative(speck: $0).away } )
-        let curCrown = seps.max()!
+        let curCrown = seps.max()!   // The guard statement ensures that there will be three or more values.
         
         return curCrown
     }
@@ -1348,29 +1341,31 @@ public struct Cubic: PenCurve   {
         guard self.trimParameters.contains(tSmall) else { throw ParameterRangeError(parA: tSmall) }
         guard self.trimParameters.contains(tLarge) else { throw ParameterRangeError(parA: tLarge) }
 
-        let span = tLarge - tSmall
+        let parameterSpan = tLarge - tSmall
         
-        let spanStep = span / 20.0
+        let parameterStep = parameterSpan / 20.0
         
-        var total = 0.0
+        /// The return value
+        var totalLength = 0.0
         
         var oldPoint = try! self.pointAt(t: tSmall)   // Protected by the guard statement
         
         for g in 1...20   {
             
-            let param = tSmall + Double(g) * spanStep
-            let freshPoint = try! self.pointAt(t: param)   // Protected by the guard statement
+            let freshParam = tSmall + Double(g) * parameterStep
+            let freshPoint = try! self.pointAt(t: freshParam)   // Protected by the guard statement
             
-            let piece = Point3D.dist(pt1: oldPoint, pt2: freshPoint)
-            total += piece
+            let chunkLength = Point3D.dist(pt1: oldPoint, pt2: freshPoint)
+            totalLength += chunkLength
             
             oldPoint = freshPoint   // Prepare for next iteration
         }
         
-        return total
+        return totalLength
     }
 
     
+    //TODO: Can this be consolidated with 'isCoincident'?
     
     /// Find the curve's closest point.
     /// - Parameters:
@@ -1386,6 +1381,7 @@ public struct Cubic: PenCurve   {
         
         guard accuracy > 0.0 else { throw NegativeAccuracyError(acc: accuracy) }
             
+        
         /// Working value for nearest point
         var priorPt = try! self.pointAt(t: 0.5)
         

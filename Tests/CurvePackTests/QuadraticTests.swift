@@ -409,4 +409,22 @@ class QuadraticTests: XCTestCase {
         
     }
     
+    
+    func testGetExtent()   {
+        
+        let aardvark = Point3D(x: 5.0, y: 0.5, z: 4.5)
+                
+        let monkey = Point3D(x: 6.75, y: 0.5, z: 4.75)
+        let zebra = Point3D(x: 9.0, y: 0.5, z: 1.5)
+        
+        /// The test subject
+        let zooTrail = try! Quadratic(ptA: aardvark, controlA: monkey, ptB: zebra)
+
+        let brick = zooTrail.getExtent()
+        
+        let spanY = brick.getHeight()
+        
+        XCTAssert(spanY > 0.0)
+        
+    }
 }

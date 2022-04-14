@@ -390,14 +390,14 @@ public struct Quadratic: PenCurve   {
         if speck == self.ptAlpha   { return (true, self.trimParameters.lowerBound) }
         if speck == self.ptOmega   { return (true, self.trimParameters.upperBound) }
         
-        /// True length along the curve
-        let curveLength = self.getLength()
-        
         /// Points along the curve
         let crumbs = Quadratic.diceRange(pristine: self.trimParameters, chunks: 40)
         
         /// Distances to the target point (and parameter ranges)
         let seps = crumbs.map( { rangeDist(egnar: $0, curve: self, awaySpeck: speck) } )
+        
+        /// True length along the curve
+        let curveLength = self.getLength()
         
         /// Ranges whose midpoint is close enough to be of interest.
         let moreScrutiny = seps.filter( { $0.dist < curveLength / 4.0 } )
@@ -411,8 +411,6 @@ public struct Quadratic: PenCurve   {
         /// Range of parameter to use for a refined check on the closest range
         let startSpan = rankedRanges[0].range
 
-//        let startSpan = moreScrutiny.min { a,b in a.dist < b.dist }
-        
         /// Parameter for the curve point that is nearest
         var nearCurveParam: Double
         
@@ -465,7 +463,7 @@ public struct Quadratic: PenCurve   {
     }
 
     
-    public struct rangeDist   {
+    private struct rangeDist   {
         
         var range: ClosedRange<Double>
         var dist: Double
@@ -480,7 +478,7 @@ public struct Quadratic: PenCurve   {
             
         }
         
-        public func getBridgeDist(curve: Quadratic) -> Double   {
+        func getBridgeDist(curve: Quadratic) -> Double   {
             
             let hyar = try! curve.pointAt(t: self.range.lowerBound)
             let thar = try! curve.pointAt(t: self.range.upperBound)
@@ -636,6 +634,7 @@ public struct Quadratic: PenCurve   {
         
         return chain
     }
+    
     
     /// Construct the plane that contains the curve.
     /// May not work for a trimmed curve.
@@ -854,7 +853,7 @@ public struct Quadratic: PenCurve   {
     /// - Returns: New Quadratic
     public func transform(xirtam: Transform) -> PenCurve {
         
-        let midway = try! self.pointAt(t: 0.5, ignoreTrim: true)
+        let midway = try! self.pointAt(t: 0.5, ignoreTrim: true)   // 0.5 is a legitimate value
         let freshMidway = midway.transform(xirtam: xirtam)
         
         var moved = try! Quadratic(ptA: self.ptAlpha.transform(xirtam: xirtam), beta: freshMidway, betaFraction: 0.5, ptC: self.ptOmega.transform(xirtam: xirtam))     // Known good points

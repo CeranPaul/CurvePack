@@ -560,5 +560,81 @@ class CubicTests: XCTestCase {
             XCTFail()
         }
     }
+    
+    func testCopyConst()   {
         
+        let launch = Point3D(x: 0.5, y: 0.5, z: 0.5)
+        let leo = Point3D(x: 1.5, y: 1.875, z: 1.5)
+        let transfer = Point3D(x: 2.5, y: 2.5, z: 2.80)
+        let geo = Point3D(x: 3.5, y: 3.5, z: 3.5)
+        
+        var traj = try! Cubic(alpha: launch, beta: leo, betaFraction: 0.33, gamma: transfer, gammaFraction: 0.67, delta: geo)
+        
+        try! traj.trimFront(lowParameter: 0.40)
+        try! traj.trimBack(highParameter: 0.78)
+        
+        let target1 = try! traj.pointAt(t: 0.0, ignoreTrim: true)
+        let target2 = try! traj.pointAt(t: 0.45)
+        let target3 = try! traj.pointAt(t: 1.0, ignoreTrim: true)
+
+        let imit = Cubic(sourceCurve: traj)
+        
+        let trial1 = try! imit.pointAt(t: 0.0, ignoreTrim: true)
+        
+        XCTAssert(trial1 == target1)
+        
+        
+        XCTAssertNoThrow(try imit.pointAt(t: 0.29))
+        
+        let trial2 = try! imit.pointAt(t: 0.45)
+        
+        XCTAssert(trial2 == target2)
+        
+        let trial3 = try! imit.pointAt(t: 1.0)
+        
+        XCTAssert(trial3 == target3)
+        
+    }
+        
+    
+    func testGenPlane()   {
+        
+        let launch = Point3D(x: 0.5, y: 0.5, z: 0.5)
+        let leo = Point3D(x: 1.5, y: 1.875, z: 1.5)
+        let transfer = Point3D(x: 2.5, y: 2.5, z: 2.80)
+        let geo = Point3D(x: 3.5, y: 3.5, z: 3.5)
+        
+        let traj = try! Cubic(alpha: launch, beta: leo, betaFraction: 0.33, gamma: transfer, gammaFraction: 0.67, delta: geo)
+        
+        XCTAssertNil(traj.genPlane())
+        
+        
+        let spuds = Point3D(x: 1.2, y: -1.6, z: 0.1)
+        let radish = Point3D(x: 1.2, y: -0.2, z: 0.8)
+        let egg = Point3D(x: 1.2, y: 0.65, z: 1.44)
+        let onion = Point3D(x: 1.2, y: 1.05, z: 2.05)
+        
+        let salad = try! Cubic(ptA: spuds, controlA: radish, controlB: egg, ptB: onion)
+        
+        XCTAssertNotNil(salad.genPlane())
+        
+    }
+    
+    
+    func testSlopeStart()   {
+        
+        let spuds = Point3D(x: -1.6, y: 1.2, z: 0.1)
+//        let radish = Point3D(x: -0.2, y: 1.2, z: 0.8)
+        let egg = Point3D(x: 0.65, y: 1.2, z: 1.44)
+        let onion = Point3D(x: 1.05, y: 1.2, z: 2.05)
+        
+        var startSlope = Vector3D(i: 0.7, j: 0.0, k: 0.7)
+        startSlope.normalize()
+        
+        XCTAssertNoThrow(try Cubic(alpha: spuds, alphaPrime: startSlope, beta: egg, betaFraction: 0.6, gamma: onion))
+        
+        XCTAssertThrowsError(try Cubic(alpha: spuds, alphaPrime: startSlope, beta: egg, betaFraction: 1.16, gamma: onion))
+
+        XCTAssertThrowsError(try Cubic(alpha: spuds, alphaPrime: startSlope, beta: spuds, betaFraction: 0.6, gamma: onion))
+    }
 }
