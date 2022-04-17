@@ -658,6 +658,31 @@ public struct Quadratic: PenCurve   {
     }
     
 
+    /// Generate even intervals by parameter value.
+    /// - Parameters:
+    ///   - divs: Number of intervals
+    /// - Returns: divs + 1 parameter values
+    public func splitParam(divs: Int) -> [Double]   {
+        
+        let deltaParam = self.trimParameters.upperBound - self.trimParameters.lowerBound
+        let paramStep = deltaParam / Double(divs)
+        
+        /// Evenly split parameter values
+        var pins = [Double]()
+        
+        pins.append(self.trimParameters.lowerBound)
+        
+        for g in 1..<divs   {
+            let pad = self.trimParameters.lowerBound + Double(g) * paramStep
+            pins.append(pad)
+        }
+        
+        pins.append(self.trimParameters.upperBound)
+        
+        return pins
+    }
+    
+    
     /// Intersection points with a line, if the line is in the plane of the curve.
     /// Needs to be a thread safe function.
     /// Ineffective if the intersection is either endpoint.

@@ -34,14 +34,24 @@ public struct Line: Equatable {
         self.direction = arrow
     }
     
-    // TODO: An initializer from two points?
-    // TODO: An initializer from a LineSeg?
+    
+    
+    /// Construct from a LineSeg
+    public init(bar: LineSeg)   {
+        
+        self.origin = bar.getOneEnd()
+        
+        self.direction = Vector3D.built(from: bar.getOneEnd(), towards: bar.getOtherEnd(), unit: true)
+        
+    }
+    
     
     /// Simple getter for the origin
     public func getOrigin() -> Point3D  {
         
         return self.origin
     }
+    
     
     /// Simple getter for the direction
     public func getDirection() -> Vector3D  {
@@ -92,7 +102,7 @@ public struct Line: Equatable {
     /// - Parameters:
     ///   - arrow:  Trial Vector
     /// - Returns: Tuple of Vectors
-    /// - SeeAlso:  'resolveRelative(Point)'
+    /// - SeeAlso:  'resolveRelativeVec(Point)'
     public func resolveRelativeVec(arrow: Vector3D) -> (along: Vector3D, perp: Vector3D)   {
         
         let along = Vector3D.dotProduct(lhs: arrow, rhs: self.direction)

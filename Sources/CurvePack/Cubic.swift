@@ -51,6 +51,7 @@ public struct Cubic: PenCurve   {
     
     /// Tuple of points and distances from the lower parameter.
     /// You want to compute this once, and not in the middle of using the Cubic.
+    /// Where is this used?
     public var pearls: (pip: [Point3D], dists: [Double], tees: [Double])  {
         
         let span = trimParameters.upperBound - trimParameters.lowerBound
@@ -85,6 +86,7 @@ public struct Cubic: PenCurve   {
     
     
     /// Build from 12 individual parameters.
+    /// - See: 'testCoeffConstruct' under CubicTests
     public init(ax: Double, bx: Double, cx: Double, dx: Double, ay: Double, by: Double, cy: Double, dy: Double, az: Double, bz: Double, cz: Double, dz: Double)   {
         
         self.ax = ax
@@ -293,7 +295,8 @@ public struct Cubic: PenCurve   {
     /// The intent is that only alpha through beta will get used.
     /// - Throws:
     ///     - ParameterRangeError if one of the fractions is lame
-    ///     - CoincidentPointsError if they are not unique
+    ///     - CoincidentPointsError if the input points are not unique
+    /// - See: 'testSlopeStart' under CubicTests
     public init(alpha: Point3D, alphaPrime: Vector3D, beta: Point3D, betaFraction: Double, gamma: Point3D) throws  {
         
         let pool = [alpha, beta, gamma]
@@ -368,6 +371,7 @@ public struct Cubic: PenCurve   {
     /// - Parameters:
     ///   - sourceCurve: Cubic to be duplicated
     /// - Returns: New Cubic that is not trimmed
+    /// - See: 'testCopyConst' under CubicTests
     public init(sourceCurve: Cubic)   {
         
         self.ptAlpha = try! sourceCurve.pointAt(t: 0.0, ignoreTrim: true)
@@ -841,13 +845,15 @@ public struct Cubic: PenCurve   {
     
     
     /// Flip the order of the end points (and control points).  Used to align members of a Loop.
+    /// Ignores trim parameters.
+    /// - See: 'testReverse' under CubicTests
     public mutating func reverse() -> Void  {
         
         let freshDelta = self.ptAlpha
         let freshAlpha = self.ptOmega
         
-        let freshBeta = try! self.pointAt(t: 0.70)
-        let freshGamma = try! self.pointAt(t: 0.35)
+        let freshBeta = try! self.pointAt(t: 0.70, ignoreTrim: true)
+        let freshGamma = try! self.pointAt(t: 0.35, ignoreTrim: true)
         
         self.genCoeff(alpha: freshAlpha, beta: freshBeta, betaFraction: 0.30, gamma: freshGamma, gammaFraction: 0.65, delta: freshDelta)
         
@@ -862,6 +868,7 @@ public struct Cubic: PenCurve   {
     /// Increase the number of intermediate points as necessary
     /// This same techniques could be used for other parametric curves
     /// - Returns: OrthoVol
+    /// - See: 'testExtent' under CubicTests
     public func getExtent() -> OrthoVol   {
         
         /// Number of check points along the curve
@@ -1133,21 +1140,22 @@ public struct Cubic: PenCurve   {
     /// - Parameters:
     ///   - divs: Number of intervals
     /// - Returns: divs + 1 parameter values
-    public static func splitParam(divs: Int) -> [Double]   {
+    public func splitParam(divs: Int) -> [Double]   {
         
-        let paramStep = 1.0 / Double(divs)
+        let deltaParam = self.trimParameters.upperBound - self.trimParameters.lowerBound
+        let paramStep = deltaParam / Double(divs)
         
         /// Evenly split parameter values
         var pins = [Double]()
         
-        pins.append(0.0)
+        pins.append(self.trimParameters.lowerBound)
         
         for g in 1..<divs   {
-            let pad = Double(g) * paramStep
+            let pad = self.trimParameters.lowerBound + Double(g) * paramStep
             pins.append(pad)
         }
         
-        pins.append(1.0)
+        pins.append(self.trimParameters.upperBound)
         
         return pins
     }
@@ -1286,6 +1294,7 @@ public struct Cubic: PenCurve   {
     ///   - NegativeAccuracyError for an input less than zero
     ///   - ParameterRangeError if things go awry
     ///   - ConvergenceError in bizarre cases
+    /// - See: 'testApproximate' under CubicTests
     public func approximate(allowableCrown: Double) throws -> [Point3D]   {
         
         guard allowableCrown > 0.0 else { throw NegativeAccuracyError(acc: allowableCrown) }

@@ -427,4 +427,35 @@ class QuadraticTests: XCTestCase {
         XCTAssert(spanY > 0.0)
         
     }
+    
+    
+    func testSplitParam()   {
+        
+        let sword1 = Point3D(x: -2.9, y: 1.05, z: 0.0)
+        let sword2 = Point3D(x: 0.6, y: 1.65, z: 0.0)
+        let sword4 = Point3D(x: 4.2, y: 0.65, z: 0.0)
+        
+        /// An untrimmed Quadratic at the moment
+        var beater = try! Quadratic(ptA: sword1, controlA: sword2, ptB: sword4)
+        
+        let milestones = beater.splitParam(divs: 5)
+        
+        XCTAssertEqual(milestones.count, 6)
+        
+        XCTAssertEqual(milestones[1], 0.2, accuracy: 0.001)
+        
+        
+        try! beater.trimFront(lowParameter: 0.40)
+
+        try! beater.trimBack(highParameter: 0.88)
+
+        let milestonesTr = beater.splitParam(divs: 4)
+        
+        XCTAssertEqual(milestonesTr.count, 5)
+        
+        XCTAssertEqual(milestonesTr[1], 0.52, accuracy: 0.001)
+        
+    }
+    
+    
 }

@@ -117,6 +117,7 @@ public struct CoordinateSystem: Equatable   {
         self.origin = spot
     }
     
+    
     /// A construction method useful for Arcs
     /// - Parameters:
     ///   - origin: Point to serve as the origin
@@ -126,6 +127,7 @@ public struct CoordinateSystem: Equatable   {
     ///   - NonUnitDirectionError for any bad input vector
     ///   - NonOrthogonalCSYSError if refDirection and normal are not perpendicular
     ///   - IdenticalVectorError for non-unique inputs
+    /// - See: 'testInitGuard' under CoordinateSystemTests
     public init(origin: Point3D, refDirection: Vector3D, normal: Vector3D) throws   {
         
         guard (refDirection.isUnit()) else { throw NonUnitDirectionError(dir: refDirection) }
@@ -145,7 +147,7 @@ public struct CoordinateSystem: Equatable   {
     }
     
     
-/// Simple getter
+    /// Simple getter
     public func getOrigin() -> Point3D   {
         
         return origin
@@ -177,7 +179,6 @@ public struct CoordinateSystem: Equatable   {
     
     
     /// Check to see that these three vectors are mutually orthogonal
-    ///  Should this routine also check that they are unit vectors?
     /// - Parameters:
     ///   - uno: Unit vector to serve as an axis
     ///   - dos: Another unit vector
@@ -185,6 +186,7 @@ public struct CoordinateSystem: Equatable   {
     ///   Returns: Simple flag
     /// - Throws:
     ///   - NonUnitDirectionError for any bad input vector
+    /// - Returns: Simple flag
     /// - See: 'testIsMutOrtho' under CoordinateSystemTests
     public static func isMutOrtho(uno: Vector3D, dos: Vector3D, tres: Vector3D) throws -> Bool   {
         
@@ -210,6 +212,7 @@ public struct CoordinateSystem: Equatable   {
     /// - Parameters:
     ///   - startingCSYS: Desired set of orientations
     ///   - betterOrigin: New location
+    /// - Returns: New CoordinateSystem
     /// - See: 'testRelocate' under CoordinateSystemTests
     public static func relocate(startingCSYS: CoordinateSystem, betterOrigin: Point3D) -> CoordinateSystem   {
         
@@ -221,6 +224,7 @@ public struct CoordinateSystem: Equatable   {
 }
 
 /// Check for them being identical
+/// - See: 'testEquals' under CoordinateSystemTests
 public func == (lhs: CoordinateSystem, rhs: CoordinateSystem) -> Bool   {
     
     let flagOrig = (lhs.getOrigin() == rhs.getOrigin())
