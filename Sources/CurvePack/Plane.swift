@@ -36,6 +36,7 @@ public struct Plane: Equatable   {
         
     }
     
+    
     /// Construct a plane from three points
     /// - Parameters:
     ///   - alpha:  First input point and origin of the fresh plane
@@ -57,34 +58,13 @@ public struct Plane: Equatable   {
         let thisWay = Vector3D.built(from: alpha, towards: beta)
         let thatWay = Vector3D.built(from: alpha, towards: gamma)
         
-        var perpTo = try! Vector3D.crossProduct(lhs: thisWay, rhs: thatWay)
+        var perpTo = try! Vector3D.crossProduct(lhs: thisWay, rhs: thatWay)   // The 'linear' guard statement protects this
         perpTo.normalize()
         
         self.normal = perpTo
 
     }
     
-    /// Construct a plane from two lines
-    /// - Parameters:
-    ///   - straightA:  First input line
-    ///   - straightB:  Second input line
-    /// - Throws:
-    ///   - CoincidentLinesError for duplicate  inputs
-    ///   - NonCoPlanarLinesError for bad inputs
-    /// - Returns: Fresh plane
-    public init(straightA: Line, straightB: Line) throws   {
-        
-        guard !Line.isCoincident(straightA: straightA, straightB: straightB)  else  { throw CoincidentLinesError(enil: straightA) }
-        
-        guard Line.isCoplanar(straightA: straightA, straightB: straightB)  else  { throw NonCoPlanarLinesError(enilA: straightA, enilB: straightB) }
-        
-        let freshFlat = try! Plane(straightA: straightA, pip: straightB.getOrigin())   // Protected by the guard statements
-        
-        self.location = freshFlat.getLocation()
-        self.normal = freshFlat.getNormal()
-        
-    }
-
     
     /// Construct a plane from a line and point
     /// - Parameters:
@@ -97,16 +77,41 @@ public struct Plane: Equatable   {
         
         guard !Line.isCoincident(straightA: straightA, pip: pip)  else  { throw CoincidentPointsError(dupePt: pip) }
         
-        var between = straightA.resolveRelativeVec(yonder: pip).perp
-        between.normalize()
+        var between = straightA.resolveRelativeVec(yonder: pip)
+        between.perp.normalize()
         
-        var planeNormal = try! Vector3D.crossProduct(lhs: straightA.getDirection(), rhs: between)   // Protected by the guard statement
+        var planeNormal = try! Vector3D.crossProduct(lhs: straightA.getDirection(), rhs: between.perp)   // Protected by the guard statement
         planeNormal.normalize()
         
         self.location = pip
         self.normal = planeNormal
     }
 
+    
+    /// Construct a plane from two lines
+    /// - Parameters:
+    ///   - straightA:  First input line
+    ///   - straightB:  Second input line
+    /// - Throws:
+    ///   - CoincidentLinesError for duplicate  inputs
+    ///   - NonCoPlanarLinesError for bad inputs
+    /// - Returns: Fresh plane
+    /// - See: 'testBuildTwoLines' under PlaneTests
+    public init(straightA: Line, straightB: Line) throws   {
+        
+        guard !Line.isCoincident(straightA: straightA, straightB: straightB)  else  { throw CoincidentLinesError(enil: straightA) }
+        
+        guard Line.isCoplanar(straightA: straightA, straightB: straightB)  else  { throw NonCoPlanarLinesError(enilA: straightA, enilB: straightB) }
+        
+        
+        let freshFlat = try! Plane(straightA: straightA, pip: straightB.getOrigin())   // Protected by the guard statements
+        
+        self.location = freshFlat.getLocation()
+        self.normal = freshFlat.getNormal()
+        
+    }
+
+    
     /// A getter for the point defining the plane
     /// - See: 'testLocationGetter' under PlaneTests
     public func getLocation() -> Point3D   {
@@ -124,17 +129,30 @@ public struct Plane: Equatable   {
     
     /// Build orthogonal vectors from the origin of the plane to the point
     /// - Parameters:
+    ///   - flat: Reference plane
     ///   - pip:  Point of interest
     /// - Returns: Tuple of Vectors
     /// - See: 'testResolveRelative' under PlaneTests
     public static func resolveRelativeVec(flat: Plane, pip: Point3D) -> (inPlane: Vector3D, perp: Vector3D)   {
         
-        let bridge = Vector3D.built(from: flat.location, towards: pip)
+        //TODO: Test the way of dealing with a point that is coincident with the origin, or lies on the plane.
         
-        let along = Vector3D.dotProduct(lhs: bridge, rhs: flat.normal)
-        let perp = flat.normal * along
+        /// Vectors on the plane, and perpendicular to it
+        var inPlane, perp: Vector3D
         
-        let inPlane = bridge - perp
+        if pip == flat.getLocation()   {
+            inPlane = Vector3D(i: 0.0, j: 0.0, k: 0.0)
+            perp = Vector3D(i: 0.0, j: 0.0, k: 0.0)
+            
+            return (inPlane, perp)
+        }
+        
+        let bridge = Vector3D.built(from: flat.getLocation(), towards: pip)
+        
+        let amountOut = Vector3D.dotProduct(lhs: bridge, rhs: flat.getNormal())
+        perp = flat.normal * amountOut
+        
+        inPlane = bridge - perp
         
         return (inPlane, perp)
     }
@@ -149,19 +167,21 @@ public struct Plane: Equatable   {
     public static func mirror(flat: Plane, pip: Point3D) -> Point3D   {
         
         /// Components of the point's position
-        let comps = Plane.resolveRelativeVec(flat: flat, pip: pip)
+        let deltaComponents = Plane.resolveRelativeVec(flat: flat, pip: pip)
         
-        let jump = comps.perp * -2.0
+        let jump = deltaComponents.perp * -2.0
         let fairest = Point3D.offset(pip: pip, jump: jump)
         
         return fairest
     }
+    
     
     /// Mirror a Vector3D
     /// - Parameters:
     ///   - flat:  Mirroring plane
     ///   - arrow:  Vector to be flipped
     /// - Returns: New Vector3D
+    /// - See: 'testMirrorVector' under PlaneTests
     public static func mirror(flat: Plane, arrow: Vector3D) -> Vector3D   {
         
         let proportion = Vector3D.dotProduct(lhs: flat.normal, rhs: arrow)
@@ -182,28 +202,11 @@ public struct Plane: Equatable   {
     /// - See: 'testIsParallelLine' under PlaneTests
     public static func isParallel(flat: Plane, enil: Line) -> Bool   {
         
-        let perp = Vector3D.dotProduct(lhs: enil.getDirection(), rhs: flat.normal)
+        let projection = Vector3D.dotProduct(lhs: enil.getDirection(), rhs: flat.normal)
         
-        return abs(perp) < Vector3D.EpsilonV
+        return abs(projection) < Vector3D.EpsilonV
     }
     
-    
-    /// Check to see that the line is parallel to the plane, and lies on it
-    /// - Parameters:
-    ///   - enalp:  Reference plane
-    ///   - enil:  Line for testing
-    ///   - accuracy: Distance under which the Line will considered to be coincident
-    /// - Returns: Simple flag
-    /// - See: 'testIsCoincidentLine' under PlaneTests
-    public static func isCoincident(flat: Plane, enil: Line, accuracy: Double = Point3D.Epsilon) throws -> Bool  {
-        
-        guard accuracy > 0.0 else { throw NegativeAccuracyError(acc: accuracy) }
-            
-        let flag1 = self.isParallel(flat: flat, enil: enil)
-        let flag2 = try! Plane.isCoincident(flat: flat, pip: enil.getOrigin(), accuracy: accuracy)
-        
-        return flag1 && flag2
-    }
     
     /// Does the argument point lie on the plane?
     /// - Parameters:
@@ -220,12 +223,33 @@ public struct Plane: Equatable   {
             
         if pip == flat.getLocation()   {  return true  }   // Shortcut!
         
+        
         let bridge = Vector3D.built(from: flat.location, towards: pip)
         
         // This can be positive, negative, or zero
-        let distanceOffPlane = Vector3D.dotProduct(lhs: bridge, rhs: flat.normal)
+        let distanceOffPlane = Vector3D.dotProduct(lhs: bridge, rhs: flat.getNormal())
         
         return  abs(distanceOffPlane) < accuracy
+    }
+    
+    
+    /// Check to see that the line is parallel to the plane, and lies on it
+    /// - Parameters:
+    ///   - enalp:  Reference plane
+    ///   - enil:  Line for testing
+    ///   - accuracy: Distance under which the Line will considered to be coincident
+    /// - Throws:
+    ///   - NegativeAccuracyError for bad 'accuracy' parameter
+    /// - Returns: Simple flag
+    /// - See: 'testIsCoincidentLine' under PlaneTests
+    public static func isCoincident(flat: Plane, enil: Line, accuracy: Double = Point3D.Epsilon) throws -> Bool  {
+        
+        guard accuracy > 0.0 else { throw NegativeAccuracyError(acc: accuracy) }
+            
+        let flag1 = self.isParallel(flat: flat, enil: enil)
+        let flag2 = try! Plane.isCoincident(flat: flat, pip: enil.getOrigin(), accuracy: accuracy)   // Protected by the guard statement
+        
+        return flag1 && flag2
     }
     
     
@@ -244,7 +268,10 @@ public struct Plane: Equatable   {
         
         guard accuracy > 0.0 else { throw NegativeAccuracyError(acc: accuracy) }
             
-        return try Plane.isCoincident(flat: flatLeft, pip: flatRight.location, accuracy: accuracy) && Plane.isParallel(lhs: flatLeft, rhs: flatRight)
+        let flag1 = try! Plane.isCoincident(flat: flatLeft, pip: flatRight.location, accuracy: accuracy)   // Protected by the guard statement
+        let flag2 = Plane.isParallel(lhs: flatLeft, rhs: flatRight)
+        
+        return flag1 && flag2
     }
     
     
@@ -301,8 +328,10 @@ public struct Plane: Equatable   {
     /// - See: 'testBuildPerpThruLine' under PlaneTests
     public static func buildPerpThruLine(enil: Line, enalp: Plane, accuracy: Double = Point3D.Epsilon) throws -> Plane   {
         
+        guard accuracy > 0.0 else { throw NegativeAccuracyError(acc: accuracy) }
+            
         // TODO:  Better error type
-        guard try Plane.isCoincident(flat: enalp, enil: enil)  else  { throw CoincidentLinesError(enil: enil) }
+        guard try Plane.isCoincident(flat: enalp, enil: enil, accuracy: accuracy)  else  { throw CoincidentLinesError(enil: enil) }
         
         let newDir = try! Vector3D.crossProduct(lhs: enil.getDirection(), rhs: enalp.normal)
         

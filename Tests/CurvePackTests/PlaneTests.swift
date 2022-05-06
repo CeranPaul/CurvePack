@@ -271,6 +271,13 @@ class PlaneTests: XCTestCase {
         
         XCTAssert(try! Plane.isCoincident(flat: playingField, pip: trial))
         
+        trial = Point3D(x: 2.2, y: 3.0, z: 4.0)
+        XCTAssertFalse(try Plane.isCoincident(flat: playingField, pip: trial))
+        
+        XCTAssert(try Plane.isCoincident(flat: playingField, pip: trial, accuracy: 0.25))
+        
+        XCTAssertThrowsError(try Plane.isCoincident(flat: playingField, pip: trial, accuracy: -0.25))
+        
     }
     
     func testIsCoincidentLine()   {
@@ -292,6 +299,16 @@ class PlaneTests: XCTestCase {
         heli = try! Line(spot: gOrig2, arrow: gNorm)
 
         XCTAssert(try! Plane.isCoincident(flat: playingField, enil: heli))
+        
+        let sepOrig = Point3D(x: 2.25, y: 4.0, z: 7.0)
+        let sepNorm = Vector3D(i: 0.0, j: 0.0, k: 1.0)
+        let noCigar = try! Line(spot: sepOrig, arrow: sepNorm)
+        
+        XCTAssertFalse(try Plane.isCoincident(flat: playingField, enil: noCigar))
+        
+        XCTAssert(try Plane.isCoincident(flat: playingField, enil: noCigar, accuracy: 0.3))
+        
+        XCTAssertThrowsError(try Plane.isCoincident(flat: playingField, enil: noCigar, accuracy: -0.3))
         
     }
     
@@ -342,7 +359,13 @@ class PlaneTests: XCTestCase {
         flat = try! Plane(spot: pOrig, arrow: pNorm)
         
         XCTAssert(try! Plane.isCoincident(flatLeft: flat, flatRight: playingField))
+ 
+        let pOrig2 = Point3D(x: 1.8, y: 3.1, z: 5.0)
+        flat = try! Plane(spot: pOrig2, arrow: horn)
         
+        XCTAssertTrue(try! Plane.isCoincident(flatLeft: flat, flatRight: playingField, accuracy: 0.25))
+        
+        XCTAssertThrowsError(try Plane.isCoincident(flatLeft: flat, flatRight: playingField, accuracy: -0.25))
     }
     
     
@@ -507,6 +530,15 @@ class PlaneTests: XCTestCase {
         
         XCTAssert(flag)
         
+        
+        let nexus2 = Point3D(x: 2.0, y: 3.15, z: 4.0)
+        
+        let dupe2 = try! Plane(spot: nexus2, arrow: horn)
+        
+        XCTAssertThrowsError(try Plane.intersectPlanes(flatA: groundFloor, flatB: dupe2, accuracy: 0.25))
+
+        XCTAssertThrowsError(try Plane.intersectPlanes(flatA: groundFloor, flatB: dupe2, accuracy: -0.25))
+
     }
     
     func testProjectToPlane()   {
@@ -596,7 +628,14 @@ class PlaneTests: XCTestCase {
         let flag = standup.getNormal() == targetVect || Vector3D.isOpposite(lhs: standup.getNormal(), rhs: targetVect)
 
         XCTAssert(flag)
-
+        
+        gOrig = Point3D(x: 2.07, y: 3.1, z: 4.7)
+        heli = try! Line(spot: gOrig, arrow: gNorm)
+        
+        XCTAssertNoThrow(try Plane.buildPerpThruLine(enil: heli, enalp: groundFloor, accuracy: 0.125))
+        
+        XCTAssertThrowsError(try Plane.buildPerpThruLine(enil: heli, enalp: groundFloor, accuracy: -0.125))
+        
     }
             
     func testBuildLinePoint()   {
@@ -649,6 +688,18 @@ class PlaneTests: XCTestCase {
         
         XCTAssertEqual(sheet.getNormal(), outX)
 
+        
+        let nexus3 = Point3D(x: 1.0, y: 1.5, z: -2.0)
+        let laser3 = try! Line(spot: nexus3, arrow: yonder)
+        
+        XCTAssertThrowsError(try Plane(straightA: laser, straightB: laser3))
+        
+        let nexus4 = Point3D(x: 2.0, y: 1.5, z: -2.0)
+        let yonder4 = Vector3D(i: 0.0, j: 1.0, k: 0.0)
+        let laser4 = try! Line(spot: nexus4, arrow: yonder4)
+        
+        XCTAssertThrowsError(try Plane(straightA: laser, straightB: laser4))
+        
     }
 
 }

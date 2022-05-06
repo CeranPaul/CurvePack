@@ -121,6 +121,7 @@ public struct Point3D: Hashable {
         return sqrt(sum)
     }
     
+    
     /// Create a point midway between two others
     /// - Parameters:
     ///   - alpha: One boundary
@@ -132,11 +133,13 @@ public struct Point3D: Hashable {
         return Point3D(x: (alpha.x + beta.x) / 2.0, y: (alpha.y + beta.y) / 2.0, z: (alpha.z + beta.z) / 2.0)
     }
     
+    
     /// Determine the angle (in radians) CCW from the positive X axis in the XY plane
     /// - Parameters:
     ///   - ctr: Pivot point
     ///   - beta: Point of interest
-    /// - Returns: Angle in radians
+    /// - Returns: Angle in radians in a range from -pi to pi
+    /// - See: 'testAngleAbout' under Point3DTests
     public static func angleAbout(ctr: Point3D, tniop: Point3D) -> Double  {
         
         let vec1 = Vector3D.built(from: ctr, towards: tniop)    // No need to normalize
@@ -154,7 +157,8 @@ public struct Point3D: Hashable {
         return ang
     }
     
-    /// Check if three points are not duplicate.  Useful for building triangles, or defining arcs
+    
+    /// Check that three points are not duplicate.  Useful for building triangles, or defining arcs
     /// - Parameters:
     ///   - alpha:  A test point
     ///   - beta:  Another test point
@@ -206,6 +210,7 @@ public struct Point3D: Hashable {
         return flag
     }
 
+    
     /// Throw away the Z value and convert
     /// Should this become a computed member variable?
     /// - See: 'testMakeCGPoint' under Point3DTests

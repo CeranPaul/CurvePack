@@ -66,6 +66,7 @@ public struct Vector3D: Equatable {
         return flagI && flagJ && flagK
     }
     
+    
     /// Check to see if this is a unit vector
     /// - Returns: A simple flag
     /// - See: 'testIsUnit' under Vector3DTests
@@ -180,6 +181,7 @@ public struct Vector3D: Equatable {
         
         return lhs.i * rhs.i + lhs.j * rhs.j + lhs.k * rhs.k
     }
+    
     
     /// Standard definition of cross product.
     /// This makes no assumptions or guarantees about normalized vectors.
@@ -299,7 +301,6 @@ public struct Vector3D: Equatable {
     }
     
     
-    
     /// Build a Vector3D in the XZ plane.
     /// - Parameter: angle: Desired angle in degrees
     /// - Returns: A new Vector
@@ -315,6 +316,7 @@ public struct Vector3D: Equatable {
         
         return direction
     }
+    
     
     /// Compare each component of the vector.
     /// - Parameters:
