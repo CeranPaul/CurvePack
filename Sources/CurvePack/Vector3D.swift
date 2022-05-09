@@ -22,7 +22,7 @@ public struct Vector3D: Equatable {
 
     
     /// The simplest and only initializer.  Needed because a default initializer has 'internal' access level.
-    /// What if the values are smaller than EpsilonV?  This might hold true for Point3D as well.
+    /// What if the values are smaller than EpsilonV?
     public init(i: Double, j: Double, k: Double)   {
         self.i = i
         self.j = j
@@ -122,18 +122,6 @@ public struct Vector3D: Equatable {
         rotated.normalize()
         
         return rotated
-    }
-    
-    
-    /// Construct a vector re-directed one quarter turn away in the counterclockwise direction in the XY plane
-    /// Use crossProduct to do this for a more general case
-    /// - Returns: A new vector in the XY plane
-    /// - See: 'testPerp' under Vector3DTests
-    public func perp() -> Vector3D   {
-        
-        let rightAngle = Vector3D(i: -self.j, j: self.i, k: 0.0)   // Perpendicular in a CCW direction
-        
-        return rightAngle
     }
     
     

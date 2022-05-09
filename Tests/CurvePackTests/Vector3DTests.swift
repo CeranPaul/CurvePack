@@ -131,39 +131,6 @@ class Vector3DTests: XCTestCase {
 
     }
     
-    func testPerp()   {
-        
-        var orig = Vector3D(i: 2.5, j: 0.0, k: 0.0)
-        var trial = orig.perp()
-        
-        var target = Vector3D(i: 0.0, j: 2.5, k: 0.0)
-        
-        XCTAssertEqual(trial, target)
-        
-        
-        orig = Vector3D(i: 2.5, j: 0.0, k: 1.2)
-        trial = orig.perp()
-        
-        XCTAssertEqual(trial, target)
-        
-        
-        orig = Vector3D(i: 0.0, j: 2.5, k: 0.0)
-        trial = orig.perp()
-        
-        target = Vector3D(i: -2.5, j: 0.0, k: 0.0)
-        
-        XCTAssertEqual(trial, target)
-        
-
-        orig = Vector3D(i: -1.0, j: -1.0, k: 0.0)
-        trial = orig.perp()
-        
-        target = Vector3D(i: 1.0, j: -1.0, k: 0.0)
-        
-        XCTAssertEqual(trial, target)
-        
-    }
-    
     // Check the scaling operation
     func testScaling()   {
         

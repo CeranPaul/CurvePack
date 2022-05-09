@@ -392,6 +392,76 @@ class LineSegTests: XCTestCase {
         
     }
     
+    func testBuildLine()   {
+        
+        let hyar = Point3D(x: 1.5, y: 2.5, z: 0.25)
+        let thar = Point3D(x: 1.5, y: 2.5, z: 1.25)
+        
+        let betwixt = try! LineSeg(end1: hyar, end2: thar)
+        
+        let rocket = LineSeg.buildLine(bar: betwixt)
+        
+        let targetOrig = Point3D(x: 1.5, y: 2.5, z: 0.25)
+        
+        XCTAssert(rocket.getOrigin() == targetOrig)
+        
+        let targetDir = Vector3D(i: 0.0, j: 0.0, k: 1.0)
+        
+        XCTAssert(rocket.getDirection() == targetDir)
+        
+
+    }
+    
+    func testGenBisect()   {
+        
+        let pipA = Point3D(x: 1.0, y: 5.0, z: 2.0)
+        let pipB = Point3D(x: 4.6, y: 5.0, z: 2.0)
+        
+        let dir1 = Vector3D(i: 0.0, j: 0.0, k: 1.0)
+        
+        let targetLoc = Point3D(x: 2.8, y: 5.0, z: 2.0)
+        let targetDir = Vector3D(i: 0.0, j: 1.0, k: 0.0)
+        
+        let targetLine = try! Line(spot: targetLoc, arrow: targetDir)
+        
+        let chop = try! LineSeg.genBisect(ptA: pipA, ptB: pipB, up: dir1)
+        
+        print(chop.getOrigin())
+        print(chop.getDirection())
+        
+        XCTAssert(chop == targetLine)
+        
+        let dir2 = Vector3D(i: 1.0, j: 1.0, k: 0.0)
+        
+        do   {
+            _ = try LineSeg.genBisect(ptA: pipA, ptB: pipB, up: dir2)
+        } catch is NonUnitDirectionError {
+            XCTAssert(true)
+        } catch {
+            XCTFail()
+        }
+
+        
+        let dir3 = Vector3D(i: 0.0, j: 0.0, k: 0.0)
+        
+        do   {
+            _ = try LineSeg.genBisect(ptA: pipA, ptB: pipB, up: dir3)
+        } catch is ZeroVectorError {
+            XCTAssert(true)
+        } catch {
+            XCTFail()
+        }
+
+        do   {
+            _ = try LineSeg.genBisect(ptA: pipA, ptB: pipA, up: dir1)
+        } catch is CoincidentPointsError {
+            XCTAssert(true)
+        } catch {
+            XCTFail()
+        }
+
+    }
+    
     func testEquals()   {
         
         let ptA = Point3D(x: 4.0, y: 2.0, z: 5.0)

@@ -386,6 +386,36 @@ class PlaneTests: XCTestCase {
         
     }
     
+    func testMirrorPointB()   {
+        
+        let lanigiro = Point3D(x: 1.5, y: 1.5, z: 1.5)
+        
+        let nexus = Point3D(x: 0.0, y: 0.0, z: 0.0)
+        
+        let XYdir = Vector3D(i: 0.0, j: 0.0, k: 1.0)
+        
+        let silver1 = try! Plane(spot: nexus, arrow: XYdir)
+        let target1 = Point3D(x: 1.5, y: 1.5, z: -1.5)
+        
+        var fairest = Plane.mirror(flat: silver1, pip: lanigiro)
+        XCTAssertEqual(fairest, target1)
+        
+        let XZdir = Vector3D(i: 0.0, j: 1.0, k: 0.0)
+        let silver2 = try! Plane(spot: nexus, arrow: XZdir)
+        let target2 = Point3D(x: 1.5, y: -1.5, z: 1.5)
+
+        fairest = Plane.mirror(flat: silver2, pip: lanigiro)
+        XCTAssertEqual(fairest, target2)
+        
+        let YZdir = Vector3D(i: 1.0, j: 0.0, k: 0.0)
+        let silver3 = try! Plane(spot: nexus, arrow: YZdir)
+        let target3 = Point3D(x: -1.5, y: 1.5, z: 1.5)
+
+        fairest = Plane.mirror(flat: silver3, pip: lanigiro)
+        XCTAssertEqual(fairest, target3)
+        
+    }
+    
     func testMirrorVector()   {
         
         let nexus = Point3D(x: 2.0, y: 3.0, z: 4.0)

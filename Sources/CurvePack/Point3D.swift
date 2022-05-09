@@ -82,28 +82,6 @@ public struct Point3D: Hashable {
     }
     
     
-    
-    /// Flip point to the opposite side of the plane
-    /// - Parameters:
-    ///   - pip:  Point to be flipped
-    ///   - flat:  Mirroring plane
-    /// - Returns: New point
-    /// - See: 'testMirrorPoint' under PlaneTests
-    public static func mirror(pip: Point3D, flat: Plane) -> Point3D   {
-        
-        /// Vector components from the Plane origin
-        let comps = Plane.resolveRelativeVec(flat: flat, pip: pip)
-        
-        /// Vector to apply to the original point
-        let jump = comps.perp * -2.0
-        
-        ///New point from mirroring
-        let fairest = Point3D.offset(pip: pip, jump: jump)
-        
-        return fairest
-    }
-    
-    
     /// Calculate the distance between two of 'em
     /// - Parameters:
     ///   - pt1:  One point

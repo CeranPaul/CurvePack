@@ -25,6 +25,7 @@ public struct Line: Equatable {
     /// - Throws: 
     ///   - ZeroVectorError if the input Vector3D has no length
     ///   - NonUnitDirectionError for a bad input Vector3D
+    /// - See: 'testFidelity' under LineTests
     public init (spot: Point3D, arrow: Vector3D) throws  {
         
         guard !arrow.isZero() else  {throw ZeroVectorError(dir: arrow)}
@@ -36,17 +37,8 @@ public struct Line: Equatable {
     
     
     
-    /// Construct from a LineSeg
-    public init(bar: LineSeg)   {
-        
-        self.origin = bar.getOneEnd()
-        
-        self.direction = Vector3D.built(from: bar.getOneEnd(), towards: bar.getOtherEnd(), unit: true)
-        
-    }
-    
-    
     /// Simple getter for the origin
+    /// - See: 'testFidelity' under LineTests
     public func getOrigin() -> Point3D  {
         
         return self.origin
@@ -54,6 +46,7 @@ public struct Line: Equatable {
     
     
     /// Simple getter for the direction
+    /// - See: 'testFidelity' under LineTests
     public func getDirection() -> Vector3D  {
         
         return self.direction
@@ -199,9 +192,9 @@ public struct Line: Equatable {
         if bridgeVector.isZero() { return true }   // Having the same origin means that they intersect.
         
         
-        if try! Vector3D.isScaled(lhs: bridgeVector, rhs: straightA.getDirection()) { return true }   // The origin of straightB lies on straightA, therefore they intersect.
+        if try! Vector3D.isScaled(lhs: bridgeVector, rhs: straightA.getDirection()) { return true }   // The origin of straightB lies on straightA, therefore they intersect, and are coplanar.
         
-        if try! Vector3D.isScaled(lhs: bridgeVector, rhs: straightB.getDirection()) { return true }   // The origin of straightA lies on straightB, therefore they intersect.
+        if try! Vector3D.isScaled(lhs: bridgeVector, rhs: straightB.getDirection()) { return true }   // The origin of straightA lies on straightB, therefore they intersect, and are coplanar.
         
 
         var perp1 = try! Vector3D.crossProduct(lhs: straightA.getDirection(), rhs: bridgeVector)
@@ -235,9 +228,9 @@ public struct Line: Equatable {
         
         guard Line.isCoplanar(straightA: straightA, straightB: straightB)  else { throw NonCoPlanarLinesError(enilA: straightA, enilB: straightB) }
         
+        if straightA.getOrigin() == straightB.getOrigin()   { return straightA.getOrigin() }
         if Line.isCoincident(straightA: straightA, pip: straightB.getOrigin())   { return straightB.getOrigin() }
         if Line.isCoincident(straightA: straightB, pip: straightA.getOrigin())   { return straightA.getOrigin() }
-        if straightA.getOrigin() == straightB.getOrigin()   { return straightA.getOrigin() }
         
         
         let bridgeVector = Vector3D.built(from: straightA.getOrigin(), towards: straightB.getOrigin())
@@ -266,80 +259,16 @@ public struct Line: Equatable {
     ///   - arrow: Source Line
     ///   - xirtam: Transform to be applied
     /// - Returns: Fresh line that has been rotated, moved, and scaled
+    /// - See: 'testLineTransform' under LineTests
     public func transform(xirtam: Transform) -> Line   {
         
-        let freshDir = self.getDirection().transform(xirtam: xirtam)
         let freshOrigin = self.getOrigin().transform(xirtam: xirtam)
-        
+        let freshDir = self.getDirection().transform(xirtam: xirtam)
+
         let freshLine = try! Line(spot: freshOrigin, arrow: freshDir)   // Should carry over validity
         
         return freshLine
     }
-    
-    
-    /// Generate the perpendicular bisector for the LineSeg between two points
-    /// - Parameters:
-    ///   - ptA:  First point
-    ///   - ptB:  Second point
-    ///   - up:  Normal for the plane in which the points lie
-    /// - Returns: Fresh Line
-    /// - Throws:
-    ///     - ZeroVectorError if the input vector is lame
-    ///     - CoincidentPointsError if the points are not unique
-    ///     - NonUnitDirectionError for  a bad vector
-    /// - See: 'testGenBisect' under LineTests
-    public static func genBisect(ptA: Point3D, ptB: Point3D, up: Vector3D) throws -> Line   {
-        
-        guard ptA != ptB else  { throw CoincidentPointsError(dupePt: ptA) }
-        
-        guard !up.isZero() else { throw ZeroVectorError(dir: up) }
-        
-        guard up.isUnit() else { throw NonUnitDirectionError(dir: up) }
-        
-        
-        let along = Vector3D.built(from: ptA, towards: ptB, unit: true)
-        
-        var inward = try Vector3D.crossProduct(lhs: up, rhs: along)
-        inward.normalize()
-        
-        let anchor = Point3D.midway(alpha: ptA, beta: ptB)
-        
-        let myLine = try Line(spot: anchor, arrow: inward)
-        
-        return myLine
-    }
-    
-    
-    
-//    /// Assumed to all be happening in the XY plane
-//    /// Needs work!
-//    public static func intersectLineCircle(arrow: Line, hoop: Arc) -> Point3D   {
-//
-//        /// The return value
-//        var RHintersect = Point3D(x: 0.0, y: 0.0, z: 0.0)
-//
-//        /// Relative position of the circle center to the line origin
-//        let relCenter = arrow.resolveRelative(yonder: hoop.getCenter())
-//
-//        if relCenter.perp > hoop.getRadius()   {   // There are a number of ways that this could be handled
-//            print("No intersection")
-//        } else {
-//
-//            let lineAnchor = arrow.getOrigin()
-//            let jump = arrow.getDirection() * relCenter.along
-//            let middleChord = lineAnchor.offset(jump: jump)
-//            let stem = Point3D.dist(pt1: hoop.getCenter(), pt2: middleChord)   // Will be the same as relCenter.perp
-//
-//            /// Magnitude of distance between middleChord and the intersection point
-//            let halfChord = sqrt(hoop.getRadius() * hoop.getRadius() - stem * stem)
-//
-//            let intersectJump = arrow.getDirection() * halfChord
-//
-//            RHintersect = middleChord.offset(jump: intersectJump)   // One of two possibilities
-//        }
-//
-//        return RHintersect
-//    }
     
     
 }    // End of definition for struct Line

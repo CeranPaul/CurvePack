@@ -83,6 +83,20 @@ public struct LineSeg: PenCurve, Equatable {
     }
     
     
+    /// Construct from a LineSeg
+    /// - See: 'testBuildLine' under LineSegTests
+    public static func buildLine(bar: LineSeg) -> Line   {
+        
+        let freshOrigin = bar.getOneEnd()
+        
+        let freshDirection = Vector3D.built(from: bar.getOneEnd(), towards: bar.getOtherEnd(), unit: true)
+        
+        let spear = try! Line(spot: freshOrigin, arrow: freshDirection)
+        
+        return spear
+    }
+    
+    
     /// Move, rotate, and scale by a matrix
     /// - Parameters:
     ///   - xirtam:  Transform to be applied
@@ -118,12 +132,12 @@ public struct LineSeg: PenCurve, Equatable {
         var pip: Point3D = wire.getOneEnd()
         
         ///New point from mirroring
-        let fairest1 = Point3D.mirror(pip: pip, flat: flat)
+        let fairest1 = Plane.mirror(flat: flat, pip: pip)
         
         pip = wire.getOtherEnd()
         
         ///New point from mirroring
-        let fairest2 = Point3D.mirror(pip: pip, flat: flat)
+        let fairest2 = Plane.mirror(flat: flat, pip: pip)
         
         let mirroredLineSeg = try! LineSeg(end1: fairest1, end2: fairest2)
         // The forced unwrapping should be no risk because it uses points from a LineSeg that has already checked out.
@@ -195,6 +209,40 @@ public struct LineSeg: PenCurve, Equatable {
         
         return (false, nil)
     }
+    
+    
+    /// Generate the perpendicular bisector for the LineSeg between two points
+    /// - Parameters:
+    ///   - ptA:  First point
+    ///   - ptB:  Second point
+    ///   - up:  Normal for the plane in which the points lie
+    /// - Returns: Fresh Line
+    /// - Throws:
+    ///     - ZeroVectorError if the input vector is lame
+    ///     - CoincidentPointsError if the points are not unique
+    ///     - NonUnitDirectionError for  a bad vector
+    /// - See: 'testGenBisect' under LineTests
+    public static func genBisect(ptA: Point3D, ptB: Point3D, up: Vector3D) throws -> Line   {
+        
+        guard ptA != ptB else  { throw CoincidentPointsError(dupePt: ptA) }
+        
+        guard !up.isZero() else { throw ZeroVectorError(dir: up) }
+        
+        guard up.isUnit() else { throw NonUnitDirectionError(dir: up) }
+        
+        
+        let along = Vector3D.built(from: ptA, towards: ptB, unit: true)
+        
+        var inward = try Vector3D.crossProduct(lhs: up, rhs: along)
+        inward.normalize()
+        
+        let anchor = Point3D.midway(alpha: ptA, beta: ptB)
+        
+        let myLine = try Line(spot: anchor, arrow: inward)
+        
+        return myLine
+    }
+    
     
     
     /// Use a different portion of the curve

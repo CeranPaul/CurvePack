@@ -215,6 +215,12 @@ class LineTests: XCTestCase {
              // Parallel
         XCTAssert(Line.isCoplanar(straightA: redstone, straightB: atlas))
         
+        let orig6 = Point3D(x: 10.5, y: 5.5, z: 3.0)
+        let dir6 = Vector3D(i: 1.0, j: 0.0, k: 0.0)
+        
+        let arrow6 = try! Line(spot: orig6, arrow: dir6)
+        
+        XCTAssert(Line.isCoplanar(straightA: arrow1, straightB: arrow6))
     }
     
     func testIsParallel()   {
@@ -363,6 +369,25 @@ class LineTests: XCTestCase {
             XCTFail()   // Generated a different kind of Error
         }
 
+//        let flatOrig = Point3D(x: 1.0, y: 0.0, z: 0.0)
+//        let flatDir = Vector3D(i: 0.0, j: 1.0, k: 0.0)
+        
+        let centaurOrig = Point3D(x: 1.0, y: 2.3, z: 0.0)
+        let centaurDir = Vector3D(i: 1.0, j: 0.0, k: 0.0)
+        
+        let centaur = try! Line(spot: centaurOrig, arrow: centaurDir)
+        
+        let collide = try! Line.intersectTwo(straightA: flat, straightB: centaur)
+        
+        XCTAssert(collide == centaurOrig)
+        
+        let centaur2 = try! Line(spot: flatOrig, arrow: centaurDir)
+        
+        let collide2 = try! Line.intersectTwo(straightA: flat, straightB: centaur2)
+        
+        XCTAssert(collide2 == flatOrig)
+        
+
     }
 
     func testLineTransform()   {
@@ -425,56 +450,6 @@ class LineTests: XCTestCase {
         let comps = refLine.resolveRelative(yonder: trial)
         
         XCTAssert(comps == target)
-    }
-    
-    func testGenBisect()   {
-        
-        let pipA = Point3D(x: 1.0, y: 5.0, z: 2.0)
-        let pipB = Point3D(x: 4.6, y: 5.0, z: 2.0)
-        
-        let dir1 = Vector3D(i: 0.0, j: 0.0, k: 1.0)
-        
-        let targetLoc = Point3D(x: 2.8, y: 5.0, z: 2.0)
-        let targetDir = Vector3D(i: 0.0, j: 1.0, k: 0.0)
-        
-        let targetLine = try! Line(spot: targetLoc, arrow: targetDir)
-        
-        let chop = try! Line.genBisect(ptA: pipA, ptB: pipB, up: dir1)
-        
-        print(chop.getOrigin())
-        print(chop.getDirection())
-        
-        XCTAssert(chop == targetLine)
-        
-        let dir2 = Vector3D(i: 1.0, j: 1.0, k: 0.0)
-        
-        do   {
-            _ = try Line.genBisect(ptA: pipA, ptB: pipB, up: dir2)
-        } catch is NonUnitDirectionError {
-            XCTAssert(true)
-        } catch {
-            XCTFail()
-        }
-
-        
-        let dir3 = Vector3D(i: 0.0, j: 0.0, k: 0.0)
-        
-        do   {
-            _ = try Line.genBisect(ptA: pipA, ptB: pipB, up: dir3)
-        } catch is ZeroVectorError {
-            XCTAssert(true)
-        } catch {
-            XCTFail()
-        }
-
-        do   {
-            _ = try Line.genBisect(ptA: pipA, ptB: pipA, up: dir1)
-        } catch is CoincidentPointsError {
-            XCTAssert(true)
-        } catch {
-            XCTFail()
-        }
-
     }
     
     func testEquals()   {
