@@ -211,14 +211,13 @@ public struct Point3D: Hashable {
         return separation < accuracy
     }
     
-    
-    /// Check to see that the distance between the two is less than Point3D.Epsilon
-    /// - See: 'testEqual' under Point3DTests
-    public static func == (lhs: Point3D, rhs: Point3D) -> Bool   {
-        
-        let separation = Point3D.dist(pt1: lhs, pt2: rhs)   // Always positive
-        
-        return separation < Point3D.Epsilon
-    }
-
 }
+/// Check to see that the distance between the two is less than Point3D.Epsilon
+/// - See: 'testEqual' under Point3DTests
+public func == (lhs: Point3D, rhs: Point3D) -> Bool   {
+    
+    let separation = Point3D.dist(pt1: lhs, pt2: rhs)   // Always positive
+    
+    return separation < Point3D.Epsilon
+}
+

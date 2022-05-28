@@ -66,83 +66,21 @@ public struct LineSeg: PenCurve, Equatable {
         self.usage = purpose
     }
     
-    /// Get the box that bounds the curve
-    /// - Returns: Brick aligned to the CSYS
-    public func getExtent() -> OrthoVol  {
-        
-        return try! OrthoVol(corner1: self.endAlpha, corner2: self.endOmega)
-    }
     
-    /// Flip the order of the end points  Used to align members of a Perimeter
-    /// - See: 'testReverse' under LineSegTests
-    public mutating func reverse() -> Void  {
-        
-        let bubble = self.endAlpha
-        self.endAlpha = self.endOmega
-        self.endOmega = bubble
+    /// Calculate length.
+    /// Part of PenCurve protocol.
+    /// - Returns: Distance between the endpoints
+    /// - See: 'testLength' under LineSegTests
+    public func getLength() -> Double   {
+        return Point3D.dist(pt1: self.endAlpha, pt2: self.endOmega)
     }
     
     
-    /// Construct from a LineSeg
-    /// - See: 'testBuildLine' under LineSegTests
-    public static func buildLine(bar: LineSeg) -> Line   {
+    /// Create a unit vector showing direction.
+    /// - Returns: Unit vector
+    public func getDirection() -> Vector3D   {
         
-        let freshOrigin = bar.getOneEnd()
-        
-        let freshDirection = Vector3D.built(from: bar.getOneEnd(), towards: bar.getOtherEnd(), unit: true)
-        
-        let spear = try! Line(spot: freshOrigin, arrow: freshDirection)
-        
-        return spear
-    }
-    
-    
-    /// Move, rotate, and scale by a matrix
-    /// - Parameters:
-    ///   - xirtam:  Transform to be applied
-    /// - Throws: CoincidentPointsError if it was scaled to be very small
-    /// - Returns:  Modified LineSeg
-    public func transform(xirtam: Transform) throws -> PenCurve {
-        
-        let tAlpha = endAlpha.transform(xirtam: xirtam)
-        let tOmega = endOmega.transform(xirtam: xirtam)
-        
-        var transformed = try LineSeg(end1: tAlpha, end2: tOmega)   // Will generate a new extent
-        
-        try! transformed.trimFront(lowParameter: self.trimParameters.lowerBound)   // Transfer the limits
-        try! transformed.trimBack(highParameter: self.trimParameters.upperBound)
-        
-
-        transformed.setIntent(purpose: self.usage)   // Copy setting instead of having the default
-        
-        return transformed
-    }
-    
-    
-
-    /// Flip line segment to the opposite side of the plane
-    /// - Parameters:
-    ///   - flat:  Mirroring plane
-    ///   - wire:  LineSeg to be flipped
-    /// - Returns: New LineSeg
-    /// - See: 'testMirrorLineSeg' under PlaneTests
-    public static func mirror(wire: LineSeg, flat: Plane) -> LineSeg   {
-        
-        /// Point to be worked on
-        var pip: Point3D = wire.getOneEnd()
-        
-        ///New point from mirroring
-        let fairest1 = Plane.mirror(flat: flat, pip: pip)
-        
-        pip = wire.getOtherEnd()
-        
-        ///New point from mirroring
-        let fairest2 = Plane.mirror(flat: flat, pip: pip)
-        
-        let mirroredLineSeg = try! LineSeg(end1: fairest1, end2: fairest2)
-        // The forced unwrapping should be no risk because it uses points from a LineSeg that has already checked out.
-        
-        return mirroredLineSeg
+        return Vector3D.built(from: self.endAlpha, towards: self.endOmega, unit: true)
     }
     
     
@@ -176,73 +114,54 @@ public struct LineSeg: PenCurve, Equatable {
     }
     
     
-    /// Check whether a point is or isn't perched on the curve.
+    /// Return the tangent vector, which won't depend on the input parameter.
+    /// Part of PenCurve protocol.
+    /// Some notations show "u" as the parameter, instead of "t"
     /// - Parameters:
-    ///   - speck:  Point near the curve.
-    /// - Returns: Flag, and optional parameter value
-    /// - See: 'testPerch' under LineSegTests
-    ///  I don't understand why removing 'throws' from the signature doesn't cause a compiler error
-    public func isCoincident(speck: Point3D, accuracy: Double = Point3D.Epsilon) -> (flag: Bool, param: Double?)   {
+    ///   - t:  Parameter value
+    /// - Throws:
+    ///     - ParameterRangeError if the input is lame
+    /// - Returns: Non-normalized vector
+    /// - See: 'testTangent' under LineSegTests
+    public func tangentAt(t: Double, ignoreTrim: Bool = false) throws -> Vector3D   {
         
-           // Shortcuts!
-        if speck == self.endAlpha   { return (true, self.trimParameters.lowerBound) }
-        if speck == self.endOmega   { return (true, self.trimParameters.upperBound) }
-        
-        /// True length along the curve
-        let curveLength = self.getLength()
-        
-        let relPos = self.resolveRelativeVec(speck: speck)
-        
-        if relPos.perp.length() > accuracy   { return (false, nil) }
-        else {
-            if relPos.along.length() < curveLength   {
-                
-                let lsDir = Vector3D.built(from: self.endAlpha, towards: endOmega, unit: true)
-                var dupe = relPos.along
-                dupe.normalize()
-                
-                if Vector3D.dotProduct(lhs: lsDir, rhs: dupe) != 1.0   { return (false, nil) }
-                let proportion = relPos.along.length() / curveLength
-                return (true, proportion)
-            }
+        if ignoreTrim   {
+            
+            /// The entire possible parameter range.
+            let wholeSheBang = ClosedRange<Double>(uncheckedBounds: (lower: 0.0, upper: 1.0))
+            
+            guard wholeSheBang.contains(t) else { throw ParameterRangeError(parA: t) }
+            
+        }  else  {
+            guard self.trimParameters.contains(t) else { throw ParameterRangeError(parA: t) }
         }
         
-        return (false, nil)
+        let along = Vector3D.built(from: self.endAlpha, towards: self.endOmega)
+        return along
     }
     
     
-    /// Generate the perpendicular bisector for the LineSeg between two points
-    /// - Parameters:
-    ///   - ptA:  First point
-    ///   - ptB:  Second point
-    ///   - up:  Normal for the plane in which the points lie
-    /// - Returns: Fresh Line
-    /// - Throws:
-    ///     - ZeroVectorError if the input vector is lame
-    ///     - CoincidentPointsError if the points are not unique
-    ///     - NonUnitDirectionError for  a bad vector
-    /// - See: 'testGenBisect' under LineTests
-    public static func genBisect(ptA: Point3D, ptB: Point3D, up: Vector3D) throws -> Line   {
+
+//TODO: Would be good to have an explicit test for this function.
+    /// Get the box that bounds the curve
+    /// - Returns: Brick aligned to the CSYS
+    public func getExtent() -> OrthoVol  {
         
-        guard ptA != ptB else  { throw CoincidentPointsError(dupePt: ptA) }
-        
-        guard !up.isZero() else { throw ZeroVectorError(dir: up) }
-        
-        guard up.isUnit() else { throw NonUnitDirectionError(dir: up) }
-        
-        
-        let along = Vector3D.built(from: ptA, towards: ptB, unit: true)
-        
-        var inward = try Vector3D.crossProduct(lhs: up, rhs: along)
-        inward.normalize()
-        
-        let anchor = Point3D.midway(alpha: ptA, beta: ptB)
-        
-        let myLine = try Line(spot: anchor, arrow: inward)
-        
-        return myLine
+        return try! OrthoVol(corner1: self.endAlpha, corner2: self.endOmega)
     }
     
+    
+    /// Flip the order of the end points  Used to align members of a Perimeter
+    /// - See: 'testReverse' under LineSegTests
+    public mutating func reverse() -> Void  {
+        
+        let bubble = self.endAlpha
+        self.endAlpha = self.endOmega
+        self.endOmega = bubble
+        
+        self.trimParameters = ClosedRange<Double>(uncheckedBounds: (lower: 1.0 - self.trimParameters.upperBound, upper: 1.0 - self.trimParameters.lowerBound))
+        
+    }
     
     
     /// Use a different portion of the curve
@@ -279,25 +198,24 @@ public struct LineSeg: PenCurve, Equatable {
     }
     
     
-    /// Plot the line segment.  This will be called by the UIView 'drawRect' function.
-    /// Part of PenCurve protocol.
+    /// Create a trimmed version
     /// - Parameters:
-    ///   - context: In-use graphics framework
-    ///   - tform:  Model-to-display transform
-    ///   - allowableCrown: Maximum deviation from the actual curve. Ignored for this struct.
-    public func draw(context: CGContext, tform: CGAffineTransform, allowableCrown: Double) throws   {
+    ///   - stub:  New terminating point
+    ///   - keepNear: Retain the near or far remnant?
+    /// - Warning:  No checks are made to see that stub lies on the segment
+    /// - Returns: A new LineSeg
+    /// - See: 'testClipTo' under LineSegTests
+    public func clipTo(stub: Point3D, keepNear: Bool) -> LineSeg   {
         
-        context.beginPath()
+        var freshSeg: LineSeg
         
-        var spot = Point3D.makeCGPoint(pip: self.endAlpha)    // Throw out Z coordinate
-        let screenSpotAlpha = spot.applying(tform)
-        context.move(to: screenSpotAlpha)
+        if keepNear   {
+            freshSeg = try! LineSeg(end1: self.getOneEnd(), end2: stub)
+        }  else  {
+            freshSeg = try! LineSeg(end1: stub, end2: self.getOtherEnd())
+        }
         
-        spot = Point3D.makeCGPoint(pip: self.endOmega)    // Throw out Z coordinate
-        let screenSpotOmega = spot.applying(tform)
-        context.addLine(to: screenSpotOmega)
-        
-        context.strokePath()
+        return freshSeg
     }
     
     
@@ -336,70 +254,95 @@ public struct LineSeg: PenCurve, Equatable {
     }
     
     
-    /// Calculate length.
-    /// Part of PenCurve protocol.
-    /// - Returns: Distance between the endpoints
-    /// - See: 'testLength' under LineSegTests
-    public func getLength() -> Double   {
-        return Point3D.dist(pt1: self.endAlpha, pt2: self.endOmega)
-    }
-    
-    
-    /// Create a unit vector showing direction.
-    /// - Returns: Unit vector
-    public func getDirection() -> Vector3D   {
-        
-        return Vector3D.built(from: self.endAlpha, towards: self.endOmega, unit: true)
-    }
-    
-    
-    /// Return the tangent vector, which won't depend on the input parameter.
-    /// Part of PenCurve protocol.
-    /// Some notations show "u" as the parameter, instead of "t"
+    /// Move, rotate, and scale by a matrix
     /// - Parameters:
-    ///   - t:  Parameter value
-    /// - Throws:
-    ///     - ParameterRangeError if the input is lame
-    /// - Returns:
-    ///   - tan:  Non-normalized vector
-    /// - See: 'testTangent' under LineSegTests
-    public func tangentAt(t: Double, ignoreTrim: Bool = false) throws -> Vector3D   {
+    ///   - xirtam:  Transform to be applied
+    /// - Throws: CoincidentPointsError if it was scaled to be very small
+    /// - Returns:  Modified LineSeg
+    public func transform(xirtam: Transform) throws -> PenCurve {
         
-        if ignoreTrim   {
-            
-            /// The entire possible parameter range.
-            let wholeSheBang = ClosedRange<Double>(uncheckedBounds: (lower: 0.0, upper: 1.0))
-            
-            guard wholeSheBang.contains(t) else { throw ParameterRangeError(parA: t) }
-            
-        }  else  {
-            guard self.trimParameters.contains(t) else { throw ParameterRangeError(parA: t) }
-        }
+        let tAlpha = endAlpha.transform(xirtam: xirtam)
+        let tOmega = endOmega.transform(xirtam: xirtam)
         
-        let along = Vector3D.built(from: self.endAlpha, towards: self.endOmega)
-        return along
+        var transformed = try LineSeg(end1: tAlpha, end2: tOmega)   // Will generate a new extent
+        
+        try! transformed.trimFront(lowParameter: self.trimParameters.lowerBound)   // Transfer the limits
+        try! transformed.trimBack(highParameter: self.trimParameters.upperBound)
+        
+
+        transformed.setIntent(purpose: self.usage)   // Copy setting instead of having the default
+        
+        return transformed
     }
     
     
 
-    /// Create a trimmed version
+    /// Flip line segment to the opposite side of the plane
     /// - Parameters:
-    ///   - stub:  New terminating point
-    ///   - keepNear: Retain the near or far remnant?
-    /// - Warning:  No checks are made to see that stub lies on the segment
-    /// - Returns: A new LineSeg
-    /// - See: 'testClipTo' under LineSegTests
-    public func clipTo(stub: Point3D, keepNear: Bool) -> LineSeg   {
+    ///   - flat:  Mirroring plane
+    ///   - wire:  LineSeg to be flipped
+    /// - Returns: New LineSeg
+    /// - See: 'testMirrorLineSeg' under LineSeg Tests
+    public static func mirror(wire: LineSeg, flat: Plane) -> LineSeg   {
         
-        var freshSeg: LineSeg
+        /// Point to be worked on
+        var pip: Point3D = wire.getOneEnd()
         
-        if keepNear   {
-            freshSeg = try! LineSeg(end1: self.getOneEnd(), end2: stub)
-        }  else  {
-            freshSeg = try! LineSeg(end1: stub, end2: self.getOtherEnd())
+        ///New point from mirroring
+        let fairest1 = Plane.mirror(flat: flat, pip: pip)
+        
+        pip = wire.getOtherEnd()
+        
+        ///New point from mirroring
+        let fairest2 = Plane.mirror(flat: flat, pip: pip)
+        
+        var mirroredLineSeg = try! LineSeg(end1: fairest1, end2: fairest2)
+        // Ignoring a possible error should be no risk because it uses points from a LineSeg that has already checked out.
+        
+        mirroredLineSeg.setIntent(purpose: wire.usage)   // Copy setting instead of having the default
+        
+        try! mirroredLineSeg.trimFront(lowParameter: wire.trimParameters.lowerBound)   // Transfer the limits
+        try! mirroredLineSeg.trimBack(highParameter: wire.trimParameters.upperBound)
+        
+        return mirroredLineSeg
+    }
+    
+    
+    /// Check whether a point is or isn't perched on the curve.
+    /// - Parameters:
+    ///   - speck:  Point near the curve.
+    /// - Throws:
+    ///   - NegativeAccuracyError for a goofy input.
+    /// - Returns: Flag, and optional parameter value
+    /// - See: 'testPerch' under LineSegTests
+    public func isCoincident(speck: Point3D, accuracy: Double = Point3D.Epsilon) throws -> (flag: Bool, param: Double?)   {
+        
+        guard accuracy > 0.0 else { throw NegativeAccuracyError(acc: accuracy) }
+                    
+          // Shortcuts!
+        if speck == self.endAlpha   { return (true, self.trimParameters.lowerBound) }
+        if speck == self.endOmega   { return (true, self.trimParameters.upperBound) }
+        
+        /// True length along the curve
+        let curveLength = self.getLength()
+        
+        let relPos = self.resolveRelativeVec(speck: speck)
+        
+        if relPos.perp.length() > accuracy   { return (false, nil) }
+        else {
+            if relPos.along.length() < curveLength   {
+                
+                let lsDir = Vector3D.built(from: self.endAlpha, towards: endOmega, unit: true)
+                var dupe = relPos.along
+                dupe.normalize()
+                
+                if Vector3D.dotProduct(lhs: lsDir, rhs: dupe) != 1.0   { return (false, nil) }
+                let proportion = relPos.along.length() / curveLength
+                return (true, proportion)
+            }
         }
         
-        return freshSeg
+        return (false, nil)
     }
     
     
@@ -410,6 +353,7 @@ public struct LineSeg: PenCurve, Equatable {
     ///   - accuracy:  How close is close enough?
     /// - Throws:
     ///     - CoincidentLinesError if the input lies on top
+    ///     - ParallelLinesError for lines that would never intersect
     /// - Returns: Possibly empty Array of points common to both curves
     /// - See: 'testIntersectLine' under LineSegTests
     public func intersect(ray: Line, accuracy: Double = Point3D.Epsilon) throws -> [PointCrv]   {
@@ -417,28 +361,28 @@ public struct LineSeg: PenCurve, Equatable {
         /// Line built from this segment
         let unbounded = try! Line(spot: self.getOneEnd(), arrow: self.getDirection())
         
-        guard !Line.isParallel(straightA: unbounded, straightB: ray)  else  { throw ParallelLinesError(enil: ray) }
-        
-           // The first guard statement should keep execution from ever reaching here
         guard !Line.isCoincident(straightA: unbounded, straightB: ray)  else  { throw CoincidentLinesError(enil: ray) }
         
+        guard !Line.isParallel(straightA: unbounded, straightB: ray)  else  { throw ParallelLinesError(enil: ray) }
         
+
         /// The return array
         var crossings = [PointCrv]()
         
-        /// Intersection of the two lines
+        /// Intersection point of the two lines
         let collision = try! Line.intersectTwo(straightA: unbounded, straightB: ray)
         
         /// Vector from segment origin towards intersection. Possible to be zero length.
-        let rescue = Vector3D.built(from: self.getOneEnd(), towards: collision, unit: true)
+        let towardsInt = Vector3D.built(from: self.getOneEnd(), towards: collision, unit: true)
         
-        if rescue.isZero()   {   // Intersection at first end.
+        if towardsInt.isZero()   {   // Intersection at first end.
             let frontPt = PointCrv(x: self.getOneEnd().x, y: self.getOneEnd().y, z: self.getOneEnd().z, t: self.trimParameters.lowerBound)
             crossings.append(frontPt)
             return crossings
         }
         
-        let sameDir = Vector3D.dotProduct(lhs: self.getDirection(), rhs: rescue)
+        // Positive value for somewhere along the line, or past it.
+        let sameDir = Vector3D.dotProduct(lhs: self.getDirection(), rhs: towardsInt)
         
         if sameDir > 0.0   {
             
@@ -446,6 +390,7 @@ public struct LineSeg: PenCurve, Equatable {
             
             if (self.getLength() - dist) > -1.0 * Point3D.Epsilon   {
                 
+//TODO: I think that this needs to be modified to work with a trimmed curve.
                 let crossPt = PointCrv(x: collision.x, y: collision.y, z: collision.z, t: dist / self.getLength())
                 crossings.append(crossPt)
             }
@@ -455,6 +400,7 @@ public struct LineSeg: PenCurve, Equatable {
     }
     
     
+    //TODO: Should something like this be written for other PenCurves?
     /// See if another segment crosses this one.
     /// Used for seeing if a screen gesture cuts across the current seg.
     /// - Parameters:
@@ -481,23 +427,53 @@ public struct LineSeg: PenCurve, Equatable {
     }
     
     
-    /// Generate array points suitable for drawing.
-    /// Part of PenCurve protocol.
-    /// - Parameter allowableCrown: Acceptable deviation from the curve
-    /// - Throws: NegativeAccuracyError even though allowableCrown is ignored.
-    /// - Returns: Array of two Point3D's
-    public func approximate(allowableCrown: Double) throws -> [Point3D]   {
+    /// Generate the perpendicular bisector for the LineSeg between two points
+    /// - Parameters:
+    ///   - ptA:  First point
+    ///   - ptB:  Second point
+    ///   - up:  Normal for the plane in which the points lie
+    /// - Returns: Fresh Line
+    /// - Throws:
+    ///     - ZeroVectorError if the input vector is lame
+    ///     - CoincidentPointsError if the points are not unique
+    ///     - NonUnitDirectionError for  a bad vector
+    /// - See: 'testGenBisect' under LineTests
+    public static func genBisect(ptA: Point3D, ptB: Point3D, up: Vector3D) throws -> Line   {
         
-        guard allowableCrown > 0.0 else { throw NegativeAccuracyError(acc: allowableCrown) }
-            
-        /// Collection of points to be returned
-        var chain = [Point3D]()
+        guard ptA != ptB else  { throw CoincidentPointsError(dupePt: ptA) }
         
-        chain.append(getOneEnd())
-        chain.append(getOtherEnd())
+        guard !up.isZero() else { throw ZeroVectorError(dir: up) }
         
-        return chain
+        guard up.isUnit() else { throw NonUnitDirectionError(dir: up) }
+        
+        
+        let along = Vector3D.built(from: ptA, towards: ptB, unit: true)
+        
+        var inward = try Vector3D.crossProduct(lhs: up, rhs: along)
+        inward.normalize()
+        
+        let anchor = Point3D.midway(alpha: ptA, beta: ptB)
+        
+        let myLine = try Line(spot: anchor, arrow: inward)
+        
+        return myLine
     }
+    
+    
+    
+    /// Construct a Line based on a LineSeg
+    /// - See: 'testBuildLine' under LineSegTests
+    public static func buildLine(bar: LineSeg) -> Line   {
+        
+        let freshOrigin = try! bar.pointAt(t: bar.trimParameters.lowerBound)
+        
+        let freshDirection = Vector3D.built(from: bar.getOneEnd(), towards: bar.getOtherEnd(), unit: true)
+        
+        let spear = try! Line(spot: freshOrigin, arrow: freshDirection)
+        
+        return spear
+    }
+    
     
     /// Calculate the crown over a small segment
     /// - See: 'testCrown' under LineSegTests
@@ -505,6 +481,8 @@ public struct LineSeg: PenCurve, Equatable {
         return 0.0
     }
     
+    
+    //TODO: Needs to be modified to handle the trimmed case.
     
     /// Find the change in parameter that meets the crown requirement
     /// - Parameters:
@@ -527,6 +505,47 @@ public struct LineSeg: PenCurve, Equatable {
     }
     
     // TODO: An "isReversed" test would be good.
+    
+    /// Generate array points suitable for drawing.
+    /// Part of PenCurve protocol.
+    /// - Parameter allowableCrown: Acceptable deviation from the curve
+    /// - Throws: NegativeAccuracyError even though allowableCrown is ignored.
+    /// - Returns: Array of two Point3D's
+    public func approximate(allowableCrown: Double) throws -> [Point3D]   {
+        
+        guard allowableCrown > 0.0 else { throw NegativeAccuracyError(acc: allowableCrown) }
+            
+        /// Collection of points to be returned
+        var chain = [Point3D]()
+        
+        chain.append(getOneEnd())
+        chain.append(getOtherEnd())
+        
+        return chain
+    }
+    
+    
+    /// Plot the line segment.  This will be called by the UIView 'drawRect' function.
+    /// Part of PenCurve protocol.
+    /// - Parameters:
+    ///   - context: In-use graphics framework
+    ///   - tform:  Model-to-display transform
+    ///   - allowableCrown: Maximum deviation from the actual curve. Ignored for this struct.
+    public func draw(context: CGContext, tform: CGAffineTransform, allowableCrown: Double) throws   {
+        
+        context.beginPath()
+        
+        var spot = Point3D.makeCGPoint(pip: self.endAlpha)    // Throw out Z coordinate
+        let screenSpotAlpha = spot.applying(tform)
+        context.move(to: screenSpotAlpha)
+        
+        spot = Point3D.makeCGPoint(pip: self.endOmega)    // Throw out Z coordinate
+        let screenSpotOmega = spot.applying(tform)
+        context.addLine(to: screenSpotOmega)
+        
+        context.strokePath()
+    }
+    
     
     /// Compare each endpoint of the segment.
     /// - Parameters:

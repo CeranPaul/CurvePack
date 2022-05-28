@@ -99,7 +99,6 @@ public struct Transform: Equatable   {
     }
     
     /// Construct a matrix to do scaling
-    /// scaleY should perhaps be negated for screen display
     /// - See: 'testScale' under TransformTests
     public init (scaleX: Double, scaleY: Double, scaleZ: Double)   {
     
@@ -425,7 +424,6 @@ public func * (pre: RowMtx4, mtx: Transform) -> RowMtx4   {
 
     //TODO: Add a post multiplication function and its tests
 
-//TODO: Add an identity check?  Can be covered by doing equals with the result of the empty initializer.
 
 
 /// Combine rotations by multiplying two square matrices.
