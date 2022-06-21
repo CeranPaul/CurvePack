@@ -1,13 +1,11 @@
-# PenCurve
+# PenCurve Protocol
 
-This protocol defines data and standard functions for the drawable curves.
+A minimum set of data and methods for curves.
 
 ## Overview
 
-When a collection of curves is used, these are the minimum functions that each curve should have.
+When using a collection of curves, this specifies the common data and functions.
 
-## Topics
+### Caution
 
-### <!--@START_MENU_TOKEN@-->Group<!--@END_MENU_TOKEN@-->
-
-- <!--@START_MENU_TOKEN@-->``Symbol``<!--@END_MENU_TOKEN@-->
+The early 2022 version of the Documentation Compiler appears to have done weird things for this protocol.

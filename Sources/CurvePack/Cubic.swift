@@ -43,7 +43,7 @@ public struct Cubic: PenCurve   {
     /// The end point
     var ptOmega: Point3D
     
-    /// The enum that hints at the meaning of the curve
+    /// The String that hints at the meaning of the curve
     public var usage: String
     
     /// Limited to be bettween 0.0 and 1.0

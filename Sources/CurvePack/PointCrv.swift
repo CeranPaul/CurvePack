@@ -8,6 +8,7 @@
 
 import Foundation
 
+///Contains three coordinates and a single parameter value. Good for describing an intersection point.
 public struct PointCrv   {
     
     public var x: Double
