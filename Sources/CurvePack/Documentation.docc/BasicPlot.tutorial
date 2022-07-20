@@ -9,21 +9,19 @@
         @ContentAndMedia {
             How to make the objects available to your code
             
-            @Image(source: <#file#>, alt: "<#accessible description#>")
         }
         
         @Steps {
             @Step {
                 Scroll to the top of your source file.
                 
-                @Code(name: "FooTop.swift", file: <#filename.swift#>)
-                @Image(source: <#file#>, alt: "<#accessible description#>")
+                @Code(name: "FooTop.swift", file: linkPackage01.swift)
             }
             
             @Step {
-                Add a "include CurvePack" to link the geometry package to your application.
+                Add an "import CurvePack" statement to link the geometry package to your application.
                 
-                @Code(name: "FooTop.swift", file: <#filename.swift#>)
+                @Code(name: "FooTop.swift", file: linkPackage02.swift)
             }
         }
     }

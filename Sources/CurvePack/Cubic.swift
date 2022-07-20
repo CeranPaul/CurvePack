@@ -210,6 +210,7 @@ public struct Cubic: PenCurve   {
         
     }
     
+    
     /// Construct from four points that lie on the curve.  This is the way to build an offset curve.
     /// - Parameters:
     ///   - alpha: First point
@@ -367,6 +368,7 @@ public struct Cubic: PenCurve   {
                 
     }
     
+    
     /// Copy constructor. Trim parameters are NOT duplicated.
     /// - Parameters:
     ///   - sourceCurve: Cubic to be duplicated
@@ -398,8 +400,6 @@ public struct Cubic: PenCurve   {
         
     }
     
-    
-
     
     
     /// Generate the 12 coefficiients that define the curve
@@ -456,45 +456,6 @@ public struct Cubic: PenCurve   {
         
     }
     
-    
-    /// Create a String with X coefficient values to be printed
-    public func coeffX() -> String   {
-        
-        let axF = String(format: "%.3f", self.ax)
-        let bxF = String(format: "%.3f", self.bx)
-        let cxF = String(format: "%.3f", self.cx)
-        let dxF = String(format: "%.3f", self.dx)
-
-        let gnirts = "X:  " + axF + "  " + bxF + "  " + cxF + "  " + dxF
-        
-        return gnirts
-    }
-    
-    /// Create a String with Y coefficient values to be printed
-    public func coeffY() -> String   {
-        
-        let ayF = String(format: "%.3f", self.ay)
-        let byF = String(format: "%.3f", self.by)
-        let cyF = String(format: "%.3f", self.cy)
-        let dyF = String(format: "%.3f", self.dy)
-
-        let gnirts = "Y:  " + ayF + "  " + byF + "  " + cyF + "  " + dyF
-        
-        return gnirts
-    }
-    
-    /// Create a String with Z coefficient values to be printed
-    public func coeffZ() -> String   {
-        
-        let azF = String(format: "%.3f", self.az)
-        let bzF = String(format: "%.3f", self.bz)
-        let czF = String(format: "%.3f", self.cz)
-        let dzF = String(format: "%.3f", self.dz)
-
-        let gnirts = "Z:  " + azF + "  " + bzF + "  " + czF + "  " + dzF
-        
-        return gnirts
-    }
     
     /// Attach new meaning to the curve.
     /// - See: 'testSetIntent' under CubicTests
@@ -626,8 +587,13 @@ public struct Cubic: PenCurve   {
     /// - Returns: Double
     public func getLength() -> Double   {
         
-        // Points every 0.01 in parameter space
-        let dots = self.dice()   // Is it a good or bad idea to use 'approximate' here?
+        /// Evenly spaced points along the trimmed portion of the curve
+        var dots = [Point3D]()
+        
+        for g in stride(from: self.trimParameters.lowerBound, through: self.trimParameters.upperBound, by: 0.01)   {
+            let pip = try! self.pointAt(t: g)   // Parameters fall within the valid range.
+            dots.append(pip)
+        }
         
         /// Return value for length
         var total = 0.0
@@ -642,6 +608,61 @@ public struct Cubic: PenCurve   {
     
 
     
+    //TODO: Can this be consolidated with 'isCoincident'?
+    
+    /// Find the curve's closest point.
+    /// - Parameters:
+    ///   - nearby:  Target point
+    ///   - accuracy:  Optional - What iteration change is close enough?
+    /// - Returns: A nearby Point3D on the curve, and its parameter.
+    /// - SeeAlso:  refineRangeDist()
+    /// - Throws:
+    ///     - CovergenceError if iterations fail
+    ///     - NegativeAccuracyError for a bad input
+    /// - See: 'testFindClosest' under CubicTests
+    public func findClosest(nearby: Point3D, accuracy: Double = Point3D.Epsilon) throws -> (pip: Point3D, param: Double)   {
+        
+        guard accuracy > 0.0 else { throw NegativeAccuracyError(acc: accuracy) }
+            
+        
+        /// Working parameter through the iterations, and part of the return tuple.
+        var midRangeParameter = (self.trimParameters.lowerBound + self.trimParameters.upperBound) / 2.0
+        
+        /// Working value for nearest point
+        var priorPt = try! self.pointAt(t: midRangeParameter)
+        
+        /// Working value for interval on the curve being checked
+        var curRange = self.trimParameters
+        
+        /// Separation between current iteration and previous iteration.
+        var successiveSep = Double.greatestFiniteMagnitude   // Starting value
+        
+        /// A counter to prevent a runaway loop
+        var tally = 0
+        
+        repeat   {
+            
+            if let refinedRange = try self.refineRangeDist(nearby: nearby, span: curRange)  {
+                
+                midRangeParameter = (refinedRange.lowerBound + refinedRange.upperBound) / 2.0
+                let midPt = try! self.pointAt(t: midRangeParameter)
+                
+                successiveSep = Point3D.dist(pt1: priorPt, pt2: midPt)
+                
+                priorPt = midPt   // Set up for the next iteration
+                curRange = refinedRange
+            }
+            
+            tally += 1
+            
+            if tally > 6 { throw ConvergenceError(tnuoc: tally) }
+            
+        } while successiveSep > accuracy  &&  tally < 7   // Fails ugly for the second clause!
+        
+        return (priorPt, midRangeParameter)
+    }
+    
+    
     /// Check whether a point is or isn't perched on the curve.
     ///  Part of the PenCurve protocol.
     /// - Parameters:
@@ -649,9 +670,13 @@ public struct Cubic: PenCurve   {
     ///   - accuracy: The small distance that defines "equal" points. Should be positive.
     /// - Throws:
     ///     - ConvergenceError if eight iterations are not sufficient
+    ///     - NegativeAccuracyError for a bad input
     /// - Returns: Flag, and optional parameter value
     /// - See: 'testPerch' under CubicTests
     public func isCoincident(speck: Point3D, accuracy: Double = Point3D.Epsilon) throws -> (flag: Bool, param: Double?)   {
+                
+        guard accuracy > 0.0 else { throw NegativeAccuracyError(acc: accuracy) }
+
         
         // Shortcuts!
         if speck == self.ptAlpha   { return (true, self.trimParameters.lowerBound) }
@@ -759,33 +784,6 @@ public struct Cubic: PenCurve   {
     }
     
     
-    /// Split a range into pieces
-    /// - Parameters:
-    ///   - pristine: Original parameter range
-    ///   - chunks: Desired number of pieces
-    /// - Returns: Array of equal smaller ranges
-    /// - SeeAlso: dice
-    public func diceRange(pristine: ClosedRange<Double>, chunks: Int) -> [ClosedRange<Double>]   {
-                
-        let increment = (pristine.upperBound - pristine.lowerBound) / Double(chunks)
-        
-        /// Array of smaller ranges
-        var rangeHerd = [ClosedRange<Double>]()
-        
-        var freshLower = pristine.lowerBound
-        
-        for g in 1...chunks   {
-            let freshUpper = pristine.lowerBound + Double(g) * increment
-            let freshRange = ClosedRange<Double>(uncheckedBounds: (lower: freshLower, upper: freshUpper))
-            rangeHerd.append(freshRange)
-            
-            freshLower = freshUpper   // Prepare for the next iteration
-        }
-        
-        return rangeHerd
-    }
-    
-    
     /// Generate the plane that the curve lies in, if possible.
     /// - Returns: Optional Plane
     public func genPlane() -> Plane?   {
@@ -815,7 +813,46 @@ public struct Cubic: PenCurve   {
     }
     
     
+    /// Create a String with X coefficient values to be printed
+    public func coeffX() -> String   {
+        
+        let axF = String(format: "%.3f", self.ax)
+        let bxF = String(format: "%.3f", self.bx)
+        let cxF = String(format: "%.3f", self.cx)
+        let dxF = String(format: "%.3f", self.dx)
+
+        let gnirts = "X:  " + axF + "  " + bxF + "  " + cxF + "  " + dxF
+        
+        return gnirts
+    }
     
+    /// Create a String with Y coefficient values to be printed
+    public func coeffY() -> String   {
+        
+        let ayF = String(format: "%.3f", self.ay)
+        let byF = String(format: "%.3f", self.by)
+        let cyF = String(format: "%.3f", self.cy)
+        let dyF = String(format: "%.3f", self.dy)
+
+        let gnirts = "Y:  " + ayF + "  " + byF + "  " + cyF + "  " + dyF
+        
+        return gnirts
+    }
+    
+    /// Create a String with Z coefficient values to be printed
+    public func coeffZ() -> String   {
+        
+        let azF = String(format: "%.3f", self.az)
+        let bzF = String(format: "%.3f", self.bz)
+        let czF = String(format: "%.3f", self.cz)
+        let dzF = String(format: "%.3f", self.dz)
+
+        let gnirts = "Z:  " + azF + "  " + bzF + "  " + czF + "  " + dzF
+        
+        return gnirts
+    }
+    
+
     /// Create a new curve translated, scaled, and rotated by the matrix.
     /// - Parameters:
     ///   - xirtam: Matrix containing translation, rotation, and scaling to be applied
@@ -944,6 +981,33 @@ public struct Cubic: PenCurve   {
         return box
     }
     
+    /// Split a range into pieces
+    /// - Parameters:
+    ///   - pristine: Original parameter range
+    ///   - chunks: Desired number of pieces
+    /// - Returns: Array of equal smaller ranges
+    /// - SeeAlso: dice
+    public func diceRange(pristine: ClosedRange<Double>, chunks: Int) -> [ClosedRange<Double>]   {
+                
+        let increment = (pristine.upperBound - pristine.lowerBound) / Double(chunks)
+        
+        /// Array of smaller ranges
+        var rangeHerd = [ClosedRange<Double>]()
+        
+        var freshLower = pristine.lowerBound
+        
+        for g in 1...chunks   {
+            let freshUpper = pristine.lowerBound + Double(g) * increment
+            let freshRange = ClosedRange<Double>(uncheckedBounds: (lower: freshLower, upper: freshUpper))
+            rangeHerd.append(freshRange)
+            
+            freshLower = freshUpper   // Prepare for the next iteration
+        }
+        
+        return rangeHerd
+    }
+    
+    
      /// Break the curve up into segments every 0.01 in parameter space.
     /// - Returns: Array of Point3D.
     public func dice() -> [Point3D]   {
@@ -959,22 +1023,6 @@ public struct Cubic: PenCurve   {
         return pearls
     }
     
-    
-    //TODO: Make this produce something useful.
-    /// Find the position of a point relative to the curve and its origin.
-    /// Useless result at the moment.
-    /// - Parameters:
-    ///   - speck:  Point near the curve.
-    /// - Returns: Tuple of Vector components relative to the origin
-    public func resolveRelativeVec(speck: Point3D) -> (along: Vector3D, perp: Vector3D)   {
-        
-        let alongVector = Vector3D(i: 1.0, j: 0.0, k: 0.0)
-        
-        let perpVector = Vector3D(i: 0.0, j: 1.0, k: 0.0)
-        
-        return (alongVector, perpVector)
-    }
-        
     
     /// Find the projection of difference vectors.
     /// - Parameters:
@@ -1337,96 +1385,6 @@ public struct Cubic: PenCurve   {
     
     }
     
-    
-    /// Not tested!
-    /// Find the distance along the curve between two parameter values
-    /// - Parameters:
-    ///   - tSmall: A location on the curve
-    ///   - tLarge: Second location on the curve
-    /// - Throws:
-    ///     - ParameterRangeError if either input parameter is lame
-    public func trueLength(tSmall: Double, tLarge: Double) throws -> Double   {
-        
-        guard self.trimParameters.contains(tSmall) else { throw ParameterRangeError(parA: tSmall) }
-        guard self.trimParameters.contains(tLarge) else { throw ParameterRangeError(parA: tLarge) }
-
-        let parameterSpan = tLarge - tSmall
-        
-        let parameterStep = parameterSpan / 20.0
-        
-        /// The return value
-        var totalLength = 0.0
-        
-        var oldPoint = try! self.pointAt(t: tSmall)   // Protected by the guard statement
-        
-        for g in 1...20   {
-            
-            let freshParam = tSmall + Double(g) * parameterStep
-            let freshPoint = try! self.pointAt(t: freshParam)   // Protected by the guard statement
-            
-            let chunkLength = Point3D.dist(pt1: oldPoint, pt2: freshPoint)
-            totalLength += chunkLength
-            
-            oldPoint = freshPoint   // Prepare for next iteration
-        }
-        
-        return totalLength
-    }
-
-    
-    //TODO: Can this be consolidated with 'isCoincident'?
-    
-    /// Find the curve's closest point.
-    /// - Parameters:
-    ///   - nearby:  Target point
-    ///   - accuracy:  Optional - What iteration change is close enough?
-    /// - Returns: A nearby Point3D on the curve, and its parameter.
-    /// - SeeAlso:  refineRangeDist()
-    /// - Throws:
-    ///     - CovergenceError if iterations fail
-    ///     - NegativeAccuracyError for a bad input
-    /// - See: 'testFindClosest' under CubicTests
-    public func findClosest(nearby: Point3D, accuracy: Double = Point3D.Epsilon) throws -> (pip: Point3D, param: Double)   {
-        
-        guard accuracy > 0.0 else { throw NegativeAccuracyError(acc: accuracy) }
-            
-        
-        /// Working value for nearest point
-        var priorPt = try! self.pointAt(t: 0.5)
-        
-        /// Separation between current iteration and previous iteration.
-        var successiveSep = Double.greatestFiniteMagnitude   // Starting value
-        
-        /// Working value for interval on the curve being checked
-        var curRange = self.trimParameters
-        
-        /// Working parameter through the iterations, and part of the return tuple.
-        var midRangeParameter: Double = 0.5
-        
-        /// A counter to prevent a runaway loop
-        var tally = 0
-        
-        repeat   {
-            
-            if let refinedRange = try self.refineRangeDist(nearby: nearby, span: curRange)  {
-                
-                midRangeParameter = (refinedRange.lowerBound + refinedRange.upperBound) / 2.0
-                let midPt = try! self.pointAt(t: midRangeParameter)
-                
-                successiveSep = Point3D.dist(pt1: priorPt, pt2: midPt)
-                
-                priorPt = midPt   // Set up for the next iteration
-                curRange = refinedRange
-            }
-            
-            tally += 1
-            
-            if tally > 6 { throw ConvergenceError(tnuoc: tally) }
-            
-        } while successiveSep > accuracy  && tally < 7   // Fails ugly for the second clause!
-        
-        return (priorPt, midRangeParameter)
-    }
     
     
     /// Find the range of the parameter where the point is closest to the curve.
