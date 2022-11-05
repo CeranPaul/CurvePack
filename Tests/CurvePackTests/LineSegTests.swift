@@ -462,6 +462,101 @@ class LineSegTests: XCTestCase {
 
     }
     
+    func testIsClosedChain()   {
+        
+        let circleStart = Point3D(x: 2.5, y: 1.0, z: -0.8)
+        
+        let center = Point3D(x: 2.5, y: 2.5, z: -0.8)
+        let axis = Vector3D(i: 0.0, j: 0.0, k: 1.0)
+        
+        /// The Arc to hold points
+        let cheerio = try! Arc(ctr: center, axis: axis, start: circleStart, sweep: Double.pi * 2.0)
+        
+        let ptA = cheerio.pointAtAngle(theta: 0.0)
+        let ptB = cheerio.pointAtAngle(theta: 0.8)
+        let ptC = cheerio.pointAtAngle(theta: 1.57)
+        let ptD = cheerio.pointAtAngle(theta: 3.14)
+        let ptE = cheerio.pointAtAngle(theta: 3.94)
+        let ptF = cheerio.pointAtAngle(theta: 5.1)
+        
+        let barA = try! LineSeg(end1: ptA, end2: ptB)
+        let barB = try! LineSeg(end1: ptB, end2: ptC)
+        let barC = try! LineSeg(end1: ptC, end2: ptD)
+        let barD = try! LineSeg(end1: ptD, end2: ptE)
+        let barE = try! LineSeg(end1: ptE, end2: ptF)
+        let barF = try! LineSeg(end1: ptF, end2: ptA)
+        
+        
+        var bag = [barA, barC, barB, barE, barD]
+        
+        XCTAssertFalse(try! LineSeg.isClosedChain(rawSegs: bag))
+        
+        bag = [barA, barC, barB, barE, barD, barF]
+        XCTAssert(try! LineSeg.isClosedChain(rawSegs: bag))
+        
+        bag = [barA, barD]
+        XCTAssertThrowsError(try LineSeg.isClosedChain(rawSegs: bag))
+        
+    }
+    
+    
+    
+    func testOrderRing()   {
+        
+        let circleStart = Point3D(x: 2.5, y: 1.0, z: -0.8)
+        
+        let center = Point3D(x: 2.5, y: 2.5, z: -0.8)
+        let axis = Vector3D(i: 0.0, j: 0.0, k: 1.0)
+        
+        /// The Arc to hold points
+        let cheerio = try! Arc(ctr: center, axis: axis, start: circleStart, sweep: Double.pi * 2.0)
+        
+        let ptA = cheerio.pointAtAngle(theta: 0.0)
+        let ptB = cheerio.pointAtAngle(theta: 0.8)
+        let ptC = cheerio.pointAtAngle(theta: 1.57)
+        let ptD = cheerio.pointAtAngle(theta: 3.14)
+        let ptE = cheerio.pointAtAngle(theta: 3.94)
+        let ptF = cheerio.pointAtAngle(theta: 5.1)
+        
+        let barA = try! LineSeg(end1: ptA, end2: ptB)
+        let barB = try! LineSeg(end1: ptB, end2: ptC)
+        let barC = try! LineSeg(end1: ptC, end2: ptD)
+        let barD = try! LineSeg(end1: ptD, end2: ptE)
+        let barE = try! LineSeg(end1: ptE, end2: ptF)
+        let barF = try! LineSeg(end1: ptF, end2: ptA)
+        
+        let target = [barA, barB, barC, barD, barE, barF]
+        
+        let bag = [barA, barC, barB, barE, barD, barF]
+        
+        let neat = try! LineSeg.orderRing(rawSegs: bag)
+        
+        XCTAssert(neat == target)
+        
+    }
+    
+    
+    func testLengthSum()   {
+        
+        let ptA = Point3D(x: 2.5, y: 1.8, z: -3.0)
+        let ptB = Point3D(x: 2.5, y: 0.8, z: -3.0)
+        let ptC = Point3D(x: 3.5, y: 0.8, z: -3.0)
+        let ptD = Point3D(x: 3.5, y: 1.8, z: -3.0)
+        
+        let eenie = try! LineSeg(end1: ptA, end2: ptB)
+        let meenie = try! LineSeg(end1: ptB, end2: ptC)
+        let minie = try! LineSeg(end1: ptC, end2: ptD)
+        let moe = try! LineSeg(end1: ptD, end2: ptA)
+
+        let wrap = [eenie, meenie, minie, moe]
+        
+        let fenceLength = LineSeg.sumLengths(sticks: wrap)
+        
+        XCTAssertEqual(fenceLength, 4.0)
+        
+        
+    }
+    
     func testEquals()   {
         
         let ptA = Point3D(x: 4.0, y: 2.0, z: 5.0)

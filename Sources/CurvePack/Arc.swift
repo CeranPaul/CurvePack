@@ -614,6 +614,227 @@ public struct Arc: PenCurve, Equatable   {
 //    }
 
 
+    /// Generate the Arc. The goal is to have this work independent of plane, and relative angles. The most general case would be working from two PenCurve's to get a fillet.
+    /// This could move to Arc in CurvePack
+    /// - Parameters:
+    ///   - straight1: One line on the boundary
+    ///   - straight2: Another line. Checked to be coplanar with straight1
+    ///   - rad: Desired radius
+    ///   - keepNear1: Whether to keep the origin of straight1
+    ///   - keepNear2: Whether to keep the origin of straight2
+    /// - Returns: Small arc
+    /// - Throws:
+    ///     - NegativeAccuracyError for a bad radius
+    ///     - NonCoPlanarLinesError for a bad pair of Lines
+    ///     - ParallelLinesError for inputs that would never intersect
+    ///     - CoincidentLinesError
+    public static func buildFillet(straight1: Line, straight2: Line, rad: Double, keepNear1: Bool, keepNear2: Bool) throws -> Arc   {
+        
+        guard rad > 0.0  else  { throw NegativeAccuracyError(acc: rad) }
+        
+            // These checks are also part of Line.intersectTwo()
+        guard Line.isCoplanar(straightA: straight1, straightB: straight2)  else  { throw NonCoPlanarLinesError(enilA: straight1, enilB: straight2) }
+        
+        guard !Line.isParallel(straightA: straight1, straightB: straight2)  else  { throw ParallelLinesError(enil: straight1) }
+                
+        guard !Line.isCoincident(straightA: straight1, straightB: straight2)  else  { throw CoincidentLinesError(enil: straight1) }
+        
+        ///The intersection of the Lines
+//        let crux = try! Line.intersectTwo(straightA: straight1, straightB: straight2)
+                
+        let twoRelative = straight1.resolveRelativeVec(yonder: straight2.getOrigin())
+        var twoRelativeOne = twoRelative.perp
+        twoRelativeOne.normalize()
+        
+        let oneRelative = straight2.resolveRelativeVec(yonder: straight1.getOrigin())
+        var oneRelativeTwo = oneRelative.perp
+        oneRelativeTwo.normalize()
+        
+        ///Offsets for parallel lines to determine the center
+        var offset1Vec, offset2Vec: Vector3D
+        
+        
+        //TODO: Can this be simplified to a couple of 'if' statements?
+        switch (keepNear1, keepNear2)   {
+            
+        case (false, false):
+            offset1Vec = twoRelativeOne * -rad
+            offset2Vec = oneRelativeTwo * -rad
+                        
+        case (false, true):
+            offset1Vec = twoRelativeOne * -rad
+            offset2Vec = oneRelativeTwo * rad
+                        
+        case (true, false):
+            offset1Vec = twoRelativeOne * rad
+            offset2Vec = oneRelativeTwo * -rad
+            
+        case (true, true):
+            offset1Vec = twoRelativeOne * rad
+            offset2Vec = oneRelativeTwo * rad
+        }
+        
+        
+        let constLine1Origin = Point3D.offset(pip: straight1.getOrigin(), jump: offset1Vec)
+        let constLine2Origin = Point3D.offset(pip: straight2.getOrigin(), jump: offset2Vec)
+        
+        let constLine1 = try! Line(spot: constLine1Origin, arrow: straight1.getDirection())
+        let constLine2 = try! Line(spot: constLine2Origin, arrow: straight2.getDirection())
+        
+        ///Point equidistant from both lines
+        let filletCenter = try! Line.intersectTwo(straightA: constLine1, straightB: constLine2)
+        
+        let tangent1 = straight1.dropPoint(away: filletCenter)
+        let tangent2 = straight2.dropPoint(away: filletCenter)
+        
+        ///The desired small Arc. Direction of the curve is unknown.
+        let lePrize = try! Arc(center: filletCenter, end1: tangent1, end2: tangent2, useSmallAngle: true)
+        
+        return lePrize
+    }
+    
+    
+    //TODO: Build a slightly higher level function that works from LineSeg's and trims them.
+    
+    /// Fillet from a line to an Arc
+    /// - Parameters:
+    ///   - straight1: Line to be blended
+    ///   - circleFrag: Partial circle to be blended
+    ///   - rad: Size of fillet Arc
+    ///   - keepNear1: Whether to keep or remove the origin of the line.
+    ///   - keepNear2: Whether or not to keep the start point of the Arc
+    /// - Returns: Small Arc
+    /// - Throws:
+    ///     - NegativeAccuracyError for a bad radius
+    ///     - CoincidentPlanesError when the Line and the Arc are NOT coincident
+    public static func buildFillet(straight1: Line, circleFrag: Arc, rad: Double, keepNear1: Bool, keepNear2: Bool) throws -> Arc   {
+        
+        guard rad > 0.0  else  { throw NegativeAccuracyError(acc: rad) }
+        
+        
+        let arcPlane = try! Plane(spot: circleFrag.getCenter(), arrow: circleFrag.getAxisDir())
+        
+        guard try! Plane.isCoincident(flat: arcPlane, enil: straight1)  else  { throw CoincidentPlanesError(enalpA: arcPlane)}
+        
+    //TODO: Add check of whether or not the circle and line intersect.
+        
+        var jump: Double
+        
+        let offsetDir = try! Vector3D.crossProduct(lhs: straight1.getDirection(), rhs: circleFrag.getAxisDir())
+        
+        if keepNear1 { jump = rad }  else  { jump = -rad }
+        let offsetSpot = Point3D.offset(pip: straight1.getOrigin(), jump: offsetDir * jump)
+                
+        let offsetLine = try! Line(spot: offsetSpot, arrow: straight1.getDirection())
+        
+        let inward = Vector3D.built(from: circleFrag.getOneEnd(), towards: circleFrag.getCenter(), unit: true)
+        
+        if keepNear2 { jump = rad }  else  { jump = -rad }
+        
+        let offsetStart = Point3D.offset(pip: circleFrag.getOneEnd(), jump: inward * jump)
+        let offsetArc = try! Arc(ctr: circleFrag.getCenter(), axis: circleFrag.getAxisDir(), start: offsetStart, sweep: circleFrag.getSweepAngle())
+        
+        ///Intersection between the offset Line and the offset Arc.
+        let intPts = try! offsetArc.intersect(ray: offsetLine)
+        let filletCtr = Point3D(x: intPts[0].x, y: intPts[0].y, z: intPts[0].z)   //This makes a precarious assumption.
+        
+        /// Tangent point on straight1
+        let lineTan = straight1.dropPoint(away: filletCtr)
+        
+        let radial = Vector3D.built(from: circleFrag.getCenter(), towards: filletCtr, unit: true)
+        let myJump = radial * circleFrag.getRadius()
+        
+        /// Tangent point on the input Arc
+        let circleTan = Point3D.offset(pip: circleFrag.getCenter(), jump: myJump)
+        
+        let filletArc = try! Arc(center: filletCtr, end1: circleTan, end2: lineTan, useSmallAngle: true)
+        
+        
+        return filletArc   // Bogus value to still the compiler
+    }
+    
+    
+    /// Mostly used for checking
+    /// - Parameter scoop: Source Arc
+    /// - Returns: Resulting plane
+    public static func genPlane(scoop: Arc) -> Plane   {
+        
+        let ctr = scoop.getCenter()
+        let thatAway = scoop.getAxisDir()
+
+        let flat = try! Plane(spot: ctr, arrow: thatAway)
+        
+        return flat
+    }
+
+    /// Generate points on an Arc that is either a fillet or a rounded edge.
+    /// Only handles the 90 degree case.
+    /// This will probably end up in Arc.
+    /// - Parameters:
+    ///   - pip: Point3D on the original edge curve.
+    ///   - faceNormalB: Outward from the other face
+    ///   - faceNormalA: Outward from one of the faces
+    ///   - filletRad: Radius of the desired fillet
+    ///   - convex: Flag for the desired curvature
+    ///   - allowableCrown: Acceptable deviation from the curve
+    /// - Returns: A set of points on a fillet
+    /// - Throws:
+    ///     - NonUnitDirectioError for a bad faceNormal.
+    ///     - NegativeAccuracyError for an improper filletRad or allowableCrown
+    public static func edgeFilletArc(pip: Point3D, faceNormalB: Vector3D, faceNormalA: Vector3D, filletRad: Double, convex: Bool, allowableCrown: Double) throws -> [Point3D]   {
+        
+        
+        //TODO: Deal with cases that aren't a quarter arc.
+        
+        guard faceNormalA.isUnit() else { throw NonUnitDirectionError(dir: faceNormalA) }
+        guard faceNormalB.isUnit() else { throw NonUnitDirectionError(dir: faceNormalB) }
+        
+        let projection = Vector3D.dotProduct(lhs: faceNormalA, rhs: faceNormalB)
+        
+        guard abs(projection) < 0.001 else { throw NonUnitDirectionError(dir: faceNormalA) }   // Needs a better error
+        
+        
+        guard filletRad > 0.0 else { throw NegativeAccuracyError(acc: filletRad) }
+        guard allowableCrown > 0.0 else { throw NegativeAccuracyError(acc: allowableCrown) }
+
+        
+        /// A short chain that is the return value
+        var leash = [Point3D]()
+        
+        
+           // Points A and B would do just fine to define a chamfer
+        
+        /// Points to define an Arc in the convex case
+        var arcEndSurfA = Point3D.offset(pip: pip, jump: faceNormalB * -filletRad)
+        var arcEndSurfB = Point3D.offset(pip: pip, jump: faceNormalA * -filletRad)
+        var center = Point3D.offset(pip: arcEndSurfA, jump: faceNormalA * -filletRad)
+
+        if !convex   {
+            
+            arcEndSurfA = Point3D.offset(pip: pip, jump: faceNormalA * filletRad)
+            arcEndSurfB = Point3D.offset(pip: pip, jump: faceNormalB * filletRad)
+            center = Point3D.offset(pip: arcEndSurfA, jump: faceNormalB * filletRad)
+
+        }
+        
+        /// Arc representing the fillet or rounded edge
+        let tinyArc = try! Arc(center: center, end1: arcEndSurfA, end2: arcEndSurfB, useSmallAngle: true)
+        
+        leash = try! tinyArc.approximate(allowableCrown: allowableCrown)
+        
+        
+        if leash.count < 4   {
+            
+            let cee = try! tinyArc.pointAt(t: 0.33)
+            let dee = try! tinyArc.pointAt(t: 0.67)
+            
+            leash = [arcEndSurfA, cee, dee, arcEndSurfB]
+        }
+        
+        return leash
+    }
+    
+
     /// Plot the circle segment.  This will be called by the UIView 'drawRect' function
     /// - Parameters:
     ///   - context: In-use graphics framework

@@ -657,4 +657,108 @@ class ArcTests: XCTestCase {
         
     }
         
+    func testArcPlane()   {
+        
+        let retnec = Point3D(x: 1.0, y: 1.0, z: 1.0)
+        
+        let pivot = Vector3D(i: 1.0, j: 0.0, k: 0.0)
+        
+        let start = Point3D(x: 1.0, y: 2.2, z: 1.0)
+        
+        let hump = try! Arc(ctr: retnec, axis: pivot, start: start, sweep: 0.5 * Double.pi)
+        
+        let target = try! Plane(spot: retnec, arrow: pivot)
+        
+        let derived = Arc.genPlane(scoop: hump)
+        
+        XCTAssert(try! Plane.isCoincident(flatLeft: target, flatRight: derived))
+        
+    }
+    
+    
+    func testBuildFillet()   {
+        
+        let filletRad = 0.25
+        
+        let orig1 = Point3D(x: 1.0, y: 0.5, z: -2.0)
+        let dir1 = Vector3D(i: 1.0, j: 0.0, k: 0.0)
+        
+        let laser1 = try! Line(spot: orig1, arrow: dir1)
+        
+        let orig2 = Point3D(x: 4.2, y: 1.2, z: -2.0)
+        var dir2 = Vector3D(i: -0.707, j: -0.707, k: 0.0)
+        dir2.normalize()
+        
+        let laser2 = try! Line(spot: orig2, arrow: dir2)
+        
+        XCTAssertNoThrow(try Arc.buildFillet(straight1: laser1, straight2: laser2, rad: filletRad, keepNear1: true, keepNear2: true) )
+                         
+        let myFillet = try! Arc.buildFillet(straight1: laser1, straight2: laser2, rad: filletRad, keepNear1: true, keepNear2: true)
+        
+        let targetPlane = try! Plane(spot: orig1, arrow: Vector3D(i: 0.0, j: 0.0, k: 1.0))
+        
+        let derived = Arc.genPlane(scoop: myFillet)
+        
+        XCTAssert(try! Plane.isCoincident(flatLeft: targetPlane, flatRight: derived))
+        
+        let comp1 = laser1.resolveRelative(yonder: myFillet.getCenter())
+        
+        XCTAssertEqual(filletRad, comp1.perp, accuracy: 0.001)
+        
+        let comp2 = laser2.resolveRelative(yonder: myFillet.getCenter())
+        
+        XCTAssertEqual(filletRad, comp2.perp, accuracy: 0.001)
+        
+        XCTAssertThrowsError(try Arc.buildFillet(straight1: laser1, straight2: laser2, rad: -0.375, keepNear1: true, keepNear2: true) )
+        
+        XCTAssertThrowsError(try Arc.buildFillet(straight1: laser1, straight2: laser1, rad: filletRad, keepNear1: true, keepNear2: true) )
+        
+        
+        let wonkyOrig = Point3D(x: 1.5, y: 1.0, z: 1.0)
+        let wonkyDir = Vector3D(i: 0.0, j: 1.0, k: 0.0)
+        
+        let wonkyLine = try! Line(spot: wonkyOrig, arrow: wonkyDir)
+        
+        XCTAssertThrowsError(try Arc.buildFillet(straight1: laser1, straight2: wonkyLine, rad: filletRad, keepNear1: true, keepNear2: true) )
+        
+        /// Intersection point of the two boundary lines
+        let crux = try! Line.intersectTwo(straightA: laser1, straightB: laser2)
+        
+        let heading1 = Vector3D.built(from: crux, towards: myFillet.getCenter())
+        
+        var iPos = heading1.i > 0.0   // This works only in a plane parallel to XY
+        var jPos = heading1.j > 0.0
+        
+        XCTAssert(iPos == false && jPos == true)
+        
+        let myFillet2 = try! Arc.buildFillet(straight1: laser1, straight2: laser2, rad: filletRad, keepNear1: false, keepNear2: true)
+        
+        let heading2 = Vector3D.built(from: crux, towards: myFillet2.getCenter())
+        
+        iPos = heading2.i > 0.0   // This works only in a plane parallel to XY
+        jPos = heading2.j > 0.0
+        
+        XCTAssert(iPos == false && jPos == false)
+        
+        let myFillet3 = try! Arc.buildFillet(straight1: laser1, straight2: laser2, rad: filletRad, keepNear1: true, keepNear2: false)
+        
+        let heading3 = Vector3D.built(from: crux, towards: myFillet3.getCenter())
+        
+        iPos = heading3.i > 0.0   // This works only in a plane parallel to XY
+        jPos = heading3.j > 0.0
+        
+        XCTAssert(iPos == true && jPos == true)
+        
+        
+        let myFillet4 = try! Arc.buildFillet(straight1: laser1, straight2: laser2, rad: filletRad, keepNear1: false, keepNear2: false)
+        
+        let heading4 = Vector3D.built(from: crux, towards: myFillet4.getCenter())
+        
+        iPos = heading4.i > 0.0   // This works only in a plane parallel to XY
+        jPos = heading4.j > 0.0
+        
+        XCTAssert(iPos == true && jPos == false)
+        
+    }
+
 }

@@ -506,6 +506,149 @@ public struct LineSeg: PenCurve, Equatable {
     
     // TODO: An "isReversed" test would be good.
     
+    
+    /// Tally up the distances
+    /// Should this be moved to be part of LineSeg? Would need to 'static'.
+    /// - Parameters:
+    ///   - sticks: LineSegs to be checked
+    /// - Returns: Double
+    public static func sumLengths(sticks: [LineSeg]) -> Double   {
+        
+        let spans = sticks.map( { $0.getLength() } )
+        
+        let total = spans.reduce(0.0, {x,y in
+            x + y
+        })
+        
+        return total
+    }
+    
+    
+    /// Check continuity of a possibly unordered Array. This should probably be in class LineSeg.
+    /// Does not check for a chain that branches. There isn't anything that keeps this from working on other PenCurves.
+    /// - Parameters:
+    ///   - rawSegs: Collection of segments that may not be in nose-to-tail order
+    /// - Returns: Simple flag
+    /// - Throws:
+    ///     - TinyArrayError for an Array with too few members
+    /// See 'testIsClosedChain' in MeshGen.tests
+    public static func isClosedChain(rawSegs: [LineSeg]) throws -> Bool   {
+        
+        guard rawSegs.count > 2  else { throw TinyArrayError(tnuoc: rawSegs.count) }
+
+        
+        /// Points that are used only once
+        var once = Set<Point3D>()
+        
+        /// Points that are used twice
+        var twice = Set<Point3D>()
+        
+        
+        /// Closure to add an endpoint to the appropriate set
+        let sortPlace: (Point3D) -> Void = { pip in
+            
+            if once.contains(pip)   {
+                twice.update(with: pip)   // Move this Edge to the 'mated' set
+                once.remove(pip)
+            }  else  {
+                once.update(with: pip)  // Insert the new Edge in the 'bachelor' set
+            }
+        }
+        
+
+        for bar in rawSegs   {
+            sortPlace(bar.getOneEnd())
+            sortPlace(bar.getOtherEnd())
+        }
+        
+        
+        let emptySingletons = once.isEmpty
+        
+        return emptySingletons
+    }
+
+    
+    /// Order a set of LineSegs that make up a ring. The Array may come from a filtering operation. Will this work with other PenCurves?
+    /// Does this belong in class LineSeg?
+    /// - Parameter rawSegs: Collection of segments that may not be in nose-to-tail order
+    /// - Returns: Ordered Array of LineSegs
+    /// - Throws:
+    ///     - TinyArrayError for an Array with too few members
+    /// See 'testOrderRing' in MeshGen.tests
+    public static func orderRing(rawSegs: [LineSeg]) throws -> [LineSeg]   {
+        
+        guard rawSegs.count > 2  else { throw TinyArrayError(tnuoc: rawSegs.count) }
+        
+
+        /// Array where members can be removed
+        var erodeSegs = rawSegs
+        
+        
+        /// Dummy starting value for a target index
+        var largestXIndex = -5
+        
+        /// Dummy starting value for the X coordinate
+        var largestX = Double.leastNonzeroMagnitude
+        
+        
+        let startPts = rawSegs.map( { $0.getOneEnd() } )   // This assumes that the LineSeg's are consistent in point ordering
+        
+        for (xedni, pip) in startPts.enumerated()   {
+            
+            if pip.x > largestX   {
+                largestX = pip.x
+                largestXIndex = xedni
+            }
+            
+        }
+                
+        
+        /// LineSeg's in order. The return value.
+        var duckChain = [LineSeg]()
+        
+        /// Latest LineSeg to go in the chain
+        let tailSeg = rawSegs[largestXIndex]   // Initial value
+        
+        duckChain.append(tailSeg)   // Insert the first value
+        
+        /// Trailing end of the LineSeg just added
+        var tailPoint = tailSeg.getOtherEnd()
+        
+        erodeSegs.removeAll(where: { $0 == tailSeg } )   // Since LineSeg is Equatable
+        
+                
+        //TODO: Deal with the possibility of a broken chain.  Make a Set of Point3D's?
+        
+        
+        while erodeSegs.count > 0   {
+            
+            /// Index for the chosen LineSeg
+            var nextSegIndex = -5
+            
+            for (xedni, bar) in erodeSegs.enumerated()   {    // Hunt for the next in sequence
+                
+                let headPoint = bar.getOneEnd()
+                
+                if headPoint == tailPoint   {
+                    
+                    nextSegIndex = xedni
+                    
+                    break
+                }
+            }
+            
+            duckChain.append(erodeSegs[nextSegIndex])
+            
+            tailPoint = erodeSegs[nextSegIndex].getOtherEnd()
+            
+            erodeSegs.remove(at: nextSegIndex)
+        }
+        
+        
+        return duckChain
+    }
+    
+
     /// Generate array points suitable for drawing.
     /// Part of PenCurve protocol.
     /// - Parameter allowableCrown: Acceptable deviation from the curve
