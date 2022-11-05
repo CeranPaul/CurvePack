@@ -1,6 +1,6 @@
 //
 //  Loop.swift
-//  LineSegShow
+//  CurvePack
 //
 //  Created by Paul on 2/3/18.
 //  Copyright © 2022 Ceran Digital Media. All rights reserved.
@@ -37,7 +37,7 @@ public class Loop   {
     // May want to be able to shift the starting point
     
     
-    init(refCoord: CoordinateSystem)   {
+    public init(refCoord: CoordinateSystem)   {
         
         closedBound = false
         
