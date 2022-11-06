@@ -16,7 +16,7 @@ public class Loop   {
     var rawCurves: [PenCurve]
     
     /// The nose-to-tail component list. Filled by function 'align'.
-    var orderedCurves: [PenCurve]
+    public var orderedCurves: [PenCurve]
     
     var refCoord: CoordinateSystem   // Should this change to become an optional plane?
     
@@ -24,7 +24,7 @@ public class Loop   {
     /// Locations where curves are joined
     internal var commonEndBucket: [CommonEnd]
     
-    /// Whether or not this is a complete boundary.  Will get updated each time a curve is added or deleted.
+    /// Whether or not this is a complete boundary.  Will get updated each time a curve is added or deleted. See function 'isClosed'.
     internal var closedBound:  Bool
     
     
@@ -122,10 +122,47 @@ public class Loop   {
     }
         
     
+    /// See if the entities form a sealed boundary.
+    /// - Returns: Simple flag.
+    /// - See: 'testIsClosed' under LoopTests
+    public func isClosed() -> Bool   {
+        
+        /// The flag to be returned
+        var flag = false
+        
+    //TODO: Incorporate or delete the commented code block
+        
+//        if self.pieces.count == 1   {   // Special case of full circle
+//
+//            let unoType = type(of: self.pieces.first!)
+//
+//            if unoType == Arc.self   {
+//
+//                let myArc = self.pieces.first! as! Arc
+//                flag = myArc.isFull
+//
+//            }
+//
+//        }  else  {  // The more general case
+        
+        let qtyflag = commonEndBucket.count == rawCurves.count
+        
+        /// flag to indicate that all curves are connected
+        let sewedUp = commonEndBucket.reduce(true, { f1, f2 in f1 && f2.other != nil } )
+        
+        flag = qtyflag && sewedUp
+        //        }
+        
+        return flag
+    }
+    
+    
+    
     /// Ensure that the curves go nose-to-tail. Called after a closure check.
     /// Fills the 'ordered' array.
     /// - Throws:
     ///     - AlignmentError if there are any unconnected curve end points
+    ///     See function 'isClosed'.
     public func align() throws -> Void   {
         
         let completeJoints = commonEndBucket.filter( {$0.other != nil} )
@@ -312,41 +349,6 @@ public class Loop   {
     }
     
 
-    /// See if the entities form a sealed boundary.
-    /// - Returns: Simple flag.
-    /// - See: 'testIsClosed' under LoopTests
-    public func isClosed() -> Bool   {
-        
-        /// The flag to be returned
-        var flag = false
-        
-    //TODO: Incorporate or delete the commented code block
-        
-//        if self.pieces.count == 1   {   // Special case of full circle
-//
-//            let unoType = type(of: self.pieces.first!)
-//
-//            if unoType == Arc.self   {
-//
-//                let myArc = self.pieces.first! as! Arc
-//                flag = myArc.isFull
-//
-//            }
-//
-//        }  else  {  // The more general case
-        
-        let qtyflag = commonEndBucket.count == rawCurves.count
-        
-        /// flag to indicate that all curves are connected
-        let sewedUp = commonEndBucket.reduce(true, { f1, f2 in f1 && f2.other != nil } )
-        
-        flag = qtyflag && sewedUp
-        //        }
-        
-        return flag
-    }
-    
-    
     /// See if the tail is coincident with the following head. How is this different than 'isClosed'?
     /// - Parameters:
     ///   - xedni: Index of the current curve.
