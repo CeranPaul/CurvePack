@@ -614,8 +614,7 @@ public struct Arc: PenCurve, Equatable   {
 //    }
 
 
-    /// Generate the Arc. The goal is to have this work independent of plane, and relative angles. The most general case would be working from two PenCurve's to get a fillet.
-    /// This could move to Arc in CurvePack
+    /// Generate the Arc between two Lines. The goal is to have this work independent of plane, and relative angles.
     /// - Parameters:
     ///   - straight1: One line on the boundary
     ///   - straight2: Another line. Checked to be coplanar with straight1
@@ -750,7 +749,7 @@ public struct Arc: PenCurve, Equatable   {
         let filletArc = try! Arc(center: filletCtr, end1: circleTan, end2: lineTan, useSmallAngle: true)
         
         
-        return filletArc   // Bogus value to still the compiler
+        return filletArc
     }
     
     
@@ -767,9 +766,7 @@ public struct Arc: PenCurve, Equatable   {
         return flat
     }
 
-    /// Generate points on an Arc that is either a fillet or a rounded edge.
-    /// Only handles the 90 degree case.
-    /// This will probably end up in Arc.
+    /// Generate points on a 90 degree Arc that is either a concave fillet or a convex rounded edge.
     /// - Parameters:
     ///   - pip: Point3D on the original edge curve.
     ///   - faceNormalB: Outward from the other face
@@ -781,29 +778,22 @@ public struct Arc: PenCurve, Equatable   {
     /// - Throws:
     ///     - NonUnitDirectioError for a bad faceNormal.
     ///     - NegativeAccuracyError for an improper filletRad or allowableCrown
-    public static func edgeFilletArc(pip: Point3D, faceNormalB: Vector3D, faceNormalA: Vector3D, filletRad: Double, convex: Bool, allowableCrown: Double) throws -> [Point3D]   {
+    public static func edgeFilletArc(pip: Point3D, faceNormalB: Vector3D, faceNormalA: Vector3D, filletRad: Double, convex: Bool, allowableCrown: Double) throws -> Arc   {
         
-        
-        //TODO: Deal with cases that aren't a quarter arc.
         
         guard faceNormalA.isUnit() else { throw NonUnitDirectionError(dir: faceNormalA) }
         guard faceNormalB.isUnit() else { throw NonUnitDirectionError(dir: faceNormalB) }
         
         let projection = Vector3D.dotProduct(lhs: faceNormalA, rhs: faceNormalB)
         
+        // See if the two vectors are perpendicular
         guard abs(projection) < 0.001 else { throw NonUnitDirectionError(dir: faceNormalA) }   // Needs a better error
         
         
         guard filletRad > 0.0 else { throw NegativeAccuracyError(acc: filletRad) }
         guard allowableCrown > 0.0 else { throw NegativeAccuracyError(acc: allowableCrown) }
 
-        
-        /// A short chain that is the return value
-        var leash = [Point3D]()
-        
-        
-           // Points A and B would do just fine to define a chamfer
-        
+                
         /// Points to define an Arc in the convex case
         var arcEndSurfA = Point3D.offset(pip: pip, jump: faceNormalB * -filletRad)
         var arcEndSurfB = Point3D.offset(pip: pip, jump: faceNormalA * -filletRad)
@@ -817,22 +807,30 @@ public struct Arc: PenCurve, Equatable   {
 
         }
         
+        
         /// Arc representing the fillet or rounded edge
-        let tinyArc = try! Arc(center: center, end1: arcEndSurfA, end2: arcEndSurfB, useSmallAngle: true)
+        let dip = try! Arc(center: center, end1: arcEndSurfA, end2: arcEndSurfB, useSmallAngle: true)
+
         
-        leash = try! tinyArc.approximate(allowableCrown: allowableCrown)
+        /// A short chain that could be a return value
+        var dipChain = [Point3D]()
         
-        
-        if leash.count < 4   {
+        dipChain = try! dip.approximate(allowableCrown: allowableCrown)
+                
+        if dipChain.count < 4   {
             
-            let cee = try! tinyArc.pointAt(t: 0.33)
-            let dee = try! tinyArc.pointAt(t: 0.67)
+            let cee = try! dip.pointAt(t: 0.33)
+            let dee = try! dip.pointAt(t: 0.67)
             
-            leash = [arcEndSurfA, cee, dee, arcEndSurfB]
+            dipChain = [arcEndSurfA, cee, dee, arcEndSurfB]   // Redefine to have a minimum of three segments
         }
         
-        return leash
+        
+        
+        return dip
     }
+    
+    
     
 
     /// Plot the circle segment.  This will be called by the UIView 'drawRect' function

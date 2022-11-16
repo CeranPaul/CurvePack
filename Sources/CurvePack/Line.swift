@@ -37,6 +37,17 @@ public struct Line: Equatable {
     
     
     
+    /// Construct one based on a LineSeg
+    /// - See: 'testBuildFromSeg' under LineTests
+    public init (bar: LineSeg)   {
+        
+        self.origin = try! bar.pointAt(t: bar.trimParameters.lowerBound)
+        
+        self.direction = Vector3D.built(from: bar.getOneEnd(), towards: bar.getOtherEnd(), unit: true)
+        
+    }
+    
+    
     /// Simple getter for the origin
     /// - See: 'testFidelity' under LineTests
     public func getOrigin() -> Point3D  {

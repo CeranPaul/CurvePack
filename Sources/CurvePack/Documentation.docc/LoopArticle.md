@@ -6,7 +6,9 @@ Loop class is a bucket for collecting PenCurves that define a region on a plane.
 
 As curves are added, an attempt is made to find what curves already in the Loop share a common end point. Function 'isClosed' reports whether or not all curves share either end point with another curve. An attempt can then be made to align the curves so that there is a continuous direction as you sequentially traverse the curves. Some curves may get reversed in that alignment process.
 
-## Topics
+## Loop Sources
+
+SVG files could be translated to Loops - e.g. alphabetic characters, though this hasn't been included yet.
 
 ### <!--@START_MENU_TOKEN@-->Group<!--@END_MENU_TOKEN@-->
 

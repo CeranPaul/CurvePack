@@ -461,20 +461,6 @@ public struct LineSeg: PenCurve, Equatable {
     
     
     
-    /// Construct a Line based on a LineSeg
-    /// - See: 'testBuildLine' under LineSegTests
-    public static func buildLine(bar: LineSeg) -> Line   {
-        
-        let freshOrigin = try! bar.pointAt(t: bar.trimParameters.lowerBound)
-        
-        let freshDirection = Vector3D.built(from: bar.getOneEnd(), towards: bar.getOtherEnd(), unit: true)
-        
-        let spear = try! Line(spot: freshOrigin, arrow: freshDirection)
-        
-        return spear
-    }
-    
-    
     /// Calculate the crown over a small segment
     /// - See: 'testCrown' under LineSegTests
     public func findCrown(smallerT: Double, largerT: Double) -> Double   {

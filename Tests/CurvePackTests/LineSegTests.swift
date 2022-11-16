@@ -392,26 +392,6 @@ class LineSegTests: XCTestCase {
         
     }
     
-    func testBuildLine()   {
-        
-        let hyar = Point3D(x: 1.5, y: 2.5, z: 0.25)
-        let thar = Point3D(x: 1.5, y: 2.5, z: 1.25)
-        
-        let betwixt = try! LineSeg(end1: hyar, end2: thar)
-        
-        let rocket = LineSeg.buildLine(bar: betwixt)
-        
-        let targetOrig = Point3D(x: 1.5, y: 2.5, z: 0.25)
-        
-        XCTAssert(rocket.getOrigin() == targetOrig)
-        
-        let targetDir = Vector3D(i: 0.0, j: 0.0, k: 1.0)
-        
-        XCTAssert(rocket.getDirection() == targetDir)
-        
-
-    }
-    
     func testGenBisect()   {
         
         let pipA = Point3D(x: 1.0, y: 5.0, z: 2.0)
