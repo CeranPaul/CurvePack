@@ -158,24 +158,6 @@ public struct Plane: Equatable   {
     }
     
     
-    /// Flip points to the opposite side of the plane
-    /// - Parameters:
-    ///   - flat:  Mirroring plane
-    ///   - pip:  Point to be flipped
-    /// - Returns: New point
-    /// - See: 'testMirrorPoint' under PlaneTests
-    public static func mirror(flat: Plane, pip: Point3D) -> Point3D   {
-        
-        /// Components of the point's position
-        let deltaComponents = Plane.resolveRelativeVec(flat: flat, pip: pip)
-        
-        let jump = deltaComponents.perp * -2.0
-        let fairest = Point3D.offset(pip: pip, jump: jump)
-        
-        return fairest
-    }
-    
-    
     /// Mirror a Vector3D
     /// - Parameters:
     ///   - flat:  Mirroring plane

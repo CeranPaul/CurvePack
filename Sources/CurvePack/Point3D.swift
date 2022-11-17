@@ -72,13 +72,31 @@ open class Point3D: Hashable {
     ///   - xirtam:  Matrix for the intended transformation
     /// - Returns: New point
     /// - SeeAlso: offset
-    public func transform(xirtam: Transform) -> Point3D {
+    open func transform(xirtam: Transform) -> Point3D {
         
         let pip4 = RowMtx4(valOne: self.x, valTwo: self.y, valThree: self.z, valFour: 1.0)
         let tniop4 = pip4 * xirtam
         
         let transformed = tniop4.toPoint()
         return transformed
+    }
+    
+    
+    /// Flip points to the opposite side of the plane
+    /// - Parameters:
+    ///   - flat:  Mirroring plane
+    ///   - pip:  Point to be flipped
+    /// - Returns: New point
+    /// - See: 'testMirrorPoint' and 'testMirrorPointB' under Point3DTests
+    open func mirror(flat: Plane) -> Point3D   {
+        
+        /// Components of the point's position
+        let deltaComponents = Plane.resolveRelativeVec(flat: flat, pip: self)
+        
+        let jump = deltaComponents.perp * -2.0
+        let fairest = Point3D.offset(pip: self, jump: jump)
+        
+        return fairest
     }
     
     

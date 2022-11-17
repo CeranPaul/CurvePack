@@ -289,12 +289,12 @@ public struct LineSeg: PenCurve, Equatable {
         var pip: Point3D = wire.getOneEnd()
         
         ///New point from mirroring
-        let fairest1 = Plane.mirror(flat: flat, pip: pip)
+        let fairest1 = pip.mirror(flat: flat)
         
         pip = wire.getOtherEnd()
         
         ///New point from mirroring
-        let fairest2 = Plane.mirror(flat: flat, pip: pip)
+        let fairest2 = pip.mirror(flat: flat)
         
         var mirroredLineSeg = try! LineSeg(end1: fairest1, end2: fairest2)
         // Ignoring a possible error should be no risk because it uses points from a LineSeg that has already checked out.
