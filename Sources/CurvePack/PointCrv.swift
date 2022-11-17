@@ -8,12 +8,8 @@
 
 import Foundation
 
-///Contains three coordinates and a single parameter value. Good for describing an intersection point.
-public struct PointCrv   {
-    
-    public var x: Double
-    public var y: Double
-    public var z: Double
+///For describing an intersection point. Inherits three coordinates - adds a single parameter value.
+public class PointCrv: Point3D   {
     
     /// Parameter value for the curve
     public var t: Double
@@ -23,11 +19,10 @@ public struct PointCrv   {
     /// - See: 'testFidelity' under PointCrvTests
     public init(x: Double, y: Double, z: Double, t: Double)   {
         
-        self.x = x
-        self.y = y
-        self.z = z
+        self.t = t   // I don't understand why this ordering is appropriate
         
-        self.t = t
+        super.init(x: x, y: y, z: z)
+        
     }
 
 }

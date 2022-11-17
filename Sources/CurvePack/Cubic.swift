@@ -46,43 +46,8 @@ public struct Cubic: PenCurve   {
     /// The String that hints at the meaning of the curve
     public var usage: String
     
-    /// Limited to be bettween 0.0 and 1.0
+    /// Intended to be bettween 0.0 and 1.0
     public var trimParameters: ClosedRange<Double>
-    
-    /// Tuple of points and distances from the lower parameter.
-    /// You want to compute this once, and not in the middle of using the Cubic.
-    /// Where is this used?
-    public var pearls: (pip: [Point3D], dists: [Double], tees: [Double])  {
-        
-        let span = trimParameters.upperBound - trimParameters.lowerBound
-        let increment = span / 50.0
-        
-        ///Array of parameter values used
-        var params = [Double]()
-        
-        var beads = [Point3D]()
-        for g in 0..<50   {
-            let freshT = trimParameters.lowerBound + Double(g) * increment
-            params.append(freshT)
-            let pip = try! pointAt(t: freshT)   // Known to be in range
-            beads.append(pip)
-        }
-        
-        params.append(trimParameters.upperBound)
-        let tailEnd = try! pointAt(t: trimParameters.upperBound)
-        beads.append(tailEnd)
-        
-        var lengths = [Double]()
-        
-        lengths.append(0.0)
-        
-        for g in 1...50   {
-            let hop = lengths [g - 1] + Point3D.dist(pt1: beads[g - 1], pt2: beads[g])
-            lengths.append(hop)
-        }
-        
-        return (beads, lengths, params)   // Arrays of 51 elements that match
-    }
     
     
     /// Build from 12 individual parameters.
@@ -607,7 +572,43 @@ public struct Cubic: PenCurve   {
     }
     
 
+    /// Tuple of points and distances from the lower parameter.
+    /// You want to compute this once, and not in the middle of using the Cubic.
+    /// Where is this used?
+    public var pearls: (pip: [Point3D], dists: [Double], tees: [Double])  {
+        
+        let span = trimParameters.upperBound - trimParameters.lowerBound
+        let increment = span / 50.0
+        
+        ///Array of parameter values used
+        var params = [Double]()
+        
+        var beads = [Point3D]()
+        for g in 0..<50   {
+            let freshT = trimParameters.lowerBound + Double(g) * increment
+            params.append(freshT)
+            let pip = try! pointAt(t: freshT)   // Known to be in range
+            beads.append(pip)
+        }
+        
+        params.append(trimParameters.upperBound)
+        let tailEnd = try! pointAt(t: trimParameters.upperBound)
+        beads.append(tailEnd)
+        
+        var lengths = [Double]()
+        
+        lengths.append(0.0)
+        
+        for g in 1...50   {
+            let hop = lengths [g - 1] + Point3D.dist(pt1: beads[g - 1], pt2: beads[g])
+            lengths.append(hop)
+        }
+        
+        return (beads, lengths, params)   // Arrays of 51 elements that match
+    }
     
+    
+
     //TODO: Can this be consolidated with 'isCoincident'?
     
     /// Find the curve's closest point.
@@ -755,7 +756,7 @@ public struct Cubic: PenCurve   {
     }
     
     
-    /// For use in 'isCoincident'
+    /// For use in 'isCoincident' and 'convergeMinDist'
     private struct rangeDist   {
         
         /// Parameter range on the Cubic
@@ -813,46 +814,6 @@ public struct Cubic: PenCurve   {
     }
     
     
-    /// Create a String with X coefficient values to be printed
-    public func coeffX() -> String   {
-        
-        let axF = String(format: "%.3f", self.ax)
-        let bxF = String(format: "%.3f", self.bx)
-        let cxF = String(format: "%.3f", self.cx)
-        let dxF = String(format: "%.3f", self.dx)
-
-        let gnirts = "X:  " + axF + "  " + bxF + "  " + cxF + "  " + dxF
-        
-        return gnirts
-    }
-    
-    /// Create a String with Y coefficient values to be printed
-    public func coeffY() -> String   {
-        
-        let ayF = String(format: "%.3f", self.ay)
-        let byF = String(format: "%.3f", self.by)
-        let cyF = String(format: "%.3f", self.cy)
-        let dyF = String(format: "%.3f", self.dy)
-
-        let gnirts = "Y:  " + ayF + "  " + byF + "  " + cyF + "  " + dyF
-        
-        return gnirts
-    }
-    
-    /// Create a String with Z coefficient values to be printed
-    public func coeffZ() -> String   {
-        
-        let azF = String(format: "%.3f", self.az)
-        let bzF = String(format: "%.3f", self.bz)
-        let czF = String(format: "%.3f", self.cz)
-        let dzF = String(format: "%.3f", self.dz)
-
-        let gnirts = "Z:  " + azF + "  " + bzF + "  " + czF + "  " + dzF
-        
-        return gnirts
-    }
-    
-
     /// Create a new curve translated, scaled, and rotated by the matrix.
     /// - Parameters:
     ///   - xirtam: Matrix containing translation, rotation, and scaling to be applied
@@ -981,6 +942,46 @@ public struct Cubic: PenCurve   {
         return box
     }
     
+    /// Create a String with X coefficient values to be printed
+    public func coeffX() -> String   {
+        
+        let axF = String(format: "%.3f", self.ax)
+        let bxF = String(format: "%.3f", self.bx)
+        let cxF = String(format: "%.3f", self.cx)
+        let dxF = String(format: "%.3f", self.dx)
+
+        let gnirts = "X:  " + axF + "  " + bxF + "  " + cxF + "  " + dxF
+        
+        return gnirts
+    }
+    
+    /// Create a String with Y coefficient values to be printed
+    public func coeffY() -> String   {
+        
+        let ayF = String(format: "%.3f", self.ay)
+        let byF = String(format: "%.3f", self.by)
+        let cyF = String(format: "%.3f", self.cy)
+        let dyF = String(format: "%.3f", self.dy)
+
+        let gnirts = "Y:  " + ayF + "  " + byF + "  " + cyF + "  " + dyF
+        
+        return gnirts
+    }
+    
+    /// Create a String with Z coefficient values to be printed
+    public func coeffZ() -> String   {
+        
+        let azF = String(format: "%.3f", self.az)
+        let bzF = String(format: "%.3f", self.bz)
+        let czF = String(format: "%.3f", self.cz)
+        let dzF = String(format: "%.3f", self.dz)
+
+        let gnirts = "Z:  " + azF + "  " + bzF + "  " + czF + "  " + dzF
+        
+        return gnirts
+    }
+    
+
     /// Split a range into pieces
     /// - Parameters:
     ///   - pristine: Original parameter range
