@@ -302,7 +302,7 @@ class QuadraticTests: XCTestCase {
         let bladeA1 = Point3D(x: 5.25, y: 5.9, z: 0.5)
         let bladeA2 = Point3D(x: 6.0, y: 0.9, z: 0.5)
 
-        let bladeDir = Vector3D.built(from: bladeA1, towards: bladeA2, unit: true)
+        let bladeDir = Vector3D(from: bladeA1, towards: bladeA2, unit: true)
         
         let cuttingLineA = try! Line(spot: bladeA1, arrow: bladeDir)
         
@@ -315,7 +315,7 @@ class QuadraticTests: XCTestCase {
         let bladeB1 = Point3D(x: 6.75, y: 5.9, z: 0.5)
         let bladeB2 = Point3D(x: 7.5, y: 0.9, z: 0.5)
 
-        let bladeDirB = Vector3D.built(from: bladeB1, towards: bladeB2, unit: true)
+        let bladeDirB = Vector3D(from: bladeB1, towards: bladeB2, unit: true)
         
         let cuttingLineB = try! Line(spot: bladeB1, arrow: bladeDirB)
         
@@ -328,7 +328,7 @@ class QuadraticTests: XCTestCase {
         let bladeC1 = Point3D(x: 3.5, y: 0.9, z: 0.5)
         let bladeC2 = Point3D(x: 6.75, y: 4.9, z: 0.5)
 
-        let bladeDirC = Vector3D.built(from: bladeC1, towards: bladeC2, unit: true)
+        let bladeDirC = Vector3D(from: bladeC1, towards: bladeC2, unit: true)
         
         let cuttingLineC = try! Line(spot: bladeC1, arrow: bladeDirC)
         
@@ -344,7 +344,7 @@ class QuadraticTests: XCTestCase {
         let bladeD1 = Point3D(x: 3.5, y: 0.9, z: 0.5)
         let bladeD2 = Point3D(x: 6.75, y: 4.9, z: 0.75)   // Different Z coordinate
 
-        let bladeDirD = Vector3D.built(from: bladeD1, towards: bladeD2, unit: true)
+        let bladeDirD = Vector3D(from: bladeD1, towards: bladeD2, unit: true)
         
         let cuttingLineD = try! Line(spot: bladeD1, arrow: bladeDirD)
         

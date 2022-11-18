@@ -474,7 +474,7 @@ public class Loop   {
     /// Used for masking triangles with a Loop
     public static func findSplit(a: Point3D, b: Point3D, perimeter: Loop) throws -> [Milestone]   {
         
-        let dir = Vector3D.built(from: a, towards: b, unit: true)
+        let dir = Vector3D(from: a, towards: b, unit: true)
         
         /// Line along edge
         let enil = try! Line(spot: a, arrow: dir)
@@ -714,7 +714,7 @@ public struct Milestone: Hashable   {
         /// This must get used somewhere
         self.loopIndex = xedni
         
-        var thataway = Vector3D.built(from: refLine.getOrigin(), towards: pip)
+        var thataway = Vector3D(from: refLine.getOrigin(), towards: pip)
         
         /// Distance from the origin of the intersecting line. Always positive.
         let dist = thataway.length()

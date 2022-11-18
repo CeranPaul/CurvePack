@@ -43,7 +43,7 @@ public struct Line: Equatable {
         
         self.origin = try! bar.pointAt(t: bar.trimParameters.lowerBound)
         
-        self.direction = Vector3D.built(from: bar.getOneEnd(), towards: bar.getOtherEnd(), unit: true)
+        self.direction = Vector3D(from: bar.getOneEnd(), towards: bar.getOtherEnd(), unit: true)
         
     }
     
@@ -74,7 +74,7 @@ public struct Line: Equatable {
     /// - See: 'testResolveRelativePoint' under LineTests
     public func resolveRelative(yonder: Point3D) -> (along: Double, perp: Double)   {
         
-        let bridge = Vector3D.built(from: self.origin, towards: yonder)
+        let bridge = Vector3D(from: self.origin, towards: yonder)
         let along = Vector3D.dotProduct(lhs: bridge, rhs: self.direction)
         
         let alongVector = self.direction * along
@@ -92,7 +92,7 @@ public struct Line: Equatable {
     /// - SeeAlso:  'resolveRelative(Point)'
     public func resolveRelativeVec(yonder: Point3D) -> (along: Vector3D, perp: Vector3D)   {
         
-        let bridge = Vector3D.built(from: self.origin, towards: yonder)
+        let bridge = Vector3D(from: self.origin, towards: yonder)
         let distAlong = Vector3D.dotProduct(lhs: bridge, rhs: self.direction)
         
         let along = self.direction * distAlong
@@ -127,10 +127,10 @@ public struct Line: Equatable {
         
         if Line.isCoincident(straightA: self, pip: away)   {  return away  }   // Shortcut!
         
-        let bridge = Vector3D.built(from: self.origin, towards: away)
+        let bridge = Vector3D(from: self.origin, towards: away)
         let along = Vector3D.dotProduct(lhs: bridge, rhs: self.direction)
         let alongVector = self.direction * along
-        let onLine = Point3D.offset(pip: self.origin, jump: alongVector)
+        let onLine = Point3D(base: self.origin, offset: alongVector)
         
         return onLine
     }
@@ -198,7 +198,7 @@ public struct Line: Equatable {
         if Line.isParallel(straightA: straightA, straightB: straightB) { return true }
         
         /// Between the origins of the two lines
-        let bridgeVector = Vector3D.built(from: straightA.getOrigin(), towards: straightB.getOrigin(), unit: true)
+        let bridgeVector = Vector3D(from: straightA.getOrigin(), towards: straightB.getOrigin(), unit: true)
         
         if bridgeVector.isZero() { return true }   // Having the same origin means that they intersect.
         
@@ -244,7 +244,7 @@ public struct Line: Equatable {
         if Line.isCoincident(straightA: straightB, pip: straightA.getOrigin())   { return straightA.getOrigin() }
         
         
-        let bridgeVector = Vector3D.built(from: straightA.getOrigin(), towards: straightB.getOrigin())
+        let bridgeVector = Vector3D(from: straightA.getOrigin(), towards: straightB.getOrigin())
         
         /// Components (vectors) of the full-length bridge vector relative to Line straightA
         let comps = straightA.resolveRelativeVec(arrow: bridgeVector)
@@ -261,7 +261,7 @@ public struct Line: Equatable {
         
         let alongB = straightB.getDirection() * lengthB;
         
-        return Point3D.offset(pip: straightB.getOrigin(), jump: alongB);
+        return Point3D(base: straightB.getOrigin(), offset: alongB);
     }
     
     

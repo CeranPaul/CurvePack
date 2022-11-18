@@ -428,7 +428,7 @@ class ArcTests: XCTestCase {
         let rainbow = try! Arc(ctr: pivot, axis: up, start: adam, sweep: Double.pi / 2.0)
         
         let hops = try! rainbow.approximate(allowableCrown: 0.001)
-        XCTAssert(Point3D.isUniquePool(flock: hops))
+        XCTAssert(try! Point3D.isUniquePool(flock: hops))
         
         XCTAssertNoThrow(try rainbow.approximate(allowableCrown: 0.001))
         XCTAssertThrowsError(try rainbow.approximate(allowableCrown: -0.05))
@@ -538,7 +538,7 @@ class ArcTests: XCTestCase {
         let pristine = cup.pointAtAngleGlobal(theta: Double.pi / 2.0)
         
         let shift = Vector3D(i: 0.0, j: 0.5, k: 0.0)
-        let target = Point3D.offset(pip: pristine, jump: shift)
+        let target = Point3D(base: pristine, offset: shift)
         
         let swing = Transform(deltaX: 0.0, deltaY: 0.5, deltaZ: 0.0)
         
@@ -724,7 +724,7 @@ class ArcTests: XCTestCase {
         /// Intersection point of the two boundary lines
         let crux = try! Line.intersectTwo(straightA: laser1, straightB: laser2)
         
-        let heading1 = Vector3D.built(from: crux, towards: myFillet.getCenter())
+        let heading1 = Vector3D(from: crux, towards: myFillet.getCenter())
         
         var iPos = heading1.i > 0.0   // This works only in a plane parallel to XY
         var jPos = heading1.j > 0.0
@@ -733,7 +733,7 @@ class ArcTests: XCTestCase {
         
         let myFillet2 = try! Arc.buildFillet(straight1: laser1, straight2: laser2, rad: filletRad, keepNear1: false, keepNear2: true)
         
-        let heading2 = Vector3D.built(from: crux, towards: myFillet2.getCenter())
+        let heading2 = Vector3D(from: crux, towards: myFillet2.getCenter())
         
         iPos = heading2.i > 0.0   // This works only in a plane parallel to XY
         jPos = heading2.j > 0.0
@@ -742,7 +742,7 @@ class ArcTests: XCTestCase {
         
         let myFillet3 = try! Arc.buildFillet(straight1: laser1, straight2: laser2, rad: filletRad, keepNear1: true, keepNear2: false)
         
-        let heading3 = Vector3D.built(from: crux, towards: myFillet3.getCenter())
+        let heading3 = Vector3D(from: crux, towards: myFillet3.getCenter())
         
         iPos = heading3.i > 0.0   // This works only in a plane parallel to XY
         jPos = heading3.j > 0.0
@@ -752,7 +752,7 @@ class ArcTests: XCTestCase {
         
         let myFillet4 = try! Arc.buildFillet(straight1: laser1, straight2: laser2, rad: filletRad, keepNear1: false, keepNear2: false)
         
-        let heading4 = Vector3D.built(from: crux, towards: myFillet4.getCenter())
+        let heading4 = Vector3D(from: crux, towards: myFillet4.getCenter())
         
         iPos = heading4.i > 0.0   // This works only in a plane parallel to XY
         jPos = heading4.j > 0.0

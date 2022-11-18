@@ -34,7 +34,7 @@ class Point3DTests: XCTestCase {
         
         let jump = Vector3D(i: 1.5, j: 1.5, k: 1.5)
         
-        let tip = Point3D.offset(pip: local, jump: jump)
+        let tip = Point3D(base: local, offset: jump)
         
         XCTAssert(tip.x == 0.5)
         XCTAssert(tip.y == 3.5)
@@ -263,14 +263,14 @@ class Point3DTests: XCTestCase {
         pond.append(ptD)
         
         
-        var light = Point3D.isUniquePool(flock: pond)
+        var light = try! Point3D.isUniquePool(flock: pond)
         XCTAssert(light)
         
         
         let ptE = Point3D(x: 5.0, y: 5.0, z: 2.0)
         pond.append(ptE)
         
-        light = Point3D.isUniquePool(flock: pond)
+        light = try! Point3D.isUniquePool(flock: pond)
         XCTAssertFalse(light)
         
     }

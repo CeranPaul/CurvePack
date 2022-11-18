@@ -58,7 +58,7 @@ public struct Arc: PenCurve, Equatable   {
         guard axis.isUnit() else { throw NonUnitDirectionError(dir: axis) }
         
         /// What can be considered horizontal for this Arc
-        let baseline = Vector3D.built(from: ctr, towards: start, unit: true)
+        let baseline = Vector3D(from: ctr, towards: start, unit: true)
         
         let myDot = Vector3D.dotProduct(lhs: axis, rhs: baseline)
         
@@ -131,9 +131,9 @@ public struct Arc: PenCurve, Equatable   {
         self.radius = rad1
         
         /// What can be considered horizontal for this Arc
-        let baseline = Vector3D.built(from: center, towards: end1, unit: true)
+        let baseline = Vector3D(from: center, towards: end1, unit: true)
         
-        let buttress = Vector3D.built(from: center, towards: end2, unit: true)
+        let buttress = Vector3D(from: center, towards: end2, unit: true)
         
         var up = try Vector3D.crossProduct(lhs: baseline, rhs: buttress)
         up.normalize()
@@ -179,9 +179,9 @@ public struct Arc: PenCurve, Equatable   {
         guard delta > -1.0 * alpha.getRadius() else { throw CoincidentPointsError(dupePt: alpha.getCenter())  }
         
         /// Normalized vector towards the start of the Arc.
-        let thataway = Vector3D.built(from: alpha.getCenter(), towards: alpha.getOneEnd(), unit: true)
+        let thataway = Vector3D(from: alpha.getCenter(), towards: alpha.getOneEnd(), unit: true)
          
-        let startOffset = Point3D.offset(pip: alpha.getOneEnd(), jump: thataway * delta)
+        let startOffset = Point3D(base: alpha.getOneEnd(), offset: thataway * delta)
         
         let freshArc = try! Arc(ctr: alpha.getCenter(), axis: alpha.getAxisDir(), start: startOffset, sweep: alpha.getSweepAngle())
         
@@ -475,7 +475,7 @@ public struct Arc: PenCurve, Equatable   {
         self.startPt = oldFinish
         self.sweepAngle = freshSweep
         
-        let baseline = Vector3D.built(from: self.center, towards: self.startPt, unit: true)
+        let baseline = Vector3D(from: self.center, towards: self.startPt, unit: true)
         
         /// Coordinate system
         let csys = try! CoordinateSystem(origin: self.center, refDirection: baseline, normal: self.axis)
@@ -519,7 +519,7 @@ public struct Arc: PenCurve, Equatable   {
         
         
            // For the case of the line being parallel and offset to the plane of the circle.
-        let bridge = Vector3D.built(from: ray.getOrigin(), towards: self.getCenter(), unit: true)
+        let bridge = Vector3D(from: ray.getOrigin(), towards: self.getCenter(), unit: true)
         projection = Vector3D.dotProduct(lhs: bridge, rhs: self.axis)
         
         if abs(projection) > 0.0   { return crossings }
@@ -528,13 +528,13 @@ public struct Arc: PenCurve, Equatable   {
         var jump = ray.getDirection() * legs.along
         
         /// Point on the line that is closest to the Arc center.
-        let lineNearest = Point3D.offset(pip: ray.getOrigin(), jump: jump)
+        let lineNearest = Point3D(base: ray.getOrigin(), offset: jump)
         
         /// Distance along the line to potential intersection points.
         let component = sqrt(self.radius * self.radius - legs.perp * legs.perp)
         
         jump = ray.getDirection() * component
-        let possible1 = Point3D.offset(pip: lineNearest, jump: jump)
+        let possible1 = Point3D(base: lineNearest, offset: jump)
         
         let poss1Loc = possible1.transform(xirtam: self.fromGlobal)
         let theta1 = atan2(poss1Loc.y, poss1Loc.x)   // Be careful with the range of the result!
@@ -570,7 +570,7 @@ public struct Arc: PenCurve, Equatable   {
 
         
         jump = jump.reverse()
-        let possible2 = Point3D.offset(pip: lineNearest, jump: jump)
+        let possible2 = Point3D(base: lineNearest, offset: jump)
 
         let poss2Loc = possible2.transform(xirtam: self.fromGlobal)
         let theta2 = atan2(poss2Loc.y, poss2Loc.x)   // Be careful with the range of the result!
@@ -674,8 +674,8 @@ public struct Arc: PenCurve, Equatable   {
         }
         
         
-        let constLine1Origin = Point3D.offset(pip: straight1.getOrigin(), jump: offset1Vec)
-        let constLine2Origin = Point3D.offset(pip: straight2.getOrigin(), jump: offset2Vec)
+        let constLine1Origin = Point3D(base: straight1.getOrigin(), offset: offset1Vec)
+        let constLine2Origin = Point3D(base: straight2.getOrigin(), offset: offset2Vec)
         
         let constLine1 = try! Line(spot: constLine1Origin, arrow: straight1.getDirection())
         let constLine2 = try! Line(spot: constLine2Origin, arrow: straight2.getDirection())
@@ -722,15 +722,15 @@ public struct Arc: PenCurve, Equatable   {
         let offsetDir = try! Vector3D.crossProduct(lhs: straight1.getDirection(), rhs: circleFrag.getAxisDir())
         
         if keepNear1 { jump = rad }  else  { jump = -rad }
-        let offsetSpot = Point3D.offset(pip: straight1.getOrigin(), jump: offsetDir * jump)
+        let offsetSpot = Point3D(base: straight1.getOrigin(), offset: offsetDir * jump)
                 
         let offsetLine = try! Line(spot: offsetSpot, arrow: straight1.getDirection())
         
-        let inward = Vector3D.built(from: circleFrag.getOneEnd(), towards: circleFrag.getCenter(), unit: true)
+        let inward = Vector3D(from: circleFrag.getOneEnd(), towards: circleFrag.getCenter(), unit: true)
         
         if keepNear2 { jump = rad }  else  { jump = -rad }
         
-        let offsetStart = Point3D.offset(pip: circleFrag.getOneEnd(), jump: inward * jump)
+        let offsetStart = Point3D(base: circleFrag.getOneEnd(), offset: inward * jump)
         let offsetArc = try! Arc(ctr: circleFrag.getCenter(), axis: circleFrag.getAxisDir(), start: offsetStart, sweep: circleFrag.getSweepAngle())
         
         ///Intersection between the offset Line and the offset Arc.
@@ -740,11 +740,11 @@ public struct Arc: PenCurve, Equatable   {
         /// Tangent point on straight1
         let lineTan = straight1.dropPoint(away: filletCtr)
         
-        let radial = Vector3D.built(from: circleFrag.getCenter(), towards: filletCtr, unit: true)
+        let radial = Vector3D(from: circleFrag.getCenter(), towards: filletCtr, unit: true)
         let myJump = radial * circleFrag.getRadius()
         
         /// Tangent point on the input Arc
-        let circleTan = Point3D.offset(pip: circleFrag.getCenter(), jump: myJump)
+        let circleTan = Point3D(base: circleFrag.getCenter(), offset: myJump)
         
         let filletArc = try! Arc(center: filletCtr, end1: circleTan, end2: lineTan, useSmallAngle: true)
         
@@ -795,15 +795,15 @@ public struct Arc: PenCurve, Equatable   {
 
                 
         /// Points to define an Arc in the convex case
-        var arcEndSurfA = Point3D.offset(pip: pip, jump: faceNormalB * -filletRad)
-        var arcEndSurfB = Point3D.offset(pip: pip, jump: faceNormalA * -filletRad)
-        var center = Point3D.offset(pip: arcEndSurfA, jump: faceNormalA * -filletRad)
+        var arcEndSurfA = Point3D(base: pip, offset: faceNormalB * -filletRad)
+        var arcEndSurfB = Point3D(base: pip, offset: faceNormalA * -filletRad)
+        var center = Point3D(base: arcEndSurfA, offset: faceNormalA * -filletRad)
 
         if !convex   {
             
-            arcEndSurfA = Point3D.offset(pip: pip, jump: faceNormalA * filletRad)
-            arcEndSurfB = Point3D.offset(pip: pip, jump: faceNormalB * filletRad)
-            center = Point3D.offset(pip: arcEndSurfA, jump: faceNormalB * filletRad)
+            arcEndSurfA = Point3D(base: pip, offset: faceNormalA * filletRad)
+            arcEndSurfB = Point3D(base: pip, offset: faceNormalB * filletRad)
+            center = Point3D(base: arcEndSurfA, offset: faceNormalB * filletRad)
 
         }
         

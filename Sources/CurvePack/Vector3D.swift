@@ -31,6 +31,43 @@ public struct Vector3D: Equatable {
     
 
     
+    /// Construct vector from first input point towards the second
+    /// Does not check for a zero vector
+    /// - Parameters:
+    ///   - from: Start point
+    ///   - towards: End point
+    ///   - unit: Optional - Whether or not the result should be a unit vector
+    /// - Returns: A new Vector
+    /// - See: 'testBuiltFrom' under Vector3DTests
+    public init(from: Point3D, towards: Point3D, unit: Bool = false) {
+        
+        // Should a guard statement be added for CoincidentPoints?
+        var deltaX = towards.x - from.x
+        var deltaY = towards.y - from.y
+        var deltaZ = towards.z - from.z
+        
+        if unit   {
+            
+            let len = sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ)
+            
+            if len > Vector3D.EpsilonV   {
+                deltaX = deltaX / len
+                deltaY = deltaY / len
+                deltaZ = deltaZ / len
+            } else {
+                deltaX = 0.0
+                deltaY = 0.0
+                deltaZ = 0.0
+            }
+        }
+        
+        self.i = deltaX
+        self.j = deltaY
+        self.k = deltaZ
+
+    }
+    
+    
     /// Destructively make this a unit vector
     /// - See: 'testNormalize' under Vector3DTests
     public mutating func normalize()   {
@@ -122,40 +159,6 @@ public struct Vector3D: Equatable {
         rotated.normalize()
         
         return rotated
-    }
-    
-    
-    /// Construct vector from first input point towards the second
-    /// Does not check for a zero vector
-    /// - Parameters:
-    ///   - from: Start point
-    ///   - towards: End point
-    ///   - unit: Optional - Whether or not the result should be a unit vector
-    /// - Returns: A new Vector
-    /// - See: 'testBuiltFrom' under Vector3DTests
-    public static func built(from: Point3D, towards: Point3D, unit: Bool = false) -> Vector3D {
-        
-        // Should a guard statement be added for CoincidentPoints?
-        var deltaX = towards.x - from.x
-        var deltaY = towards.y - from.y
-        var deltaZ = towards.z - from.z
-        
-        if unit   {
-            
-            let len = sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ)
-            
-            if len > Vector3D.EpsilonV   {
-                deltaX = deltaX / len
-                deltaY = deltaY / len
-                deltaZ = deltaZ / len
-            } else {
-                deltaX = 0.0
-                deltaY = 0.0
-                deltaZ = 0.0
-            }
-        }
-        
-        return Vector3D(i: deltaX, j: deltaY, k: deltaZ)
     }
     
     

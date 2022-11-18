@@ -106,7 +106,7 @@ class Vector3DTests: XCTestCase {
         XCTAssertFalse(ping == pong2)
     }
     
-    // Test a common construction operation
+
     /// Needs to have a test for the optional parameter
     func testBuiltFrom()   {
         
@@ -115,7 +115,7 @@ class Vector3DTests: XCTestCase {
         
         var target = Vector3D(i: 13.5, j: -1.85, k: 4.7)
         
-        var trial = Vector3D.built(from: alpha, towards: beta)
+        var trial = Vector3D(from: alpha, towards: beta)
         
         XCTAssert(trial == target)
         
@@ -125,7 +125,7 @@ class Vector3DTests: XCTestCase {
         
         target = Vector3D(i: 13.5, j: -1.85, k: 4.7)
         
-        trial = Vector3D.built(from: alpha, towards: beta, unit: true)
+        trial = Vector3D(from: alpha, towards: beta, unit: true)
         
         XCTAssert(trial.isUnit())
 

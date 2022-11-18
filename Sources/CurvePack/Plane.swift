@@ -55,8 +55,8 @@ public struct Plane: Equatable   {
         
         self.location = alpha
         
-        let thisWay = Vector3D.built(from: alpha, towards: beta)
-        let thatWay = Vector3D.built(from: alpha, towards: gamma)
+        let thisWay = Vector3D(from: alpha, towards: beta)
+        let thatWay = Vector3D(from: alpha, towards: gamma)
         
         var perpTo = try! Vector3D.crossProduct(lhs: thisWay, rhs: thatWay)   // The 'linear' guard statement protects this
         perpTo.normalize()
@@ -147,7 +147,7 @@ public struct Plane: Equatable   {
             return (inPlane, perp)
         }
         
-        let bridge = Vector3D.built(from: flat.getLocation(), towards: pip)
+        let bridge = Vector3D(from: flat.getLocation(), towards: pip)
         
         let amountOut = Vector3D.dotProduct(lhs: bridge, rhs: flat.getNormal())
         perp = flat.normal * amountOut
@@ -206,7 +206,7 @@ public struct Plane: Equatable   {
         if pip == flat.getLocation()   {  return true  }   // Shortcut!
         
         
-        let bridge = Vector3D.built(from: flat.location, towards: pip)
+        let bridge = Vector3D(from: flat.location, towards: pip)
         
         // This can be positive, negative, or zero
         let distanceOffPlane = Vector3D.dotProduct(lhs: bridge, rhs: flat.getNormal())
@@ -283,7 +283,7 @@ public struct Plane: Equatable   {
         let jump = base.normal * offset    // Offset could be a negative number
         
         let origPoint = base.location
-        let newLoc = Point3D.offset(pip: origPoint, jump: jump)
+        let newLoc = Point3D(base: origPoint, offset: jump)
         
         
         var newNorm = base.normal
@@ -347,7 +347,7 @@ public struct Plane: Equatable   {
         
         let projectedLineOrigin = try Plane.projectToPlane(pip: enil.getOrigin(), enalp: enalp)
         
-        let drop = Vector3D.built(from: enil.getOrigin(), towards: projectedLineOrigin, unit: true)
+        let drop = Vector3D(from: enil.getOrigin(), towards: projectedLineOrigin, unit: true)
         
         let closure = Vector3D.dotProduct(lhs: enil.getDirection(), rhs: drop)
         
@@ -361,7 +361,7 @@ public struct Plane: Equatable   {
         
         let inPlaneOffset = lineInPlaneComponent * factor
         
-        return Point3D.offset(pip: projectedLineOrigin, jump: inPlaneOffset)
+        return Point3D(base: projectedLineOrigin, offset: inPlaneOffset)
     }
     
     
@@ -419,7 +419,7 @@ public struct Plane: Equatable   {
         
         let planeCenter = enalp.getLocation()   // Referred to multiple times
         
-        let bridge = Vector3D.built(from: planeCenter, towards: pip)   // Not normalized
+        let bridge = Vector3D(from: planeCenter, towards: pip)   // Not normalized
         
         // This can be positive, or negative
         let distanceOffPlane = Vector3D.dotProduct(lhs: bridge, rhs: enalp.getNormal())
@@ -428,7 +428,7 @@ public struct Plane: Equatable   {
         let bridgeNormComponent = enalp.getNormal() * distanceOffPlane
         let bridgeInPlaneComponent = bridge - bridgeNormComponent
         
-        return Point3D.offset(pip: planeCenter, jump: bridgeInPlaneComponent)   // Ignore the component normal to the plane
+        return Point3D(base: planeCenter, offset: bridgeInPlaneComponent)   // Ignore the component normal to the plane
     }
         
 }

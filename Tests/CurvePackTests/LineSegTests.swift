@@ -263,7 +263,7 @@ class LineSegTests: XCTestCase {
         let ptC = Point3D(x: 3.0, y: 2.0, z: 5.0)
         let ptD = Point3D(x: 1.0, y: 4.0, z: 5.0)
         
-        var dir = Vector3D.built(from: ptC, towards: ptD, unit: true)
+        var dir = Vector3D(from: ptC, towards: ptD, unit: true)
         
         let cliff = try! Line(spot: ptC, arrow: dir)
         
@@ -278,7 +278,7 @@ class LineSegTests: XCTestCase {
         let ptE = Point3D(x: 5.0, y: 1.0, z: 5.0)
         let ptF = Point3D(x: 1.0, y: 5.0, z: 5.0)
         
-        dir = Vector3D.built(from: ptE, towards: ptF, unit: true)
+        dir = Vector3D(from: ptE, towards: ptF, unit: true)
         let cliff2 = try! Line(spot: ptE, arrow: dir)
 
         XCTAssertThrowsError(try plateau.intersect(ray: cliff2))

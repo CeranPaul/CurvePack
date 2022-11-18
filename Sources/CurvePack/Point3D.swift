@@ -10,6 +10,7 @@ import Foundation
 import CoreGraphics
 
 /// Simple representation of a position in space by the use of three orthogonal coordinates.
+/// As an 'open' class so that children can be created.
 open class Point3D: Hashable {
     
     public var x: Double 
@@ -21,13 +22,30 @@ open class Point3D: Hashable {
     public static var Epsilon: Double = 0.0001
     
     
-    /// The simplest and only initializer.  Needed because a default initializer has 'internal' access level.
+    /// The simplest constructor.  Needed because a default initializer has 'internal' access level.
     /// - See: 'testFidelity' under Point3DTests
     public init(x: Double, y: Double, z: Double)   {
         self.x = x
         self.y = y
         self.z = z
     }
+    
+    
+    /// Create a new point by offsetting
+    /// - Parameters:
+    ///   - pip: Original point
+    ///   - offset: Vector to be used as the offset
+    /// - Returns: New point
+    /// - SeeAlso: transform
+    /// - See: 'testOffset' under Point3DTests
+    public init (base: Point3D, offset: Vector3D)   {
+        
+        self.x = base.x + offset.i
+        self.y = base.y + offset.j
+        self.z = base.z + offset.k
+    
+    }
+    
     
     
     /// Generate the unique value using Swift 4.2 tools
@@ -50,22 +68,6 @@ open class Point3D: Hashable {
         
     }
 
-    
-    /// Create a new point by offsetting
-    /// - Parameters:
-    ///   - pip: Original point
-    ///   - jump: Vector to be used as the offset
-    /// - Returns: New point
-    /// - SeeAlso: transform
-    /// - See: 'testOffset' under Point3DTests
-    public static func offset (pip: Point3D, jump: Vector3D) -> Point3D   {
-        
-        let totalX = pip.x + jump.i
-        let totalY = pip.y + jump.j
-        let totalZ = pip.z + jump.k
-    
-        return Point3D(x: totalX, y: totalY, z: totalZ)
-    }
     
     /// Move, rotate, and/or scale by a matrix
     /// - Parameters:
@@ -94,7 +96,7 @@ open class Point3D: Hashable {
         let deltaComponents = Plane.resolveRelativeVec(flat: flat, pip: self)
         
         let jump = deltaComponents.perp * -2.0
-        let fairest = Point3D.offset(pip: self, jump: jump)
+        let fairest = Point3D(base: self, offset: jump)
         
         return fairest
     }
@@ -136,9 +138,10 @@ open class Point3D: Hashable {
     ///   - beta: Point of interest
     /// - Returns: Angle in radians in a range from -pi to pi
     /// - See: 'testAngleAbout' under Point3DTests
+    /// - See: 'figCCWAngle'
     public static func angleAbout(ctr: Point3D, tniop: Point3D) -> Double  {
         
-        let vec1 = Vector3D.built(from: ctr, towards: tniop)    // No need to normalize
+        let vec1 = Vector3D(from: ctr, towards: tniop)    // No need to normalize
         var ang = atan(vec1.j / vec1.i)
         
         if vec1.i < 0.0   {
@@ -154,6 +157,36 @@ open class Point3D: Hashable {
     }
     
     
+    ///Figure the counterclockwise angle of the point. 0.0 -> 2 Pi
+    /// - See: 'angleAbout'
+    public static func figCCWAngle(pip: Point3D) -> Double   {
+        
+        let radial = Vector3D(i: pip.x, j: pip.y, k: 0.0)    // No need to normalize
+        var angle = atan(radial.j / radial.i)
+        
+        let iPos = radial.i >= 0.0
+        let jPos = radial.j >= 0.0
+        
+        switch (iPos, jPos)   {
+            
+        case (true, true):
+            angle = atan(radial.j / radial.i)
+            
+        case (false, true):
+            angle = atan(radial.j / radial.i) + Double.pi
+            
+        case (false, false):
+            angle = atan(radial.j / radial.i) + Double.pi
+            
+        case (true, false):
+            angle = atan(radial.j / radial.i) + 2.0 * Double.pi
+            
+        }
+                    
+        return angle
+    }
+    
+
     /// Check that three points are not duplicate.  Useful for building triangles, or defining arcs
     /// - Parameters:
     ///   - alpha:  A test point
@@ -161,7 +194,7 @@ open class Point3D: Hashable {
     ///   - gamma:  The final test point
     /// - Returns: Simple flag
     /// - See: 'testIsThreeUnique' under Point3DTests
-    public static func  isThreeUnique(alpha: Point3D, beta: Point3D, gamma: Point3D) -> Bool   {
+    public static func isThreeUnique(alpha: Point3D, beta: Point3D, gamma: Point3D) -> Bool   {
         
         let flag1 = alpha != beta
         let flag2 = alpha != gamma
@@ -181,8 +214,8 @@ open class Point3D: Hashable {
     /// - See: 'testIsThreeLinear' under Point3DTests
     public static func isThreeLinear(alpha: Point3D, beta: Point3D, gamma: Point3D) -> Bool   {
         
-        let thisWay = Vector3D.built(from: alpha, towards: beta)
-        let thatWay = Vector3D.built(from: alpha, towards: gamma)
+        let thisWay = Vector3D(from: alpha, towards: beta)
+        let thatWay = Vector3D(from: alpha, towards: gamma)
 
         let flag1 = try! Vector3D.isScaled(lhs: thisWay, rhs: thatWay)
         
@@ -195,7 +228,11 @@ open class Point3D: Hashable {
     ///   - flock:  A collection of points
     /// - Returns: A simple flag
     /// - See: 'testUniquePool' under Point3DTests
-    public static func isUniquePool(flock: [Point3D]) -> Bool   {
+    /// - Throws:
+    ///     - TinyArrayError if the input is lame
+    public static func isUniquePool(flock: [Point3D]) throws -> Bool   {
+        
+        guard !flock.isEmpty  else  { throw TinyArrayError(tnuoc: flock.count)}
         
         /// A hash set
         let pool = Set<Point3D>(flock)
@@ -230,6 +267,8 @@ open class Point3D: Hashable {
     }
     
 }
+
+
 /// Check to see that the distance between the two is less than Point3D.Epsilon
 /// - See: 'testEqual' under Point3DTests
 public func == (lhs: Point3D, rhs: Point3D) -> Bool   {

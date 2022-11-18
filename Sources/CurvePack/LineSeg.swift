@@ -80,7 +80,7 @@ public struct LineSeg: PenCurve, Equatable {
     /// - Returns: Unit vector
     public func getDirection() -> Vector3D   {
         
-        return Vector3D.built(from: self.endAlpha, towards: self.endOmega, unit: true)
+        return Vector3D(from: self.endAlpha, towards: self.endOmega, unit: true)
     }
     
     
@@ -104,11 +104,11 @@ public struct LineSeg: PenCurve, Equatable {
         }
         
 
-        let wholeVector = Vector3D.built(from: self.endAlpha, towards: self.endOmega, unit: false)
+        let wholeVector = Vector3D(from: self.endAlpha, towards: self.endOmega, unit: false)
         
         let scaled = wholeVector * t
         
-        let spot = Point3D.offset(pip: self.endAlpha, jump: scaled)
+        let spot = Point3D(base: self.endAlpha, offset: scaled)
         
         return spot
     }
@@ -136,7 +136,7 @@ public struct LineSeg: PenCurve, Equatable {
             guard self.trimParameters.contains(t) else { throw ParameterRangeError(parA: t) }
         }
         
-        let along = Vector3D.built(from: self.endAlpha, towards: self.endOmega)
+        let along = Vector3D(from: self.endAlpha, towards: self.endOmega)
         return along
     }
     
@@ -229,7 +229,7 @@ public struct LineSeg: PenCurve, Equatable {
         /// Direction of the segment.  Is a unit vector.
         let thisWay = self.getDirection()
         
-        let bridge = Vector3D.built(from: self.endAlpha, towards: speck)
+        let bridge = Vector3D(from: self.endAlpha, towards: speck)
         
         let along = Vector3D.dotProduct(lhs: bridge, rhs: thisWay)
         let alongVector = thisWay * along
@@ -332,7 +332,7 @@ public struct LineSeg: PenCurve, Equatable {
         else {
             if relPos.along.length() < curveLength   {
                 
-                let lsDir = Vector3D.built(from: self.endAlpha, towards: endOmega, unit: true)
+                let lsDir = Vector3D(from: self.endAlpha, towards: endOmega, unit: true)
                 var dupe = relPos.along
                 dupe.normalize()
                 
@@ -373,7 +373,7 @@ public struct LineSeg: PenCurve, Equatable {
         let collision = try! Line.intersectTwo(straightA: unbounded, straightB: ray)
         
         /// Vector from segment origin towards intersection. Possible to be zero length.
-        let towardsInt = Vector3D.built(from: self.getOneEnd(), towards: collision, unit: true)
+        let towardsInt = Vector3D(from: self.getOneEnd(), towards: collision, unit: true)
         
         if towardsInt.isZero()   {   // Intersection at first end.
             let frontPt = PointCrv(x: self.getOneEnd().x, y: self.getOneEnd().y, z: self.getOneEnd().z, t: self.trimParameters.lowerBound)
@@ -447,7 +447,7 @@ public struct LineSeg: PenCurve, Equatable {
         guard up.isUnit() else { throw NonUnitDirectionError(dir: up) }
         
         
-        let along = Vector3D.built(from: ptA, towards: ptB, unit: true)
+        let along = Vector3D(from: ptA, towards: ptB, unit: true)
         
         var inward = try Vector3D.crossProduct(lhs: up, rhs: along)
         inward.normalize()
@@ -494,10 +494,10 @@ public struct LineSeg: PenCurve, Equatable {
     
     
     /// Tally up the distances
-    /// Should this be moved to be part of LineSeg? Would need to 'static'.
     /// - Parameters:
     ///   - sticks: LineSegs to be checked
     /// - Returns: Double
+    /// See 'testLengthSum' in LineSeg.tests
     public static func sumLengths(sticks: [LineSeg]) -> Double   {
         
         let spans = sticks.map( { $0.getLength() } )
@@ -510,14 +510,15 @@ public struct LineSeg: PenCurve, Equatable {
     }
     
     
-    /// Check continuity of a possibly unordered Array. This should probably be in class LineSeg.
+    
+    /// Check continuity of a possibly unordered Array.
     /// Does not check for a chain that branches. There isn't anything that keeps this from working on other PenCurves.
     /// - Parameters:
     ///   - rawSegs: Collection of segments that may not be in nose-to-tail order
     /// - Returns: Simple flag
     /// - Throws:
     ///     - TinyArrayError for an Array with too few members
-    /// See 'testIsClosedChain' in MeshGen.tests
+    /// See 'testIsClosedChain' in LineSeg.tests
     public static func isClosedChain(rawSegs: [LineSeg]) throws -> Bool   {
         
         guard rawSegs.count > 2  else { throw TinyArrayError(tnuoc: rawSegs.count) }
@@ -554,13 +555,13 @@ public struct LineSeg: PenCurve, Equatable {
     }
 
     
+    
     /// Order a set of LineSegs that make up a ring. The Array may come from a filtering operation. Will this work with other PenCurves?
-    /// Does this belong in class LineSeg?
     /// - Parameter rawSegs: Collection of segments that may not be in nose-to-tail order
     /// - Returns: Ordered Array of LineSegs
     /// - Throws:
     ///     - TinyArrayError for an Array with too few members
-    /// See 'testOrderRing' in MeshGen.tests
+    /// See 'testOrderRing' in LineSeg.tests
     public static func orderRing(rawSegs: [LineSeg]) throws -> [LineSeg]   {
         
         guard rawSegs.count > 2  else { throw TinyArrayError(tnuoc: rawSegs.count) }

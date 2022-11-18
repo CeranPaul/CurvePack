@@ -39,7 +39,7 @@ public struct Involute   {
         let rayVec = Vector3D(i: cos(angle), j: sin(angle), k: 0.0)
         
         /// Point on the base circle at the specified angle
-        let tangentPt = Point3D.offset(pip: center, jump: rayVec * self.baseRadius)
+        let tangentPt = Point3D(base: center, offset: rayVec * self.baseRadius)
         
         
         /// This uses the assumption that the curve is in the XY plane
@@ -53,7 +53,7 @@ public struct Involute   {
         let cordLength = angle * self.baseRadius
         
         /// The point on the involute curve and the return value
-        let toothPoint = Point3D.offset(pip: tangentPt, jump: cordVec * cordLength)
+        let toothPoint = Point3D(base: tangentPt, offset: cordVec * cordLength)
         
         return toothPoint
     }
@@ -142,7 +142,7 @@ public struct Involute   {
         let beforePoint = self.pointAtAngle(angle: angle - tinyDelta)
         let afterPoint = self.pointAtAngle(angle: angle + tinyDelta)
         
-        let fauxTangent = Vector3D.built(from: beforePoint, towards: afterPoint, unit: true)
+        let fauxTangent = Vector3D(from: beforePoint, towards: afterPoint, unit: true)
         
         let positiveZ = Vector3D(i: 0.0, j: 0.0, k: 1.0)
         

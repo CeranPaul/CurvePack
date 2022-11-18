@@ -146,7 +146,7 @@ public struct Cubic: PenCurve   {
     public init(ptA: Point3D, controlA: Point3D, controlB: Point3D, ptB: Point3D) throws   {
         
         let pool = [ptA, controlA, controlB, ptB]
-        guard Point3D.isUniquePool(flock: pool) else { throw CoincidentPointsError(dupePt: ptA)}
+        guard try! Point3D.isUniquePool(flock: pool) else { throw CoincidentPointsError(dupePt: ptA)}
         
         // TODO: Then add tests to see that the guard statements are doing their job
         
@@ -195,7 +195,7 @@ public struct Cubic: PenCurve   {
         guard self.trimParameters.contains(gammaFraction) else { throw ParameterRangeError(parA: gammaFraction) }
         
         let pool = [alpha, beta, gamma, delta]
-        guard Point3D.isUniquePool(flock: pool) else { throw CoincidentPointsError(dupePt: alpha)}
+        guard try! Point3D.isUniquePool(flock: pool) else { throw CoincidentPointsError(dupePt: alpha)}
         
         // TODO: Then add tests to see that the guard statements are doing their job
         
@@ -267,7 +267,7 @@ public struct Cubic: PenCurve   {
         
         let pool = [alpha, beta, gamma]
         
-        guard Point3D.isUniquePool(flock: pool)  else  { throw CoincidentPointsError(dupePt: alpha) }
+        guard try! Point3D.isUniquePool(flock: pool)  else  { throw CoincidentPointsError(dupePt: alpha) }
         
         
         let wholeRange = ClosedRange<Double>(uncheckedBounds: (lower: 0.0, upper: 1.0))

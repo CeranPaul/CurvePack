@@ -65,12 +65,12 @@ class CubicTests: XCTestCase {
         let alpha = Point3D(x: 2.3, y: 1.5, z: 0.7)
         let alSlope = Vector3D(i: 0.866, j: 0.5, k: 0.0)
         
-        let control1 = Point3D.offset(pip: alpha, jump: alSlope)
+        let control1 = Point3D(base: alpha, offset: alSlope)
         
         let beta = Point3D(x: 3.1, y: 1.6, z: 0.7)
         let betSlope = Vector3D(i: 0.866, j: -0.5, k: 0.0)
         let bReverse = betSlope.reverse()
-        let control2 = Point3D.offset(pip: beta, jump: bReverse)
+        let control2 = Point3D(base: beta, offset: bReverse)
         
         let bump = try! Cubic(ptA: alpha, controlA: control1, controlB: control2, ptB: beta)
         
@@ -93,12 +93,12 @@ class CubicTests: XCTestCase {
         let alpha = Point3D(x: 2.3, y: 1.5, z: 0.7)
         let alSlope = Vector3D(i: 0.866, j: 0.5, k: 0.0)
         
-        let control1 = Point3D.offset(pip: alpha, jump: alSlope)
+        let control1 = Point3D(base: alpha, offset: alSlope)
         
         let beta = Point3D(x: 3.1, y: 1.6, z: 0.7)
         let betSlope = Vector3D(i: 0.866, j: -0.5, k: 0.0)
         let bReverse = betSlope.reverse()
-        let control2 = Point3D.offset(pip: beta, jump: bReverse)
+        let control2 = Point3D(base: beta, offset: bReverse)
         
         let bump = try! Cubic(ptA: alpha, controlA: control1, controlB: control2, ptB: beta)
         
@@ -201,12 +201,12 @@ class CubicTests: XCTestCase {
         let alpha = Point3D(x: 2.3, y: 1.5, z: 0.7)
         let alSlope = Vector3D(i: 0.866, j: 0.5, k: 0.0)
         
-        let control1 = Point3D.offset(pip: alpha, jump: alSlope)
+        let control1 = Point3D(base: alpha, offset: alSlope)
         
         let beta = Point3D(x: 3.1, y: 1.6, z: 0.7)
         let betSlope = Vector3D(i: 0.866, j: -0.5, k: 0.0)
         let bReverse = betSlope.reverse()
-        let control2 = Point3D.offset(pip: beta, jump: bReverse)
+        let control2 = Point3D(base: beta, offset: bReverse)
         
         let bump = try! Cubic(ptA: alpha, controlA: control1, controlB: control2, ptB: beta)
         
@@ -470,7 +470,7 @@ class CubicTests: XCTestCase {
         let scissorA2 = Point3D(x: 3.5, y: 4.75, z: 1.25)
         
         
-        var traj = Vector3D.built(from: scissorA1, towards: scissorA2, unit: true)
+        var traj = Vector3D(from: scissorA1, towards: scissorA2, unit: true)
         
         var zorro = try! Line(spot: scissorA1, arrow: traj)
         
@@ -483,7 +483,7 @@ class CubicTests: XCTestCase {
         let scissorB2 = Point3D(x: 3.5, y: 0.875, z: 1.25)
         
         
-        traj = Vector3D.built(from: scissorB1, towards: scissorB2, unit: true)
+        traj = Vector3D(from: scissorB1, towards: scissorB2, unit: true)
         
         zorro = try! Line(spot: scissorB1, arrow: traj)
         
@@ -496,7 +496,7 @@ class CubicTests: XCTestCase {
         let scissorC2 = Point3D(x: 4.15, y: 4.05, z: 1.25)
         
         
-        traj = Vector3D.built(from: scissorC1, towards: scissorC2, unit: true)
+        traj = Vector3D(from: scissorC1, towards: scissorC2, unit: true)
         
         zorro = try! Line(spot: scissorC1, arrow: traj)
         

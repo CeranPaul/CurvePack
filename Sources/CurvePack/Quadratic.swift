@@ -57,7 +57,7 @@ public struct Quadratic: PenCurve   {
     public init(ptA: Point3D, controlA: Point3D, ptB: Point3D) throws   {
         
         let pool = [ptA, controlA, ptB]
-        guard Point3D.isUniquePool(flock: pool) else { throw CoincidentPointsError(dupePt: ptA)}
+        guard try! Point3D.isUniquePool(flock: pool) else { throw CoincidentPointsError(dupePt: ptA)}
         
         
         self.ptAlpha = ptA
@@ -101,7 +101,7 @@ public struct Quadratic: PenCurve   {
         guard self.trimParameters.contains(betaFraction) else { throw ParameterRangeError(parA: betaFraction) }
         
         let pool = [ptA, beta, ptC]
-        guard Point3D.isUniquePool(flock: pool) else { throw CoincidentPointsError(dupePt: ptA)}
+        guard try! Point3D.isUniquePool(flock: pool) else { throw CoincidentPointsError(dupePt: ptA)}
         
         // TODO: Add tests to see that the guard statements are doing their job
         
@@ -646,8 +646,8 @@ public struct Quadratic: PenCurve   {
         
         let beta = try! self.pointAt(t: 0.52)   // Might not work for a trimmed curve!
         
-        let forward = Vector3D.built(from: beta, towards: alpha, unit: true)
-        let rearward = Vector3D.built(from: beta, towards: omega, unit: true)
+        let forward = Vector3D(from: beta, towards: alpha, unit: true)
+        let rearward = Vector3D(from: beta, towards: omega, unit: true)
         
         var upAndAway = try! Vector3D.crossProduct(lhs: forward, rhs: rearward)
         upAndAway.normalize()
