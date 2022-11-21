@@ -34,6 +34,8 @@ public protocol PenCurve   {
     
     func getLength() -> Double
     
+    func approximate(allowableCrown: Double) throws -> [Point3D]
+    
     func intersect(ray: Line, accuracy: Double) throws -> [PointCrv]
         
     func isCoincident(speck: Point3D, accuracy: Double) throws -> (flag: Bool, param: Double?) 
