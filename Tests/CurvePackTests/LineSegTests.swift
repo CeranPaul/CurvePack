@@ -52,7 +52,7 @@ class LineSegTests: XCTestCase {
         let pt1 = Point3D(x: 1.0, y: 1.0, z: 1.0)
         let pt2 = Point3D(x: 5.0, y: 5.0, z: 5.0)
         
-        let slash = try! LineSeg(end1: pt1, end2: pt2)
+        var slash = try! LineSeg(end1: pt1, end2: pt2)
         
         let ladybug = try! slash.pointAt(t: 0.6)
         
@@ -62,8 +62,19 @@ class LineSegTests: XCTestCase {
         
         XCTAssertThrowsError(try slash.pointAt(t: -0.4))
         XCTAssertThrowsError(try slash.pointAt(t: 1.7))
+        
+        
+        try! slash.trimFront(lowParameter: 0.25)
+        
+        XCTAssertNoThrow(try slash.pointAt(t: 0.38))
 
-    }
+        XCTAssertThrowsError(try slash.pointAt(t: 0.20))
+
+        XCTAssertNoThrow(try slash.pointAt(t: 0.20, ignoreTrim: true))
+
+        XCTAssertThrowsError(try slash.pointAt(t: 1.15, ignoreTrim: true))
+
+   }
     
 
     func testTangent()   {
@@ -157,7 +168,7 @@ class LineSegTests: XCTestCase {
         XCTAssertEqual(beta, stroke.getOneEnd())
     }
     
-    func testResolveRelative()   {
+    func testResolveRelativeVec()   {
         
         let alpha = Point3D(x: 2.5, y: 2.5, z: 2.5)
         let beta = Point3D(x: 4.5, y: 2.5, z: 2.5)
@@ -174,6 +185,26 @@ class LineSegTests: XCTestCase {
         
         XCTAssertEqual(offset.along, targetA)
         XCTAssertEqual(offset.perp, targetP)
+        
+    }
+    
+    func testResolveRelative()   {
+        
+        let alpha = Point3D(x: 2.5, y: 2.5, z: 2.5)
+        let beta = Point3D(x: 4.5, y: 2.5, z: 2.5)
+        
+        let stroke = try! LineSeg(end1: alpha, end2: beta)
+        
+        let pip = Point3D(x: 3.5, y: 3.0, z: 2.5)
+        
+        let offset = stroke.resolveRelative(speck: pip)
+        
+        
+        let targetA = 1.0
+        let targetP = 0.5
+        
+        XCTAssertEqual(offset.along, targetA)
+        XCTAssertEqual(offset.away, targetP)
         
     }
     
@@ -342,6 +373,10 @@ class LineSegTests: XCTestCase {
 
         sitRep = try! contrail.isCoincident(speck: ptB)
         XCTAssert(sitRep.flag)
+
+        XCTAssertNoThrow(try contrail.isCoincident(speck: ptB, accuracy: 0.0001))
+
+        XCTAssertThrowsError(try contrail.isCoincident(speck: ptB, accuracy: -0.005))
 
     }
     

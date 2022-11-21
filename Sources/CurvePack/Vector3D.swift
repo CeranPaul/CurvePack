@@ -9,7 +9,6 @@
 import Foundation
 
 /// A direction built from three orthogonal components.
-/// Default constructor suffices.
 /// See overloaded functions in the documentation.
 public struct Vector3D: Equatable {
     
@@ -82,6 +81,7 @@ public struct Vector3D: Equatable {
         }
     }
     
+    
     /// Figure the combined length of all three components.
     /// - Returns: Size from base to tip.
     /// - See: 'testLength' under Vector3DTests
@@ -141,27 +141,6 @@ public struct Vector3D: Equatable {
     }
     
     
-    /// Construct a new vector that has been rotated about the axis specified by the first argument
-    /// - Parameters:
-    ///   - axisDir: Axis for twisting
-    ///   - angleRad:  The amount that the direction should change  Expressed in radians, not degrees!
-    /// - Returns: A new Vector
-    /// - SeeAlso:  transform()
-    /// - See: 'testTwistAbout' under Vector3DTests
-    public static func twistAbout(arrow: Vector3D, axisDir: Vector3D, angleRad: Double) -> Vector3D  {   // Should this become a static func?
-        
-        let perp = try! Vector3D.crossProduct(lhs: axisDir, rhs: arrow)
-        
-        let alongStep = arrow * cos(angleRad)
-        let perpStep = perp * sin(angleRad)
-        
-        var rotated = alongStep + perpStep
-        rotated.normalize()
-        
-        return rotated
-    }
-    
-    
     /// Standard definition of dot product
     /// - Parameters:
     ///   - lhs:  One Vector
@@ -170,7 +149,9 @@ public struct Vector3D: Equatable {
     /// - See: 'testDot' under Vector3DTests
     public static func dotProduct(lhs: Vector3D, rhs: Vector3D) -> Double   {
         
-        return lhs.i * rhs.i + lhs.j * rhs.j + lhs.k * rhs.k
+        let projection = lhs.i * rhs.i + lhs.j * rhs.j + lhs.k * rhs.k
+        
+        return projection
     }
     
     
@@ -248,11 +229,11 @@ public struct Vector3D: Equatable {
     
     
     /// Resolve a vector into components relative to a reference vector
-    /// Should become part of class Vector3D
     /// - Parameters:
     ///   - split: Vector to be broken up
     ///   - ref: Reference vector. It's good if this is a unit vector.
     /// - Returns: One new vector perpendicular to the reference, one new vector along the reference
+    /// - See: 'testVectorResolve' under Vector3DTests
     public static func resolve(split: Vector3D, ref: Vector3D) -> (perp: Vector3D, along: Vector3D)   {
         
         let alongProjection = Vector3D.dotProduct(lhs: split, rhs: ref)
@@ -289,6 +270,27 @@ public struct Vector3D: Equatable {
         if side < 0.0   { angle = -1.0 * angle }
         
         return angle
+    }
+    
+    
+    /// Construct a new vector that has been rotated about the axis specified by the first argument
+    /// - Parameters:
+    ///   - axisDir: Axis for twisting
+    ///   - angleRad:  The amount that the direction should change  Expressed in radians, not degrees!
+    /// - Returns: A new Vector
+    /// - SeeAlso:  transform()
+    /// - See: 'testTwistAbout' under Vector3DTests
+    public static func twistAbout(arrow: Vector3D, axisDir: Vector3D, angleRad: Double) -> Vector3D  {
+        
+        let perp = try! Vector3D.crossProduct(lhs: axisDir, rhs: arrow)
+        
+        let alongStep = arrow * cos(angleRad)
+        let perpStep = perp * sin(angleRad)
+        
+        var rotated = alongStep + perpStep
+        rotated.normalize()
+        
+        return rotated
     }
     
     

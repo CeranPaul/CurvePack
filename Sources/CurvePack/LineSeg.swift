@@ -151,7 +151,7 @@ public struct LineSeg: PenCurve, Equatable {
     }
     
     
-    /// Flip the order of the end points  Used to align members of a Perimeter
+    /// Flip the order of the end points  Used to align members of a Loop
     /// - See: 'testReverse' under LineSegTests
     public mutating func reverse() -> Void  {
         
@@ -219,11 +219,11 @@ public struct LineSeg: PenCurve, Equatable {
     }
     
     
-    /// Find the position of a point relative to the LineSeg
+    /// Find two orthogonal Vector3D's relative to the LineSeg for a Point3D
     /// - Parameters:
     ///   - speck:  Point of interest
     /// - Returns: Tuple of vectors - one along the seg, other perp to it
-    /// - See: 'testResolveRelative' under LineSegTests
+    /// - See: 'testResolveRelativeVec' under LineSegTests
     public func resolveRelativeVec(speck: Point3D) -> (along: Vector3D, perp: Vector3D)   {
         
         /// Direction of the segment.  Is a unit vector.
@@ -259,6 +259,7 @@ public struct LineSeg: PenCurve, Equatable {
     ///   - xirtam:  Transform to be applied
     /// - Throws: CoincidentPointsError if it was scaled to be very small
     /// - Returns:  Modified LineSeg
+    /// - See: 'testTransform' under LineSegTests
     public func transform(xirtam: Transform) throws -> PenCurve {
         
         let tAlpha = endAlpha.transform(xirtam: xirtam)
