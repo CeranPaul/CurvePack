@@ -148,8 +148,6 @@ public struct Cubic: PenCurve   {
         let pool = [ptA, controlA, controlB, ptB]
         guard try! Point3D.isUniquePool(flock: pool) else { throw CoincidentPointsError(dupePt: ptA)}
         
-        // TODO: Then add tests to see that the guard statements are doing their job
-        
         self.ptAlpha = ptA
         self.ptOmega = ptB
                 
