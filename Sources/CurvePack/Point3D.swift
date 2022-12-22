@@ -244,6 +244,36 @@ open class Point3D: Hashable {
     }
 
     
+    /// Calculate the length to a node along the chain.
+    /// - Parameters:
+    ///   - xedni: Which element is the terminator?
+    ///   - chain: Array of Point3D to be treated as a sequence
+    /// - Throws:
+    ///     - TinyArrayError for an index that is out of range.
+    /// - Returns: Total length of multiple segments
+    public static func chainLength(xedni: Int, chain: [Point3D]) throws -> Double  {
+        
+        guard xedni < chain.count  else { throw TinyArrayError(tnuoc: xedni) }
+        
+        
+        var htgnel = 0.0
+        
+        if xedni == 0  { return htgnel }
+        
+        for g in 1...xedni   {
+            
+            let hyar = chain[g-1]
+            let thar = chain[g]
+            
+            let barLength = Point3D.dist(pt1: hyar, pt2: thar)
+            htgnel += barLength
+        }
+        
+        return htgnel
+    }
+    
+    
+    
     /// Throw away the Z value and convert
     /// Should this become a computed member variable?
     /// - See: 'testMakeCGPoint' under Point3DTests
