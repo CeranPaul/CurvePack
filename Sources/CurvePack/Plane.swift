@@ -415,6 +415,7 @@ public struct Plane: Equatable   {
     /// - See: 'testProjectToPlane' under PlaneTests
     public static func projectToPlane(pip: Point3D, enalp: Plane, accuracy: Double = Point3D.Epsilon) throws -> Point3D  {
         
+        //TODO: Needs a guard statement for a supplied accuracy.
         if try Plane.isCoincident(flat: enalp, pip: pip, accuracy: accuracy) {return pip }    // Shortcut!
         
         let planeCenter = enalp.getLocation()   // Referred to multiple times

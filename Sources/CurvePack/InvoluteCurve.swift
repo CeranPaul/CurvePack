@@ -8,12 +8,13 @@
 
 import Foundation
 
-/// Curve generated from an Arc.  The basis for meshing teeth on a gear.
+/// Curve generated from a portion of a circle.  The basis for meshing teeth on gears.
 /// Assumes that the center is 0.0, 0.0, 0.0  and that construction is in the XY plane.
 /// Unit tests would be good!
 public struct Involute   {
     
     var baseRadius: Double   // Figure 11-10 in Shigley is helpful
+    
 
     
     /// See a different class for generating an entire gear tooth.
@@ -59,16 +60,45 @@ public struct Involute   {
     }
    
         
+    /// Generate a vector perpendicular to the curve at the input angle.
+    /// Used for generating a fillet.
+    /// Is there a more elegant way to do this?
+    /// - Parameters:
+    ///   - angle: Direction of generating ray for this point on the involute (radians).
+    /// - Returns: Point at that angle, plus a unit perpendicular vector
+    public func normalAtAngle(angle: Double) -> (loc: Point3D, dir: Vector3D)   {
+        
+        let anchorPoint = self.pointAtAngle(angle: angle)
+        
+        let tinyDelta = 0.005   // Too small of a value here will generate a zero vector for fauxTangent
+        
+        let beforePoint = self.pointAtAngle(angle: angle - tinyDelta)
+        let afterPoint = self.pointAtAngle(angle: angle + tinyDelta)
+        
+        let fauxTangent = Vector3D(from: beforePoint, towards: afterPoint, unit: true)
+        
+        let positiveZ = Vector3D(i: 0.0, j: 0.0, k: 1.0)
+        
+        var perpAway = try! Vector3D.crossProduct(lhs: fauxTangent, rhs: positiveZ)
+        perpAway.normalize()
+        
+        return (anchorPoint, perpAway)
+    }
+    
+    
     /// Determine the location of a point for an input radius.
     /// Brute force convergence.
     /// - Parameters:
     ///   - targetR: Input radius.  Needs to be larger than the base radius.
-    ///   - epsilon: Acceptable accuracy
+    ///   - epsilon: Acceptable accuracy for angle iterations
     /// - Returns: Angle (radians) that generated the point
+    /// - Throws:
+    ///     - NegativeAccuracyError if the radius is too small.
     /// - SeeAlso: 'pointAtAngle()'
-    public func angleForRadius(targetR: Double, epsilon: Double) -> Double   {
+    public func angleForRadius(targetR: Double, epsilon: Double) throws -> Double   {
         
-        //TODO: Add guard statement to protect against a radius that is too small.
+        guard targetR > self.baseRadius  else  { throw NegativeAccuracyError(acc: targetR) }
+
         
         /// Circle center
         let center = Point3D(x: 0.0, y: 0.0, z: 0.0)
@@ -116,7 +146,7 @@ public struct Involute   {
                 // Prepare for the next iteration
                 lastDeltaPositive = deltaPositive
                 
-            } while deltaIdentical  && trialAngle < 1.0
+            } while deltaIdentical  &&  trialAngle < 1.0
             
 
             stepSize = stepSize / -2.0   // Reduce and reverse step
@@ -127,38 +157,14 @@ public struct Involute   {
     }
 
     
-    /// Generate a vector perpendicular to the curve at the input angle.
-    /// Used for generating a fillet.
-    /// Is there a more elegant way to do this?
-    /// - Parameters:
-    ///   - angle: Direction of generating ray for this point on the involute (radians).
-    /// - Returns: Point at that angle, plus a unit perpendicular vector
-    public func normalAtAngle(angle: Double) -> (loc: Point3D, dir: Vector3D)   {
-        
-        let anchorPoint = self.pointAtAngle(angle: angle)
-        
-        let tinyDelta = 0.005   // Too small of a value here will generate a zero vector for fauxTangent
-        
-        let beforePoint = self.pointAtAngle(angle: angle - tinyDelta)
-        let afterPoint = self.pointAtAngle(angle: angle + tinyDelta)
-        
-        let fauxTangent = Vector3D(from: beforePoint, towards: afterPoint, unit: true)
-        
-        let positiveZ = Vector3D(i: 0.0, j: 0.0, k: 1.0)
-        
-        var perpAway = try! Vector3D.crossProduct(lhs: fauxTangent, rhs: positiveZ)
-        perpAway.normalize()
-        
-        return (anchorPoint, perpAway)
-    }
-    
-    
     /// Create only enough points to meet the crown limit
     /// - Parameters:
     ///   - startAngle: In radians
     ///   - finishAngle: In radians
     ///   - allowableCrown:  Maximum deviation from the true curve
     /// - Returns: Array of points approximating the curves
+    /// - Throws:
+    ///     - NegativeAccuracyError for a bad parameter.
     public func approximate(startAngle: Double, finishAngle: Double, allowableCrown: Double) -> [Point3D]   {
 
         /// The accumulated points to be returned to represent the curve.
@@ -193,6 +199,8 @@ public struct Involute   {
     ///   - lastAngle: Generating angle (radians) for the last stepping stone
     ///   - allowableCrown: Acceptable deviation from the curve
     /// - Returns: Point and angle (radians) on the generating circle
+    /// - Throws:
+    ///     - NegativeAccuracyError for a bad parameter.
     public func pointByCrown(lastAngle: Double, allowableCrown: Double) throws -> (pip: Point3D, theta: Double)   {
 
         guard allowableCrown > 0.0 else { throw NegativeAccuracyError(acc: allowableCrown) }

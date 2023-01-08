@@ -328,6 +328,52 @@ public struct Arc: PenCurve, Equatable   {
     }
     
     
+    /// Generate a concave fillet where the height difference is less than the fillet radius.
+    /// Should this be expanded to cover tall fillets, and ones at an arbitrary angle?
+    /// - Parameters:
+    ///   - spot: Point on the elevated edge curve.
+    ///   - toCtr: Unit vector perpendicular to the guide curve and parallel to 'floor' at 'guidePip'.
+    ///   - floor: Plane for the tangency of the fillet
+    ///   - filletRadius: Size of the Arc
+    /// - Returns: Small Arc
+    /// - Throws:
+    ///     - NegativeAccuracyError for a negative filletRadius
+    ///     - NonUnitDirectionError for a bad 'toCtr' vector
+    ///     - CoincidentPointsError for 'spot' that is on 'floor'
+    public static func shortFillet(spot: Point3D, toCtr: Vector3D, floor: Plane, filletRadius: Double) throws -> Arc   {
+        
+        guard filletRadius > 0.0 else { throw NegativeAccuracyError(acc: filletRadius) }
+        
+        guard toCtr.isUnit() else { throw NonUnitDirectionError(dir: toCtr) }
+        
+        /// Ensure that 'toCtr' is parallel to 'floor'.
+        let dummyLine = try! Line(spot: spot, arrow: toCtr)
+        guard Plane.isParallel(flat: floor, enil: dummyLine) else { throw NonUnitDirectionError(dir: toCtr) }   //Needs a better error
+        
+        let onPlane = try! Plane.isCoincident(flat: floor, pip: spot)
+        guard !onPlane  else  { throw CoincidentPointsError(dupePt: spot) }
+
+
+        let spotRelative = Plane.resolveRelativeVec(flat: floor, pip: spot)
+        let deltaHeight = spotRelative.perp.length()
+        
+        let spotTheta = asin((filletRadius - deltaHeight) / filletRadius)
+        let deltaHorizontal = cos(spotTheta) * filletRadius
+        
+        let partwayUp = Point3D(base: spot, offset: toCtr * deltaHorizontal)
+        let tanOnPlane = try! Plane.projectToPlane(pip: partwayUp, enalp: floor)
+        
+        let filletCenter = Point3D(base: tanOnPlane, offset: floor.getNormal() * filletRadius)
+        
+        
+        /// The desired Arc
+        let stunted = try! Arc(center: filletCenter, end1: spot, end2: tanOnPlane, useSmallAngle: true)
+        
+        return stunted
+    }
+    
+    
+
     /// Use a different portion of the curve
     /// - Parameters:
     ///   - lowParameter:  New parameter value.  Checked to be 0 < t < 1 and less than the upper bound.
