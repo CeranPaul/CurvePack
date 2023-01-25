@@ -158,6 +158,27 @@ public struct Plane: Equatable   {
     }
     
     
+    /// Make a Vector3D perpendicular to a Plane's normal
+    /// - Parameters:
+    ///   - flat: Reference Plane
+    ///   - dir: Raw vector
+    /// - Returns: Unit vector
+    public static func resolveParallel(flat: Plane, dir: Vector3D) -> Vector3D   {
+        
+        // Does this need an error for a vector input that is perpendicular to the plane?
+        // Zero vector error near the end.
+        
+        
+        let farPoint = Point3D(base: flat.getLocation(), offset: dir)
+        let diffs = Plane.resolveRelativeVec(flat: flat, pip: farPoint)
+        
+        var planarDiff = dir - diffs.perp
+        planarDiff.normalize()
+
+        return planarDiff
+    }
+    
+    
     /// Mirror a Vector3D
     /// - Parameters:
     ///   - flat:  Mirroring plane

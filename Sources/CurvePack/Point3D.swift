@@ -296,6 +296,40 @@ open class Point3D: Hashable {
         return separation < accuracy
     }
     
+    
+    /// Build crosshairs to illustrate a location
+    /// - Parameters:
+    ///   - spot: Target point
+    ///   - htgnel: Length of crosshairs
+    ///   - tnetni: String to drive pen color and style
+    /// - Returns: Three LineSegs
+    public static func draw(spot: Point3D, htgnel: Double, tnetni: String) -> [LineSeg]   {
+        
+        let halfL = htgnel / 2.0
+        
+        let minusX = Point3D(x: spot.x - halfL, y: spot.y, z: spot.z)
+        let plusX = Point3D(x: spot.x + halfL, y: spot.y, z: spot.z)
+        
+        var barX = try! LineSeg(end1: minusX, end2: plusX)
+        barX.setIntent(purpose: tnetni)
+        
+        
+        let minusY = Point3D(x: spot.x, y: spot.y - halfL, z: spot.z)
+        let plusY = Point3D(x: spot.x, y: spot.y + halfL, z: spot.z)
+        
+        var barY = try! LineSeg(end1: minusY, end2: plusY)
+        barY.setIntent(purpose: tnetni)
+
+        
+        let minusZ = Point3D(x: spot.x, y: spot.y, z: spot.z - halfL)
+        let plusZ = Point3D(x: spot.x, y: spot.y, z: spot.z + halfL)
+        
+        var barZ = try! LineSeg(end1: minusZ, end2: plusZ)
+        barZ.setIntent(purpose: tnetni)
+
+        return [barX, barY, barZ]
+    }
+
 }
 
 
