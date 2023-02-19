@@ -18,12 +18,16 @@ public struct Involute   {
 
     
     /// See a different class for generating an entire gear tooth.
-    init(baseRadius: Double)   {
+    public init(baseRadius: Double)   {
         
         self.baseRadius = baseRadius
         
     }
     
+    
+    public func getBaseRadius() -> Double   {
+        return self.baseRadius
+    }
     
     /// Determines a point on an involute curve.
     /// See Figure 11.6 of Shigley
@@ -165,8 +169,12 @@ public struct Involute   {
     /// - Returns: Array of points approximating the curves
     /// - Throws:
     ///     - NegativeAccuracyError for a bad parameter.
-    public func approximate(startAngle: Double, finishAngle: Double, allowableCrown: Double) -> [Point3D]   {
+    public func approximate(startAngle: Double, finishAngle: Double, allowableCrown: Double) throws -> [Point3D]   {
 
+        
+        guard allowableCrown > 0.0 else { throw NegativeAccuracyError(acc: allowableCrown) }
+        
+            
         /// The accumulated points to be returned to represent the curve.
         var chain = [Point3D]()
 
@@ -201,10 +209,12 @@ public struct Involute   {
     /// - Returns: Point and angle (radians) on the generating circle
     /// - Throws:
     ///     - NegativeAccuracyError for a bad parameter.
-    public func pointByCrown(lastAngle: Double, allowableCrown: Double) throws -> (pip: Point3D, theta: Double)   {
+    private func pointByCrown(lastAngle: Double, allowableCrown: Double) throws -> (pip: Point3D, theta: Double)   {
 
+        
         guard allowableCrown > 0.0 else { throw NegativeAccuracyError(acc: allowableCrown) }
             
+        
         let angleStep = 0.05   // Arbitrary value
 
 
