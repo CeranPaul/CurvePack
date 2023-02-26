@@ -1,7 +1,8 @@
 # CurvePack
 
-This is a project - not a product. It consists of routines used in making models for 3D printing combined as a Swift Package. 4493 lines of code, 5316 lines of testing. InvoluteCurve has no unit testing. 
+This is a project - not a product. It consists of geometric code to make models for 3D printing. Repository "MeshPackSolo" contains a class and functions for building the mesh.
 
-2.1.0 added Loop class! This commit changed splitParam to work with trimmed Cubics and Quadratics.
+![PrintStuff](https://user-images.githubusercontent.com/13353344/221426283-44aa8101-6837-44e1-a3b7-38656b0b2b88.jpg)
 
-Compile the documentation for a catalog of member functions and variables.
+Compile the documentation for a catalog of member structs and classes.
+
