@@ -32,10 +32,10 @@ public struct Arc: PenCurve, Equatable   {
     
     
     /// Turn local points into global points
-    var toGlobal: Transform
+    public var toGlobal: Transform
     
     /// Turn global points into local
-    var fromGlobal: Transform
+    public var fromGlobal: Transform
     
     
     /// Distance of all points from the center
@@ -547,6 +547,22 @@ public struct Arc: PenCurve, Equatable   {
         /// Intersection points. The return array.
         var crossings = [PointCrv]()
         
+        /// Projection of the intersecting line and the Arc axis. Should be zero.
+        var projection = Vector3D.dotProduct(lhs: self.axis, rhs: ray.getDirection())
+        if projection > Vector3D.EpsilonV { return crossings }   // Returns an empty Array, as opposed to throwing an error.
+                
+           // For the case of the line being parallel and offset to the plane of the circle.
+        let bridge = Vector3D(from: ray.getOrigin(), towards: self.getCenter(), unit: true)
+        projection = Vector3D.dotProduct(lhs: bridge, rhs: self.axis)
+        
+        if abs(projection) > 0.0   { return crossings }
+        
+        
+        /// Distances along and perpendicular to the intersecting Line to reach the Arc center.
+        let legs = ray.resolveRelative(yonder: self.center)
+        if legs.perp > self.radius { return crossings }
+        
+        
         /// Variable for comparison with the trigonometric results
         var sweepRange: ClosedRange<Double>
         
@@ -556,32 +572,22 @@ public struct Arc: PenCurve, Equatable   {
             sweepRange = ClosedRange(uncheckedBounds: (lower: self.sweepAngle, upper: 0.0))
         }
         
-        /// Distances along and perpendicular to the Line to a point closest to the Arc center.
-        let legs = ray.resolveRelative(yonder: self.center)
-        if legs.perp > self.radius { return crossings }
-        
-        var projection = Vector3D.dotProduct(lhs: self.axis, rhs: ray.getDirection())
-        if projection > Vector3D.EpsilonV { return crossings }
-        
-        
-           // For the case of the line being parallel and offset to the plane of the circle.
-        let bridge = Vector3D(from: ray.getOrigin(), towards: self.getCenter(), unit: true)
-        projection = Vector3D.dotProduct(lhs: bridge, rhs: self.axis)
-        
-        if abs(projection) > 0.0   { return crossings }
-        
-        
+
+        ///Offset Vector3D used multiple times
         var jump = ray.getDirection() * legs.along
         
         /// Point on the line that is closest to the Arc center.
         let lineNearest = Point3D(base: ray.getOrigin(), offset: jump)
         
         /// Distance along the line to potential intersection points.
-        let component = sqrt(self.radius * self.radius - legs.perp * legs.perp)
+        let chordComponent = sqrt(self.radius * self.radius - legs.perp * legs.perp)
         
-        jump = ray.getDirection() * component
+        jump = ray.getDirection() * chordComponent
+        
+        ///Possible intersection point
         let possible1 = Point3D(base: lineNearest, offset: jump)
         
+        ///Position of the point in the Arc's coordinate system
         let poss1Loc = possible1.transform(xirtam: self.fromGlobal)
         let theta1 = atan2(poss1Loc.y, poss1Loc.x)   // Be careful with the range of the result!
         
@@ -629,35 +635,6 @@ public struct Arc: PenCurve, Equatable   {
     }
     
     
-//    /// Assumed to all be happening in the XY plane
-//    /// Needs work!
-//    public static func intersectLineCircle(arrow: Line, hoop: Arc) -> Point3D   {
-//
-//        /// The return value
-//        var RHintersect = Point3D(x: 0.0, y: 0.0, z: 0.0)
-//
-//        /// Relative position of the circle center to the line origin
-//        let relCenter = arrow.resolveRelative(yonder: hoop.getCenter())
-//
-//        if relCenter.perp > hoop.getRadius()   {   // There are a number of ways that this could be handled
-//            print("No intersection")
-//        } else {
-//
-//            let lineAnchor = arrow.getOrigin()
-//            let jump = arrow.getDirection() * relCenter.along
-//            let middleChord = lineAnchor.offset(jump: jump)
-//            let stem = Point3D.dist(pt1: hoop.getCenter(), pt2: middleChord)   // Will be the same as relCenter.perp
-//
-//            /// Magnitude of distance between middleChord and the intersection point
-//            let halfChord = sqrt(hoop.getRadius() * hoop.getRadius() - stem * stem)
-//
-//            let intersectJump = arrow.getDirection() * halfChord
-//
-//            RHintersect = middleChord.offset(jump: intersectJump)   // One of two possibilities
-//        }
-//
-//        return RHintersect
-//    }
 
 
     /// Generate the Arc between two Lines. The goal is to have this work independent of plane, and relative angles.

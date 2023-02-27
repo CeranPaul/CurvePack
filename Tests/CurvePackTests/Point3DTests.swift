@@ -250,6 +250,9 @@ class Point3DTests: XCTestCase {
         /// Bag o' points
         var pond = [Point3D]()
         
+        XCTAssertThrowsError(try Point3D.isUniquePool(flock: pond))
+        
+        
         let ptA = Point3D(x: 5.0, y: 5.0, z: 2.0)
         pond.append(ptA)
         
@@ -272,6 +275,71 @@ class Point3DTests: XCTestCase {
         
         light = try! Point3D.isUniquePool(flock: pond)
         XCTAssertFalse(light)
+        
+    }
+    
+    
+    func testTranform()   {
+        
+        let pip = Point3D(x: 5.0, y: 2.0, z: 1.2)
+        
+        let shift = Transform(deltaX: 1.0, deltaY: 1.0, deltaZ: -1.0)
+        
+        let target = Point3D(x: 6.0, y: 3.0, z: 0.2)
+        
+        XCTAssertEqual(target, pip.transform(xirtam: shift))
+        
+    }
+    
+    
+    func testChainLength()   {
+        
+        let retnec = Point3D(x: 1.2, y: 3.5, z: 2.4)
+        let rocket = Vector3D(i: 1.0, j: 0.0, k: 0.0)
+        let greenFlag = Point3D(x: 1.2, y: 3.5, z: 0.4)
+        
+        let quarter = try! Arc(ctr: retnec, axis: rocket, start: greenFlag, sweep: Double.pi / 2.0)
+        
+        var pips = [Point3D]()
+        
+        XCTAssertThrowsError(try Point3D.chainLength(xedni: 1, chain: pips))
+        
+        
+        let ptA = quarter.pointAtAngle(theta: 0.0)
+        pips.append(ptA)
+        let ptB = quarter.pointAtAngle(theta: Double.pi / 8.0)
+        pips.append(ptB)
+        let ptC = quarter.pointAtAngle(theta: Double.pi / 4.0)
+        pips.append(ptC)
+        let ptD = quarter.pointAtAngle(theta: 3.0 * Double.pi / 8.0)
+        pips.append(ptD)
+        let ptE = quarter.pointAtAngle(theta: Double.pi / 2.0)
+        pips.append(ptE)
+        
+        XCTAssertEqual(try Point3D.chainLength(xedni: 0, chain: pips), 0.0)
+
+        XCTAssertEqual(try Point3D.chainLength(xedni: 1, chain: pips), 0.7804, accuracy: 0.0001)   //Shortcuts from true arc length
+        XCTAssertEqual(try Point3D.chainLength(xedni: 2, chain: pips), 1.5607, accuracy: 0.0001)
+        XCTAssertEqual(try Point3D.chainLength(xedni: 3, chain: pips), 2.3411, accuracy: 0.0001)
+        XCTAssertEqual(try Point3D.chainLength(xedni: 4, chain: pips), 3.1214, accuracy: 0.0001)
+
+    }
+    
+    
+    func testDraw()   {
+        
+        let ptA = Point3D(x: -5.0, y: 5.0, z: 2.0)
+        
+        let fred = Point3D.draw(spot: ptA, htgnel: 0.875, tnetni: "Wilma")
+        
+        XCTAssertEqual(fred.count, 3)
+        
+        
+        XCTAssertEqual(fred[0].getLength(), 0.875)
+        XCTAssertEqual(fred[1].getLength(), 0.875)
+        XCTAssertEqual(fred[2].getLength(), 0.875)
+
+
         
     }
     

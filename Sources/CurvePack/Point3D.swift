@@ -3,7 +3,7 @@
 //  CurvePack
 //
 //  Created by Paul on 8/11/15.
-//  Copyright © 2022 Ceran Digital Media. All rights reserved.  See LICENSE.md
+//  Copyright © 2023 Ceran Digital Media. All rights reserved.  See LICENSE.md
 //
 
 import Foundation
@@ -74,6 +74,7 @@ open class Point3D: Hashable {
     ///   - xirtam:  Matrix for the intended transformation
     /// - Returns: New point
     /// - SeeAlso: offset
+    /// - See: 'testTransform' under Point3DTests
     open func transform(xirtam: Transform) -> Point3D {
         
         let pip4 = RowMtx4(valOne: self.x, valTwo: self.y, valThree: self.z, valFour: 1.0)
@@ -157,8 +158,11 @@ open class Point3D: Hashable {
     }
     
     
-    ///Figure the counterclockwise angle of the point. 0.0 -> 2 Pi
-    /// - See: 'angleAbout'
+    /// Figure the counterclockwise angle of the point around x: 0.0, y: 0.0. Will range from 0.0 -> 2 Pi
+    ///  Use a Transform to get the point a local CSYS
+    /// - Parameter pip: Point of interest
+    /// - Returns: Angle in radians - from 0.0 -> 2 Pi
+    ///  - See: 'angleAbout'
     public static func figCCWAngle(pip: Point3D) -> Double   {
         
         let radial = Vector3D(i: pip.x, j: pip.y, k: 0.0)    // No need to normalize
@@ -211,7 +215,6 @@ open class Point3D: Hashable {
     ///   - beta:  Another test point
     ///   - gamma:  The final test point
     /// - Returns: Simple flag
-    /// - See: 'testIsThreeLinear' under Point3DTests
     public static func isThreeLinear(alpha: Point3D, beta: Point3D, gamma: Point3D) -> Bool   {
         
         let thisWay = Vector3D(from: alpha, towards: beta)
@@ -230,6 +233,7 @@ open class Point3D: Hashable {
     /// - See: 'testUniquePool' under Point3DTests
     /// - Throws:
     ///     - TinyArrayError if the input is lame
+    /// - See: 'testUniquePool' under Point3DTests
     public static func isUniquePool(flock: [Point3D]) throws -> Bool   {
         
         guard !flock.isEmpty  else  { throw TinyArrayError(tnuoc: flock.count)}
@@ -251,6 +255,7 @@ open class Point3D: Hashable {
     /// - Throws:
     ///     - TinyArrayError for an index that is out of range.
     /// - Returns: Total length of multiple segments
+    /// - See: 'testChainLength' under Point3DTests
     public static func chainLength(xedni: Int, chain: [Point3D]) throws -> Double  {
         
         guard xedni < chain.count  else { throw TinyArrayError(tnuoc: xedni) }
@@ -303,6 +308,7 @@ open class Point3D: Hashable {
     ///   - htgnel: Length of crosshairs
     ///   - tnetni: String to drive pen color and style
     /// - Returns: Three LineSegs
+    /// - See: 'testDraw' under Point3DTests
     public static func draw(spot: Point3D, htgnel: Double, tnetni: String) -> [LineSeg]   {
         
         let halfL = htgnel / 2.0
