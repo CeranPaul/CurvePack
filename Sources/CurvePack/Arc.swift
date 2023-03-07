@@ -3,7 +3,7 @@
 //  CurvePack
 //
 //  Created by Paul on 8/24/19.
-//  Copyright © 2022 Ceran Digital Media. All rights reserved.  See LICENSE.md
+//  Copyright © 2023 Ceran Digital Media. All rights reserved.  See LICENSE.md
 //
 
 import Foundation
@@ -167,25 +167,25 @@ public struct Arc: PenCurve, Equatable   {
         
     }
     
-    /// Build a concentric Arc with larger or smaller radius
+    /// Build a concentric Arc with larger or smaller radius.
+    /// Uses the same start point.
     /// - Parameters:
-    ///   - alpha: Original Arc
+    ///   - basis: Original Arc
     ///   - delta: Increase in size
     /// - Throws:
     ///   - CoincidentPointsError for a reduction that would leave nothing but a point.
     /// - See: 'testConcentric' under ArcTests
-    public static func concentric(alpha: Arc, delta: Double) throws -> Arc  {
+    public init(basis: Arc, delta: Double) throws  {
         
-        guard delta > -1.0 * alpha.getRadius() else { throw CoincidentPointsError(dupePt: alpha.getCenter())  }
+        guard delta > -1.0 * basis.getRadius() else { throw CoincidentPointsError(dupePt: basis.getCenter())  }
         
         /// Normalized vector towards the start of the Arc.
-        let thataway = Vector3D(from: alpha.getCenter(), towards: alpha.getOneEnd(), unit: true)
+        let thataway = Vector3D(from: basis.getCenter(), towards: basis.getOneEnd(), unit: true)
          
-        let startOffset = Point3D(base: alpha.getOneEnd(), offset: thataway * delta)
+        let startOffset = Point3D(base: basis.getOneEnd(), offset: thataway * delta)
         
-        let freshArc = try! Arc(ctr: alpha.getCenter(), axis: alpha.getAxisDir(), start: startOffset, sweep: alpha.getSweepAngle())
+        self = try Arc(ctr: basis.getCenter(), axis: basis.getAxisDir(), start: startOffset, sweep: basis.getSweepAngle())
         
-        return freshArc
     }
     
     /// Attach new meaning to the curve
@@ -718,62 +718,6 @@ public struct Arc: PenCurve, Equatable   {
     
     //TODO: Build a slightly higher level function that works from LineSeg's and trims them.
     
-    /// Fillet from a line to an Arc
-    /// - Parameters:
-    ///   - straight1: Line to be blended
-    ///   - circleFrag: Partial circle to be blended
-    ///   - rad: Size of fillet Arc
-    ///   - keepNear1: Whether to keep or remove the origin of the line.
-    ///   - keepNear2: Whether or not to keep the start point of the Arc
-    /// - Returns: Small Arc
-    /// - Throws:
-    ///     - NegativeAccuracyError for a bad radius
-    ///     - CoincidentPlanesError when the Line and the Arc are NOT coincident
-    public static func buildFillet(straight1: Line, circleFrag: Arc, rad: Double, keepNear1: Bool, keepNear2: Bool) throws -> Arc   {
-        
-        guard rad > 0.0  else  { throw NegativeAccuracyError(acc: rad) }
-        
-        
-        let arcPlane = try! Plane(spot: circleFrag.getCenter(), arrow: circleFrag.getAxisDir())
-        
-        guard try! Plane.isCoincident(flat: arcPlane, enil: straight1)  else  { throw CoincidentPlanesError(enalpA: arcPlane)}
-        
-    //TODO: Add check of whether or not the circle and line intersect.
-        
-        var jump: Double
-        
-        let offsetDir = try! Vector3D.crossProduct(lhs: straight1.getDirection(), rhs: circleFrag.getAxisDir())
-        
-        if keepNear1 { jump = rad }  else  { jump = -rad }
-        let offsetSpot = Point3D(base: straight1.getOrigin(), offset: offsetDir * jump)
-                
-        let offsetLine = try! Line(spot: offsetSpot, arrow: straight1.getDirection())
-        
-        let inward = Vector3D(from: circleFrag.getOneEnd(), towards: circleFrag.getCenter(), unit: true)
-        
-        if keepNear2 { jump = rad }  else  { jump = -rad }
-        
-        let offsetStart = Point3D(base: circleFrag.getOneEnd(), offset: inward * jump)
-        let offsetArc = try! Arc(ctr: circleFrag.getCenter(), axis: circleFrag.getAxisDir(), start: offsetStart, sweep: circleFrag.getSweepAngle())
-        
-        ///Intersection between the offset Line and the offset Arc.
-        let intPts = try! offsetArc.intersect(ray: offsetLine)
-        let filletCtr = Point3D(x: intPts[0].x, y: intPts[0].y, z: intPts[0].z)   //This makes a precarious assumption.
-        
-        /// Tangent point on straight1
-        let lineTan = straight1.dropPoint(away: filletCtr)
-        
-        let radial = Vector3D(from: circleFrag.getCenter(), towards: filletCtr, unit: true)
-        let myJump = radial * circleFrag.getRadius()
-        
-        /// Tangent point on the input Arc
-        let circleTan = Point3D(base: circleFrag.getCenter(), offset: myJump)
-        
-        let filletArc = try! Arc(center: filletCtr, end1: circleTan, end2: lineTan, useSmallAngle: true)
-        
-        
-        return filletArc
-    }
     
     
     /// Mostly used for checking
@@ -789,6 +733,171 @@ public struct Arc: PenCurve, Equatable   {
         return flat
     }
 
+    
+    
+    ///Test a line
+    public static func isCoplanar(hump: Arc, ray: Line) -> Bool   {
+        
+        let arcPlane = Arc.genPlane(scoop: hump)
+        
+        let flag = try! Plane.isCoincident(flat: arcPlane, enil: ray)
+        
+        return flag
+    }
+    
+    
+    /// Generate a fillet from a Line to an Arc.
+    /// - Parameters:
+    ///   - ray: Intersecting Line
+    ///   - filletRadius: Size of the desired blend
+    ///   - hump: Arc that is one end of the blend
+    ///   - inside: Is the fillet inside or outside 'hump'?
+    ///   - firstCCW: From the start of 'hump', going CCW, use the first intersection point?
+    ///   - lead: When traversing the Arc CCW, will the fillet lead or follow the intersecting line?
+    /// - Returns: Small Arc
+    /// - Throws:
+    ///   - NegativeAccuracyError for a radius that is less than or equal to 0.0
+    ///   - NonCoPlanarLinesError if 'ray' is not in the Plane of the Arc
+    ///   - CoincidentLinesError if 'ray' does not intersect the Arc
+    public static func lineFillet(ray: Line, filletRadius: Double, hump: Arc, inside: Bool, firstCCW: Bool, lead: Bool) throws -> Arc   {
+        
+        guard filletRadius > 0.0 else { throw NegativeAccuracyError(acc: filletRadius) }
+                    
+        guard isCoplanar(hump: hump, ray: ray)  else  { throw NonCoPlanarLinesError(enilA: ray, enilB: ray) }
+        
+        
+        let nicks = try! hump.intersect(ray: ray)
+        
+        if nicks.isEmpty { throw CoincidentLinesError(enil: ray) }   // Needs a better error type
+        
+        
+                
+        var radiusDelta: Double
+        
+        if inside   {
+            radiusDelta = -1.0 * filletRadius
+        }  else  {
+            radiusDelta = filletRadius
+        }
+        
+        ///Larger or smaller circle that will hold the fillet center
+        let offsetArc = try! Arc(basis: hump, delta: radiusDelta)
+        
+        
+//        offsetArc.setIntent(purpose: "Construction")
+//        displayCurves.append(offsetArc)
+        
+        
+        ///The point to be avoided by blending
+        var corner: PointArc
+        
+        
+        let thetized = nicks.map( { PointArc(pip: $0, hoop: hump) } )
+        
+        ///Intersection PointArc's, sorted by CCW orientation
+        let sortheta = thetized.sorted(by: { $0.localTheta < $1.localTheta } )
+        
+        
+
+        if nicks.count > 1   {
+                        
+            if firstCCW   {
+                corner = sortheta[0]
+            }  else  {
+                corner = sortheta[1]
+            }
+            
+        }  else  {
+            
+            corner = sortheta[0]
+        }
+        
+        
+        
+        
+        let myRadial = Vector3D(from: hump.getCenter(), towards: corner, unit: true)
+        
+        let mySense = Vector3D.dotProduct(lhs: myRadial, rhs: ray.getDirection())
+        
+        let positive = mySense > 0.0
+        
+                
+        var sense: Double
+
+        switch (lead, positive)   {
+            
+        case (true, true): sense = -1.0
+        case (true, false): sense = 1.0
+        case (false, true): sense = 1.0
+        case (false, false): sense = -1.0
+
+        }
+        
+        ///Offset to and from the intersecting Line
+        let jump = sense * filletRadius
+                
+        ///Perpendicular to 'ray' - in the plane of the Arc.
+        var rayPerp = try! Vector3D.crossProduct(lhs: hump.getAxisDir(), rhs: ray.getDirection())   //Trusted Vector3D's
+        rayPerp.normalize()
+        
+        let rayShift = Point3D(base: ray.getOrigin(), offset: rayPerp * jump)
+        
+        ///Parallel to 'ray' but offset by the 'filletRadius' in the specified sense.
+        let rayParl = try! Line(spot: rayShift, arrow: ray.getDirection())
+        
+                
+
+        ///Intersections of the offset circle, and the offset line
+        let offInt = try! offsetArc.intersect(ray: rayParl)
+        
+        
+        var filletCtr = Point3D(x: offInt[0].x, y: offInt[0].y, z: offInt[0].z)
+
+        if offInt.count > 1   {
+            
+            let dist1 = Point3D.dist(pt1: corner, pt2: filletCtr)
+            
+            let candidate2 = Point3D(x: offInt[1].x, y: offInt[1].y, z: offInt[1].z)
+            let dist2 = Point3D.dist(pt1: corner, pt2: candidate2)
+            
+            if dist2 < dist1   { filletCtr = candidate2 }
+            
+        }
+        
+        ///Tangent point on the intersecting Line
+        let lineTan = Point3D(base: filletCtr, offset: rayPerp * -jump)
+
+        
+        let radialCons = Vector3D(from: hump.getCenter(), towards: filletCtr, unit: true)
+        
+        let radialLine = try! Line(spot: hump.getCenter(), arrow: radialCons)
+        let tangentPoints = try! hump.intersect(ray: radialLine)
+        
+        ///Closure to check the distance between potential tangent points and the fillet center
+        let distanceGate: (PointCrv) -> Bool = { pip in
+            let separation = Point3D.dist(pt1: filletCtr, pt2: pip)
+            let delta = abs(separation - filletRadius)
+            let flag = delta < Point3D.Epsilon
+            return flag
+        }
+        
+        ///Tangent point on the input Arc
+        var tanOnArc = Point3D(x: tangentPoints[0].x, y: tangentPoints[0].y, z: tangentPoints[0].z)
+        
+        if tangentPoints.count > 1   {
+            let chosenTan = tangentPoints.filter( {distanceGate($0)} )
+            tanOnArc = Point3D(x: chosenTan[0].x, y: chosenTan[0].y, z: chosenTan[0].z)
+        }
+        
+        ///The fillet Arc
+        let curl = try! Arc(center: filletCtr, end1: tanOnArc, end2: lineTan, useSmallAngle: true)
+        
+        return curl
+        
+    }
+    
+    
+    
     /// Generate points on a 90 degree Arc that is either a concave fillet or a convex rounded edge.
     /// - Parameters:
     ///   - pip: Point3D on the original edge curve.

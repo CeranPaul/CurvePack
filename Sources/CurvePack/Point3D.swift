@@ -73,7 +73,7 @@ open class Point3D: Hashable {
     /// - Parameters:
     ///   - xirtam:  Matrix for the intended transformation
     /// - Returns: New point
-    /// - SeeAlso: offset
+    /// - SeeAlso: Offset constructor
     /// - See: 'testTransform' under Point3DTests
     open func transform(xirtam: Transform) -> Point3D {
         
@@ -252,9 +252,9 @@ open class Point3D: Hashable {
     /// - Parameters:
     ///   - xedni: Which element is the terminator?
     ///   - chain: Array of Point3D to be treated as a sequence
+    /// - Returns: Total length of multiple segments
     /// - Throws:
     ///     - TinyArrayError for an index that is out of range.
-    /// - Returns: Total length of multiple segments
     /// - See: 'testChainLength' under Point3DTests
     public static func chainLength(xedni: Int, chain: [Point3D]) throws -> Double  {
         
@@ -316,21 +316,21 @@ open class Point3D: Hashable {
         let minusX = Point3D(x: spot.x - halfL, y: spot.y, z: spot.z)
         let plusX = Point3D(x: spot.x + halfL, y: spot.y, z: spot.z)
         
-        var barX = try! LineSeg(end1: minusX, end2: plusX)
+        var barX = try! LineSeg(end1: minusX, end2: plusX)   // End points are know to be good
         barX.setIntent(purpose: tnetni)
         
         
         let minusY = Point3D(x: spot.x, y: spot.y - halfL, z: spot.z)
         let plusY = Point3D(x: spot.x, y: spot.y + halfL, z: spot.z)
         
-        var barY = try! LineSeg(end1: minusY, end2: plusY)
+        var barY = try! LineSeg(end1: minusY, end2: plusY)   // End points are know to be good
         barY.setIntent(purpose: tnetni)
 
         
         let minusZ = Point3D(x: spot.x, y: spot.y, z: spot.z - halfL)
         let plusZ = Point3D(x: spot.x, y: spot.y, z: spot.z + halfL)
         
-        var barZ = try! LineSeg(end1: minusZ, end2: plusZ)
+        var barZ = try! LineSeg(end1: minusZ, end2: plusZ)   // End points are know to be good
         barZ.setIntent(purpose: tnetni)
 
         return [barX, barY, barZ]

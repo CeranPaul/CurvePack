@@ -3,7 +3,7 @@
 //  CurvePack
 //
 //  Created by Paul on 12/14/15.
-//  Copyright © 2022 Ceran Digital Media. All rights reserved.  See LICENSE.md
+//  Copyright © 2023 Ceran Digital Media. All rights reserved.  See LICENSE.md
 //
 
 import Foundation

@@ -3,7 +3,7 @@
 //  CurvePack
 //
 //  Created by Paul on 8/11/15.
-//  Copyright © 2022 Ceran Digital Media. All rights reserved.
+//  Copyright © 2023 Ceran Digital Media. All rights reserved.  See LICENSE.md
 //
 
 import Foundation
@@ -179,24 +179,6 @@ public struct Plane: Equatable   {
     }
     
     
-    /// Mirror a Vector3D
-    /// - Parameters:
-    ///   - flat:  Mirroring plane
-    ///   - arrow:  Vector to be flipped
-    /// - Returns: New Vector3D
-    /// - See: 'testMirrorVector' under PlaneTests
-    public static func mirror(flat: Plane, arrow: Vector3D) -> Vector3D   {
-        
-        let proportion = Vector3D.dotProduct(lhs: flat.normal, rhs: arrow)
-        let along = flat.normal * proportion
-        let inPlane = arrow - along
-        
-        let reflect = along * -1.0 + inPlane
-        
-        return reflect
-    }
-    
-    
     /// Check to see that the line direction is perpendicular to the normal
     /// - Parameters:
     ///   - flat:  Reference plane
@@ -216,9 +198,9 @@ public struct Plane: Equatable   {
     ///   - flat:  Plane for testing
     ///   - pip:  Point for testing
     ///   - accuracy: Distance under which a point will considered to be coincident
+    /// - Returns: Simple flag
     /// - Throws:
     ///   - NegativeAccuracyError for bad 'accuracy' parameter
-    /// - Returns: Simple flag
     /// - See: 'testIsCoincident' under PlaneTests
     public static func isCoincident(flat: Plane, pip:  Point3D, accuracy: Double = Point3D.Epsilon) throws -> Bool  {
         
@@ -241,9 +223,9 @@ public struct Plane: Equatable   {
     ///   - enalp:  Reference plane
     ///   - enil:  Line for testing
     ///   - accuracy: Distance under which the Line will considered to be coincident
+    /// - Returns: Simple flag
     /// - Throws:
     ///   - NegativeAccuracyError for bad 'accuracy' parameter
-    /// - Returns: Simple flag
     /// - See: 'testIsCoincidentLine' under PlaneTests
     public static func isCoincident(flat: Plane, enil: Line, accuracy: Double = Point3D.Epsilon) throws -> Bool  {
         
@@ -348,6 +330,7 @@ public struct Plane: Equatable   {
     /// - Parameters:
     ///   - enil:  Line of interest
     ///   - enalp:  Flat surface to hit
+    /// - Returns: Single Point3D
     /// - Throws:
     ///   - ParallelError if the input Line is parallel to the plane
     ///   - NegativeAccuracyError for bad 'accuracy' parameter
@@ -386,10 +369,11 @@ public struct Plane: Equatable   {
     }
     
     
-    /// Construct a line by intersecting two planes
+    /// Construct a Line by intersecting two planes
     /// - Parameters:
     ///   - flatA:  First plane
     ///   - flatB:  Second plane
+    /// - Returns: Fresh Line
     /// - Throws:
     ///   - ParallelPlanesError if the inputs are parallel
     ///   - CoincidentPlanesError if the inputs are coincident
@@ -430,13 +414,15 @@ public struct Plane: Equatable   {
     /// - Parameters:
     ///   - pip:  Point to be projected
     ///   - enalp:  Flat surface to hit
+    /// - Returns: Closest point on plane
     /// - Throws:
     ///   - NegativeAccuracyError for bad 'accuracy' parameter
-    /// - Returns: Closest point on plane
     /// - See: 'testProjectToPlane' under PlaneTests
     public static func projectToPlane(pip: Point3D, enalp: Plane, accuracy: Double = Point3D.Epsilon) throws -> Point3D  {
         
-        //TODO: Needs a guard statement for a supplied accuracy.
+        guard accuracy > 0.0 else { throw NegativeAccuracyError(acc: accuracy) }
+            
+
         if try Plane.isCoincident(flat: enalp, pip: pip, accuracy: accuracy) {return pip }    // Shortcut!
         
         let planeCenter = enalp.getLocation()   // Referred to multiple times

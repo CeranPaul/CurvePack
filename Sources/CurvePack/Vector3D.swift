@@ -3,7 +3,7 @@
 //  CurvePack
 //
 //  Created by Paul on 8/11/15.
-//  Copyright © 2022 Ceran Digital Media. All rights reserved.  See LICENSE.md
+//  Copyright © 2023 Ceran Digital Media. All rights reserved.  See LICENSE.md
 //
 
 import Foundation
@@ -138,6 +138,23 @@ public struct Vector3D: Equatable {
         
         let transformed = vec4.toVector()
         return transformed
+    }
+    
+    
+    /// Mirror a Vector3D
+    /// - Parameters:
+    ///   - flat:  Mirroring plane
+    /// - Returns: New Vector3D
+    /// - See: 'testMirror' under Vector3DTests
+    public func mirror(flat: Plane) -> Vector3D   {
+                
+        let proportion = Vector3D.dotProduct(lhs: flat.getNormal(), rhs: self)
+        let alongNorm = flat.getNormal() * proportion
+        let inPlane = self - alongNorm
+        
+        let reflect = alongNorm * -1.0 + inPlane
+        
+        return reflect
     }
     
     

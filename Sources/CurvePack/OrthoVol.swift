@@ -232,6 +232,7 @@ public struct OrthoVol   {
         return flagX && flagY && flagZ
     }
     
+    //TODO: Trim a Line to a LineSeg within the volume.
     
     /// Move, rotate, and/or scale by a matrix
     /// Should this become a class function since it is creating a new volume?  Or a constructor?

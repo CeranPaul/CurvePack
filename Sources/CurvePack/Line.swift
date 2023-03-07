@@ -3,7 +3,7 @@
 //  CurvePack
 //
 //  Created by Paul on 8/12/15.
-//  Copyright © 2022 Ceran Digital Media.  See LICENSE.md
+//  Copyright © 2023 Ceran Digital Media.  See LICENSE.md
 //
 
 import Foundation
@@ -140,8 +140,8 @@ public struct Line: Equatable {
     /// - Parameters:
     ///   - straightA:  Reference line
     ///   - pip:  Point to test
-    /// - SeeAlso:  Overloaded ==
     /// - Returns: Simple flag
+    /// - SeeAlso:  Overloaded ==
     /// - See: 'testIsCoincident' under LineTests
     public static func isCoincident(straightA: Line, pip: Point3D) -> Bool   {
         
@@ -170,8 +170,8 @@ public struct Line: Equatable {
     
     /// Check two lines  See that the either origin lies on the other line, and
     /// that they have the same direction, even with the opposite sense
-    /// - SeeAlso:  Overloaded ==
     /// - Returns: Simple flag
+    /// - SeeAlso:  Overloaded ==
     /// - See: 'testIsCoincidentLine' under LineTests
     public static func isCoincident(straightA: Line, straightB: Line) -> Bool   {
         
@@ -225,11 +225,11 @@ public struct Line: Equatable {
     /// - Parameters:
     ///   - straightA:  First test line
     ///   - straightB:  Second test line
+    /// - Returns: Common point
     /// - Throws:
     ///     - CoincidentLinesError if the inputs are the same
     ///     - ParallelLinesError if the inputs are parallel
     ///     - NonCoPlanarLinesError if the inputs don't lie in the same plane
-    /// - Returns: Common point
     /// - See: 'testIntersectTwo' under LineTests
     public static func intersectTwo (straightA: Line, straightB: Line) throws -> Point3D  {
         

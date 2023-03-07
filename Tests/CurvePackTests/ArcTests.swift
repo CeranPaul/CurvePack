@@ -500,17 +500,17 @@ class ArcTests: XCTestCase {
         
         let cup = try! Arc(ctr: ctr, axis: zee, start: start, sweep: Double.pi / 2.0)
         
-        let jug = try! Arc.concentric(alpha: cup, delta: 0.3)
+        let jug = try! Arc(basis: cup, delta: 0.3)
         
         XCTAssertEqual(jug.getRadius(), 0.80, accuracy: 0.00001)
         
-        let straw = try! Arc.concentric(alpha: cup, delta: -0.3)
+        let straw = try! Arc(basis: cup, delta: -0.3)
         
         XCTAssertEqual(straw.getRadius(), 0.20, accuracy: 0.00001)
         
-        XCTAssertThrowsError( try Arc.concentric(alpha: cup, delta: -0.6) )
+        XCTAssertThrowsError( try Arc(basis: cup, delta: -0.6) )
         
-        XCTAssertThrowsError( try Arc.concentric(alpha: cup, delta: -0.5) )
+        XCTAssertThrowsError( try Arc(basis: cup, delta: -0.5) )
         
     }
     
@@ -758,6 +758,43 @@ class ArcTests: XCTestCase {
         jPos = heading4.j > 0.0
         
         XCTAssert(iPos == true && jPos == false)
+        
+    }
+
+    func testLineFillet()  {
+
+        let rocket = Vector3D(i: 0.0, j: 0.0, k: 1.0)
+        let nigiro = Point3D(x: 0.0, y: 0.0, z: 0.0)
+        
+        let greenFlag = Point3D(x: 2.0, y: 0.0, z: 0.0)
+        
+        let adamArc = try! Arc(ctr: nigiro, axis: rocket, start: greenFlag, sweep: Double.pi * 3.0 / 2.0)
+        
+        ///Origin for the intersecting Line
+//        let hub = Point3D(x: -2.125, y: -1.50, z: 0.0)
+        let hub = Point3D(x: -0.875, y: 0.50, z: 0.0)
+
+        ///Direction for the intersecting Line
+//        var oneThirty = Vector3D(i: 0.707, j: 0.707, k: 0.0)
+//        oneThirty.normalize()
+        
+        var five = Vector3D(i: 0.5, j: -0.866, k: 0.0)
+        five.normalize()
+        
+        ///Slicer
+        let zig = try! Line(spot: hub, arrow: five)
+        
+                
+        ///The resulting fillet
+        var heScores = try! Arc.lineFillet(ray: zig, filletRadius: 0.250, hump: adamArc, inside: true, firstCCW: true, lead: false)
+
+        let curl = heScores.getCenter()
+        
+        let targetSTTF = Point3D(x: -1.4450, y: 0.9872, z: 0.0)
+        let sweepSTTF = 2.0186
+        
+        XCTAssertEqual(targetSTTF, curl)
+        XCTAssertEqual(sweepSTTF, heScores.getSweepAngle(), accuracy: 0.0001)
         
     }
 

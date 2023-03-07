@@ -369,38 +369,6 @@ class PlaneTests: XCTestCase {
     }
     
     
-    func testMirrorVector()   {
-        
-        let nexus = Point3D(x: 2.0, y: 3.0, z: 4.0)
-        let horn = Vector3D(i: 0.0, j: -1.0, k: 0.0)
-        
-        let XZplane = try! Plane(spot: nexus, arrow: horn)
-        
-        let arrow1 = Vector3D(i: 0.5, j: 0.7, k: 0.5)
-        let mirror1 = Vector3D(i: 0.5, j: -0.7, k: 0.5)
-        
-        let flipped1 = Plane.mirror(flat: XZplane, arrow: arrow1)
-        XCTAssertEqual(flipped1, mirror1)
-    
-        let horn2 = Vector3D(i: 1.0, j: 0.0, k: 0.0)
-        let YZplane = try! Plane(spot: nexus, arrow: horn2)
-        
-        let mirror2 = Vector3D(i: -0.5, j: 0.7, k: 0.5)
-        
-        let flipped2 = Plane.mirror(flat: YZplane, arrow: arrow1)
-        XCTAssertEqual(flipped2, mirror2)
-        
-        let horn3 = Vector3D(i: 0.0, j: 0.0, k: 1.0)
-        let XYplane = try! Plane(spot: nexus, arrow: horn3)
-        
-        let mirror3 = Vector3D(i: 0.5, j: 0.7, k: -0.5)
-        
-        let flipped3 = Plane.mirror(flat: XYplane, arrow: arrow1)
-        XCTAssertEqual(flipped3, mirror3)
-        
-    }
-    
-    
     func testISParallel()   {
         
         let nexus = Point3D(x: 2.0, y: 3.0, z: 4.0)
