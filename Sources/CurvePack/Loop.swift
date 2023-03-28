@@ -53,19 +53,19 @@ public class Loop   {
     
     
     /// Pile on another curve.  No checks are made.
-    /// Some curves may get reversed when the Loop becomes closed.
     /// Will not attempt alignment if the loop is not closed.
     /// There are a whole bunch of checks that should be done as part of this process.
-    /// Need to check that a duplicate curve is not submitted.
     /// - See: 'testAdd' and 'testCount' under LoopTests
     public func add(noob: PenCurve) -> Void   {
         
         // TODO: Add code to check that the new curve is planar, and in the plane of the other curves.
+        //TODO: Check that a duplicate curve is not added
         
-        // Need to protect against a zero-length curve, or a duplicate curve
+        // Need to protect against a zero-length curve.
         // Will need a special case for a closed circle.
         
         rawCurves.append(noob)   // Blindly add this curve
+        
         
         if commonEndBucket.count == 0   {   // First curve - start on finding common ends
             
@@ -77,7 +77,7 @@ public class Loop   {
             
         }  else  {   // Most curves
                         
-            var headmate = false
+            var headmate = false   // Initial values
             var tailmate = false
             
             // Loop through bucket members to find if either end joins up.

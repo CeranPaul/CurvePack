@@ -192,7 +192,7 @@ public struct Line: Equatable {
     /// - SeeAlso:  Overloaded ==
     /// - SeeAlso:  Line.isParallel()
     /// - See: 'testIsCoPlanar' under LineTests
-    public static func isCoplanar(straightA: Line, straightB: Line) -> Bool   {
+    public static func isLineCoplanar(straightA: Line, straightB: Line) -> Bool   {
         
         if Line.isCoincident(straightA: straightA, straightB: straightB) { return true }   // Shortcut!
         if Line.isParallel(straightA: straightA, straightB: straightB) { return true }
@@ -218,6 +218,44 @@ public struct Line: Equatable {
         let oppFlag = Vector3D.isOpposite(lhs: perp1, rhs: perp2)
         
         return sameFlag  || oppFlag
+    }
+    
+    
+    /// Verify that two lines could form a plane.
+    /// Should avoid failing when lines have only a small angle difference.
+    /// - Parameters:
+    ///   - straightA:  First test line
+    ///   - straightB:  Second test line
+    /// - Returns: Simple flag
+    /// - SeeAlso:  Overloaded ==
+    /// - SeeAlso:  Line.isParallel()
+    /// - See: 'testIsCoPlanar' under LineTests
+    public static func isCoplanar(straightA: Line, straightB: Line) -> Bool   {
+        
+        if Line.isCoincident(straightA: straightA, straightB: straightB) { return true }   // Shortcut!
+        if Line.isParallel(straightA: straightA, straightB: straightB) { return true }
+        
+
+        var upwardFromLines = try! Vector3D.crossProduct(lhs: straightA.getDirection(), rhs: straightB.getDirection())
+        upwardFromLines.normalize()
+        
+        let scissorCSYS = try! CoordinateSystem(spot: straightA.getOrigin(), direction1: straightA.getDirection(), direction2: upwardFromLines, useFirst: true, verticalRef: false)
+        
+        let scissorFromGlobal = Transform.genFromGlobal(csys: scissorCSYS)
+        
+        let localBdir = straightB.getDirection().transform(xirtam: scissorFromGlobal)
+        
+        let dirFlag = localBdir.j < Vector3D.EpsilonV
+        
+        let localBloc = straightB.getOrigin().transform(xirtam: scissorFromGlobal)
+        
+        let locFlag = localBloc.y < Point3D.Epsilon
+        
+        let planarFlag = dirFlag && locFlag
+//        print(planarFlag)
+        
+        
+        return planarFlag
     }
     
     

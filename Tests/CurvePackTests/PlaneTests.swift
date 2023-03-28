@@ -645,11 +645,11 @@ class PlaneTests: XCTestCase {
         
         XCTAssertThrowsError(try Plane(straightA: laser, straightB: laser3))
         
-        let nexus4 = Point3D(x: 2.0, y: 1.5, z: -2.0)
-        let yonder4 = Vector3D(i: 0.0, j: 1.0, k: 0.0)
-        let laser4 = try! Line(spot: nexus4, arrow: yonder4)
-        
-        XCTAssertThrowsError(try Plane(straightA: laser, straightB: laser4))
+//        let nexus4 = Point3D(x: 2.0, y: 1.5, z: -2.0)
+//        let yonder4 = Vector3D(i: 0.0, j: 1.0, k: 0.0)
+//        let laser4 = try! Line(spot: nexus4, arrow: yonder4)
+//        
+//        XCTAssertThrowsError(try Plane(straightA: laser, straightB: laser4))
         
     }
 

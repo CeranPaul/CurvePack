@@ -790,6 +790,7 @@ class ArcTests: XCTestCase {
 
         let curl = heScores.getCenter()
         
+        ///Single intersection, True, True, False
         let targetSTTF = Point3D(x: -1.4450, y: 0.9872, z: 0.0)
         let sweepSTTF = 2.0186
         
