@@ -42,6 +42,7 @@ public struct Arc: PenCurve, Equatable   {
     var radius: Double
         
     
+    
     /// Create a new one. Use this intializer for a half or whole circle.
     /// - Parameters:
     ///   - ctr: Point to be used as origin
@@ -50,7 +51,7 @@ public struct Arc: PenCurve, Equatable   {
     ///   - sweep: Sweep angle in radians. Positive or negative.
     /// - Throws:
     ///   - NonUnitDirectionError for a bad set of inputs
-    ///   - NonOrthogonalPointError
+    ///   - NonOrthogonalPointError for a bad start point
     ///   - ParameterRangeError for a bad sweep value
     /// - See: 'testFidelityCASS' under ArcTests
     public init(ctr: Point3D, axis: Vector3D, start: Point3D, sweep: Double) throws   {
@@ -64,6 +65,10 @@ public struct Arc: PenCurve, Equatable   {
         
         guard myDot < Vector3D.EpsilonV else { throw NonOrthogonalPointError(trats: start) }
         
+        
+        guard sweep != 0.0 else { throw ZeroSweepError(ctr: ctr) }
+        
+                
         // TODO: Needs a more specific error type?
         let minSweep = Double.pi * -2.0
         guard sweep >= minSweep else { throw ParameterRangeError(parA: sweep) }
@@ -96,6 +101,7 @@ public struct Arc: PenCurve, Equatable   {
         self.fromGlobal = Transform.genFromGlobal(csys: csys)
         
     }
+    
     
     /// Create from center and two endpoints.
     /// Use the other initializer for a half or whole circle.
@@ -167,6 +173,7 @@ public struct Arc: PenCurve, Equatable   {
         
     }
     
+    
     /// Build a concentric Arc with larger or smaller radius.
     /// Uses the same start point.
     /// - Parameters:
@@ -179,6 +186,7 @@ public struct Arc: PenCurve, Equatable   {
         
         guard delta > -1.0 * basis.getRadius() else { throw CoincidentPointsError(dupePt: basis.getCenter())  }
         
+        
         /// Normalized vector towards the start of the Arc.
         let thataway = Vector3D(from: basis.getCenter(), towards: basis.getOneEnd(), unit: true)
          
@@ -188,6 +196,7 @@ public struct Arc: PenCurve, Equatable   {
         
     }
     
+    
     /// Attach new meaning to the curve
     /// - Parameter: purpose:PenTypes
     /// - See: 'testSetIntent' under ArcTests
@@ -196,10 +205,12 @@ public struct Arc: PenCurve, Equatable   {
         self.usage = purpose
     }
     
+    
     /// Fetch the location of the pivot point
     public func getCenter() -> Point3D   {
         return self.center
     }
+    
     
     /// Fetch the location of an end
     /// - See: 'getOtherEnd()'
@@ -207,55 +218,26 @@ public struct Arc: PenCurve, Equatable   {
         return try! pointAt(t: self.trimParameters.lowerBound)
     }
     
+    
     /// Fetch the location of the opposite end
     /// - See: 'getOneEnd()'
     public func getOtherEnd() -> Point3D   {
         return try! pointAt(t: self.trimParameters.upperBound)
     }
     
+    
     public func getRadius() -> Double   {
         return self.radius
     }
+    
     
     public func getAxisDir() -> Vector3D   {
         return self.axis
     }
     
+    
     public func getSweepAngle() -> Double   {
         return self.sweepAngle
-    }
-    
-    /// Generate a global point at the given angle
-    /// - Parameters:
-    ///   - theta - desired angle
-    /// - Returns: A point in the global CSYS
-    /// - See: 'testPointAtAngleGlobal' under ArcTests
-    public func pointAtAngleGlobal(theta: Double) -> Point3D   {
-        
-        //TODO: Range checking would be good
-        let horiz = cos(theta) * self.radius
-        let vert = sin(theta) * self.radius
-        
-        let localPt = Point3D(x: horiz, y: vert, z: 0.0)        
-        let globalPt = localPt.transform(xirtam: self.toGlobal)
-        
-        return globalPt
-    }
-    
-    
-    /// Generate a point at the given angle
-    /// - Parameters:
-    ///   - theta - desired angle
-    /// - Returns: A point in the local CSYS
-    public func pointAtAngle(theta: Double) -> Point3D   {
-        
-        //TODO: Range checking would be good
-        let horiz = cos(theta) * self.radius
-        let vert = sin(theta) * self.radius
-        
-        let localPt = Point3D(x: horiz, y: vert, z: 0.0)
-        
-        return localPt
     }
     
     
@@ -289,12 +271,38 @@ public struct Arc: PenCurve, Equatable   {
     
     // TODO: Add 'tangentAt' function
     
-    /// Figure the arc length
-    /// - See: 'testGetLength' under ArcTests
-    public func getLength() -> Double   {
+    
+    /// Generate a global point at the given angle
+    /// - Parameters:
+    ///   - theta - desired angle
+    /// - Returns: A point in the global CSYS
+    /// - See: 'testPointAtAngleGlobal' under ArcTests
+    public func pointAtAngleGlobal(theta: Double) -> Point3D   {
         
-        let includedAngle = abs(getSweepAngle())
-        return includedAngle * self.getRadius()
+        //TODO: Range checking would be good
+        let horiz = cos(theta) * self.radius
+        let vert = sin(theta) * self.radius
+        
+        let localPt = Point3D(x: horiz, y: vert, z: 0.0)
+        let globalPt = localPt.transform(xirtam: self.toGlobal)
+        
+        return globalPt
+    }
+    
+    
+    /// Generate a point at the given angle
+    /// - Parameters:
+    ///   - theta - desired angle
+    /// - Returns: A point in the local CSYS
+    public func pointAtAngle(theta: Double) -> Point3D   {
+        
+        //TODO: Range checking would be good
+        let horiz = cos(theta) * self.radius
+        let vert = sin(theta) * self.radius
+        
+        let localPt = Point3D(x: horiz, y: vert, z: 0.0)
+        
+        return localPt
     }
     
     
@@ -328,57 +336,21 @@ public struct Arc: PenCurve, Equatable   {
     }
     
     
-    /// Generate a concave fillet where the height difference is less than the fillet radius.
-    /// Should this be expanded to cover tall fillets, and ones at an arbitrary angle?
-    /// - Parameters:
-    ///   - spot: Point on the elevated edge curve.
-    ///   - toCtr: Unit vector perpendicular to the guide curve and parallel to 'floor' at 'guidePip'.
-    ///   - floor: Plane for the tangency of the fillet
-    ///   - filletRadius: Size of the Arc
-    /// - Returns: Small Arc
-    /// - Throws:
-    ///     - NegativeAccuracyError for a negative filletRadius
-    ///     - NonUnitDirectionError for a bad 'toCtr' vector
-    ///     - CoincidentPointsError for 'spot' that is on 'floor'
-    public static func shortFillet(spot: Point3D, toCtr: Vector3D, floor: Plane, filletRadius: Double) throws -> Arc   {
+    /// Figure the arc length
+    /// - See: 'testGetLength' under ArcTests
+    public func getLength() -> Double   {
         
-        guard filletRadius > 0.0 else { throw NegativeAccuracyError(acc: filletRadius) }
-        
-        guard toCtr.isUnit() else { throw NonUnitDirectionError(dir: toCtr) }
-        
-        /// Ensure that 'toCtr' is parallel to 'floor'.
-        let dummyLine = try! Line(spot: spot, arrow: toCtr)
-        guard Plane.isParallel(flat: floor, enil: dummyLine) else { throw NonUnitDirectionError(dir: toCtr) }   //Needs a better error
-        
-        let onPlane = try! Plane.isCoincident(flat: floor, pip: spot)
-        guard !onPlane  else  { throw CoincidentPointsError(dupePt: spot) }
-
-
-        let spotRelative = Plane.resolveRelativeVec(flat: floor, pip: spot)
-        let deltaHeight = spotRelative.perp.length()
-        
-        let spotTheta = asin((filletRadius - deltaHeight) / filletRadius)
-        let deltaHorizontal = cos(spotTheta) * filletRadius
-        
-        let partwayUp = Point3D(base: spot, offset: toCtr * deltaHorizontal)
-        let tanOnPlane = try! Plane.projectToPlane(pip: partwayUp, enalp: floor)
-        
-        let filletCenter = Point3D(base: tanOnPlane, offset: floor.getNormal() * filletRadius)
-        
-        
-        /// The desired Arc
-        let stunted = try! Arc(center: filletCenter, end1: spot, end2: tanOnPlane, useSmallAngle: true)
-        
-        return stunted
+        let includedAngle = abs(getSweepAngle())
+        return includedAngle * self.getRadius()
     }
     
     
-
     /// Use a different portion of the curve
     /// - Parameters:
     ///   - lowParameter:  New parameter value.  Checked to be 0 < t < 1 and less than the upper bound.
     /// - Throws:
     ///     - ParameterRangeError if the input is lame
+    /// - See: 'testTrimFront' under ArcTests
     mutating public func trimFront(lowParameter: Double) throws   {
         
         guard lowParameter >= 0.0  else  { throw ParameterRangeError(parA: lowParameter)}
@@ -396,6 +368,7 @@ public struct Arc: PenCurve, Equatable   {
     ///   - highParameter:  New parameter value.  Checked to be 0 < t < 1 and less than the upper bound.
     /// - Throws:
     ///     - ParameterRangeError if the input is lame
+    /// - See: 'testTrimBack' under ArcTests
     mutating public func trimBack(highParameter: Double) throws   {
         
         guard highParameter <= 1.0  else  { throw ParameterRangeError(parA: highParameter)}
@@ -637,6 +610,32 @@ public struct Arc: PenCurve, Equatable   {
     
 
 
+    /// Mostly used for checking
+    /// - Parameter scoop: Source Arc
+    /// - Returns: Resulting plane
+    public static func genPlane(scoop: Arc) -> Plane   {
+        
+        let ctr = scoop.getCenter()
+        let thatAway = scoop.getAxisDir()
+
+        let flat = try! Plane(spot: ctr, arrow: thatAway)
+        
+        return flat
+    }
+
+    
+    
+    ///Test a line
+    public static func isCoplanar(hump: Arc, ray: Line) -> Bool   {
+        
+        let arcPlane = Arc.genPlane(scoop: hump)
+        
+        let flag = try! Plane.isCoincident(flat: arcPlane, enil: ray)
+        
+        return flag
+    }
+    
+    
     /// Generate the Arc between two Lines. The goal is to have this work independent of plane, and relative angles.
     /// - Parameters:
     ///   - straight1: One line on the boundary
@@ -720,32 +719,52 @@ public struct Arc: PenCurve, Equatable   {
     
     
     
-    /// Mostly used for checking
-    /// - Parameter scoop: Source Arc
-    /// - Returns: Resulting plane
-    public static func genPlane(scoop: Arc) -> Plane   {
+    /// Generate a concave fillet where the height difference is less than the fillet radius.
+    /// Should this be expanded to cover tall fillets, and ones at an arbitrary angle?
+    /// - Parameters:
+    ///   - spot: Point on the elevated edge curve.
+    ///   - toCtr: Unit vector perpendicular to the guide curve and parallel to 'floor' at 'guidePip'.
+    ///   - floor: Plane for the tangency of the fillet
+    ///   - filletRadius: Size of the Arc
+    /// - Returns: Small Arc
+    /// - Throws:
+    ///     - NegativeAccuracyError for a negative filletRadius
+    ///     - NonUnitDirectionError for a bad 'toCtr' vector
+    ///     - CoincidentPointsError for 'spot' that is on 'floor'
+    public static func shortFillet(spot: Point3D, toCtr: Vector3D, floor: Plane, filletRadius: Double) throws -> Arc   {
         
-        let ctr = scoop.getCenter()
-        let thatAway = scoop.getAxisDir()
+        guard filletRadius > 0.0 else { throw NegativeAccuracyError(acc: filletRadius) }
+        
+        guard toCtr.isUnit() else { throw NonUnitDirectionError(dir: toCtr) }
+        
+        /// Ensure that 'toCtr' is parallel to 'floor'.
+        let dummyLine = try! Line(spot: spot, arrow: toCtr)
+        guard Plane.isParallel(flat: floor, enil: dummyLine) else { throw NonUnitDirectionError(dir: toCtr) }   //Needs a better error
+        
+        let onPlane = try! Plane.isCoincident(flat: floor, pip: spot)
+        guard !onPlane  else  { throw CoincidentPointsError(dupePt: spot) }
 
-        let flat = try! Plane(spot: ctr, arrow: thatAway)
-        
-        return flat
-    }
 
-    
-    
-    ///Test a line
-    public static func isCoplanar(hump: Arc, ray: Line) -> Bool   {
+        let spotRelative = Plane.resolveRelativeVec(flat: floor, pip: spot)
+        let deltaHeight = spotRelative.perp.length()
         
-        let arcPlane = Arc.genPlane(scoop: hump)
+        let spotTheta = asin((filletRadius - deltaHeight) / filletRadius)
+        let deltaHorizontal = cos(spotTheta) * filletRadius
         
-        let flag = try! Plane.isCoincident(flat: arcPlane, enil: ray)
+        let partwayUp = Point3D(base: spot, offset: toCtr * deltaHorizontal)
+        let tanOnPlane = try! Plane.projectToPlane(pip: partwayUp, enalp: floor)
         
-        return flag
+        let filletCenter = Point3D(base: tanOnPlane, offset: floor.getNormal() * filletRadius)
+        
+        
+        /// The desired Arc
+        let stunted = try! Arc(center: filletCenter, end1: spot, end2: tanOnPlane, useSmallAngle: true)
+        
+        return stunted
     }
     
     
+
     /// Generate a fillet from a Line to an Arc.
     /// - Parameters:
     ///   - ray: Intersecting Line

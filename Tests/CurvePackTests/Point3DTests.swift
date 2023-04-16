@@ -279,7 +279,7 @@ class Point3DTests: XCTestCase {
     }
     
     
-    func testTranform()   {
+    func testTransform()   {
         
         let pip = Point3D(x: 5.0, y: 2.0, z: 1.2)
         
@@ -289,9 +289,18 @@ class Point3DTests: XCTestCase {
         
         XCTAssertEqual(target, pip.transform(xirtam: shift))
         
+        
+        let scale = Transform(scaleX: 2.0, scaleY: 2.0, scaleZ: 2.0)
+        
+        let targetScale = Point3D(x: 10.0, y: 4.0, z: 2.4)
+        
+        XCTAssertEqual(targetScale, pip.transform(xirtam: scale))
+        
     }
     
+    // TODO: Add tests for other types of transforms
     
+
     func testChainLength()   {
         
         let retnec = Point3D(x: 1.2, y: 3.5, z: 2.4)
@@ -343,6 +352,48 @@ class Point3DTests: XCTestCase {
         
     }
     
-    // TODO: Add tests for transform
+    func testFigCCW()   {
+        
+        let localOrig = Point3D(x: 1.0, y: 2.0, z: 0.5)
+        let localHoriz = Vector3D(i: 0.0, j: 0.0, k: -1.0)
+        let localVert = Vector3D(i: 0.0, j: 1.0, k: 0.0)
+        
+        let myLocal = try! CoordinateSystem(spot: localOrig, direction1: localHoriz, direction2: localVert, useFirst: true, verticalRef: false)
+        
+        let makeLocal = Transform.genFromGlobal(csys: myLocal)
+        
+        
+        var spot = Point3D(x: 1.0, y: 3.0, z: 0.5)
+        var localSpot = spot.transform(xirtam: makeLocal)
+        
+        var theta = Point3D.figCCWAngle(pip: localSpot)
+        
+        XCTAssertEqual(Double.pi / 2.0, theta)
+        
+        spot = Point3D(x: 1.0, y: 0.5, z: 0.5)
+        localSpot = spot.transform(xirtam: makeLocal)
+        theta = Point3D.figCCWAngle(pip: localSpot)
+        
+        XCTAssertEqual(3.0 * Double.pi / 2.0, theta)
+        
+        spot = Point3D(x: 1.0, y: 2.0, z: -0.5)
+        localSpot = spot.transform(xirtam: makeLocal)
+        theta = Point3D.figCCWAngle(pip: localSpot)
+        
+        XCTAssertEqual(0.0, theta)
+        
+        spot = Point3D(x: 1.0, y: 2.0, z: 3.5)
+        localSpot = spot.transform(xirtam: makeLocal)
+        theta = Point3D.figCCWAngle(pip: localSpot)
+        
+        XCTAssertEqual(Double.pi, theta)
+        
+        spot = Point3D(x: 1.0, y: 1.5, z: 1.0)
+        localSpot = spot.transform(xirtam: makeLocal)
+        theta = Point3D.figCCWAngle(pip: localSpot)
+        
+        XCTAssertEqual(5.0 * Double.pi / 4.0, theta)
+        
+    }
     
 }

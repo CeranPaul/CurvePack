@@ -158,19 +158,22 @@ open class Point3D: Hashable {
     }
     
     
-    /// Figure the counterclockwise angle of the point around x: 0.0, y: 0.0. Will range from 0.0 -> 2 Pi
+    /// Figure the counterclockwise angle of the point around x: 0.0, y: 0.0. Will range from 0.0 -> 2 Pi.
     ///  Use a Transform to get the point a local CSYS
     /// - Parameter pip: Point of interest
     /// - Returns: Angle in radians - from 0.0 -> 2 Pi
+    /// - See: 'testFigCCW' under Point3DTests
     ///  - See: 'angleAbout'
     public static func figCCWAngle(pip: Point3D) -> Double   {
         
         let radial = Vector3D(i: pip.x, j: pip.y, k: 0.0)    // No need to normalize
-        var angle = atan(radial.j / radial.i)
         
         let iPos = radial.i >= 0.0
         let jPos = radial.j >= 0.0
         
+        ///The return value
+        var angle: Double
+
         switch (iPos, jPos)   {
             
         case (true, true):

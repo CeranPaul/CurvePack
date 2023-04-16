@@ -52,6 +52,22 @@ class ArcTests: XCTestCase {
             XCTAssert(false)
         }
         
+        
+        // Detect an CoincidentPointsError from duplicate points by bad referencing
+        do   {
+            let ctr = Point3D(x: 2.0, y: 1.0, z: 5.0)
+            //        let e1 = Point3D(x: 3.0, y: 1.0, z: 5.0)
+            let e2 = Point3D(x: 2.0, y: 2.0, z: 5.0)
+            
+            // Bad referencing should cause an error to be thrown
+            let _ = try Arc(center: ctr, end1: e2, end2: e2, useSmallAngle: false)
+            
+        }   catch is CoincidentPointsError   {
+            XCTAssert(true)
+        }   catch   {   // This code will never get run
+            XCTAssert(false)
+        }
+        
            // Detect non-equidistant points
         do   {
             let ctr = Point3D(x: 2.0, y: 1.0, z: 5.0)
@@ -295,7 +311,74 @@ class ArcTests: XCTestCase {
         }
         
         
+        do   {
+            
+            orbit = try Arc(ctr: sun, axis: solarSystemUp, start: earth, sweep: -6.5)
+            
+        }   catch is ParameterRangeError   {
+            
+            XCTAssert(true)
+            
+        }   catch   {
+            
+            XCTAssert(false, "Code should never have gotten here")
+        }
+        
 
+        do   {
+            
+            orbit = try Arc(ctr: sun, axis: solarSystemUp, start: earth, sweep: 6.5)
+            
+        }   catch is ParameterRangeError   {
+            
+            XCTAssert(true)
+            
+        }   catch   {
+            
+            XCTAssert(false, "Code should never have gotten here")
+        }
+        
+
+    }
+    
+    
+    func testTrimFront()   {
+        
+        let thumb = Point3D(x: 3.5, y: 6.0, z: 0.0)
+        let knuckle = Point3D(x: 5.5, y: 6.0, z: 0.0)
+        let tip = Point3D(x: 3.5, y: 8.0, z: 0.0)
+        
+        var grip2 = try! Arc(center: thumb, end1: knuckle, end2: tip, useSmallAngle: true)
+        
+        try! grip2.trimFront(lowParameter: 0.25)
+        try! grip2.trimBack(highParameter: 0.80)
+        
+        XCTAssertEqual(0.25, grip2.trimParameters.lowerBound)
+        
+        XCTAssertThrowsError(try grip2.trimFront(lowParameter: 0.85))
+        
+        XCTAssertThrowsError(try grip2.trimFront(lowParameter: -0.25))
+        XCTAssertThrowsError(try grip2.trimFront(lowParameter: 1.22))
+    }
+    
+    
+    func testTrimBack()   {
+        
+        let thumb = Point3D(x: 3.5, y: 6.0, z: 0.0)
+        let knuckle = Point3D(x: 5.5, y: 6.0, z: 0.0)
+        let tip = Point3D(x: 3.5, y: 8.0, z: 0.0)
+        
+        var grip2 = try! Arc(center: thumb, end1: knuckle, end2: tip, useSmallAngle: true)
+        
+        try! grip2.trimFront(lowParameter: 0.25)
+        try! grip2.trimBack(highParameter: 0.80)
+        
+        XCTAssertEqual(0.80, grip2.trimParameters.upperBound)
+        
+        XCTAssertThrowsError(try grip2.trimBack(highParameter: 0.22))
+        
+        XCTAssertThrowsError(try grip2.trimBack(highParameter: -0.25))
+        XCTAssertThrowsError(try grip2.trimBack(highParameter: 1.22))
     }
     
     
@@ -313,6 +396,7 @@ class ArcTests: XCTestCase {
             XCTAssert(spot.z == 0.0)
             XCTAssert(spot.y == 6.0 + 2.squareRoot())   // This is bizarre notation, probably from a language level comparison.
             XCTAssert(spot.x == 3.5 + 2.squareRoot())
+            XCTAssert(spot.x == 3.5 + sqrt(2.0))
             
             spot = try! grip.pointAt(t: 0.0)
             
@@ -387,8 +471,36 @@ class ArcTests: XCTestCase {
         
         plop = try! countdown.pointAt(t: 0.333333)
         XCTAssert(Line.isCoincident(straightA: ray3, pip: plop))
+
         
+        var grip2 = try! Arc(center: thumb, end1: knuckle, end2: tip, useSmallAngle: true)
+        
+        try! grip2.trimFront(lowParameter: 0.25)
+        try! grip2.trimBack(highParameter: 0.80)
+        
+        XCTAssertThrowsError(try grip2.pointAt(t: 0.90))
+        
+        
+        do   {
+            
+            var grip2 = try Arc(center: thumb, end1: knuckle, end2: tip, useSmallAngle: true)
+            
+            try grip2.trimFront(lowParameter: 0.25)
+            try grip2.trimBack(highParameter: 0.80)
+            
+            _ = try grip2.pointAt(t: 0.17)
+            
+        } catch is ParameterRangeError   {
+            
+            XCTAssert(true)
+            
+        }   catch {
+            XCTAssert(false, "Code should never have gotten here")
+        }
+        
+
     }
+    
     
     func testPointAtAngleGlobal()   {
         

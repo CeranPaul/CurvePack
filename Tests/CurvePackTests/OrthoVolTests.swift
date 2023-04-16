@@ -31,6 +31,55 @@ class OrthoVolTests: XCTestCase {
         }
     }
     
+    func testRangeInit()   {
+        
+        let easyVol = OrthoVol(minX: 1.0, maxX: 5.0, minY: -1.2, maxY: 2.8, minZ: 3.0, maxZ: 3.5)
+        
+        XCTAssertEqual (easyVol.getWidth(), 4.0, accuracy: Point3D.Epsilon / 3.0)
+        XCTAssertEqual (easyVol.getHeight(), 4.0, accuracy: Point3D.Epsilon / 3.0)
+        XCTAssertEqual (easyVol.getDepth(), 0.50, accuracy: Point3D.Epsilon / 3.0)
+        
+        
+        let backwardsVol = OrthoVol(minX: 5.0, maxX: 1.0, minY: -1.2, maxY: 2.8, minZ: 3.0, maxZ: 3.5)
+        
+        XCTAssertEqual (backwardsVol.getWidth(), 4.0, accuracy: Point3D.Epsilon / 3.0)
+        XCTAssertEqual (backwardsVol.getHeight(), 4.0, accuracy: Point3D.Epsilon / 3.0)
+        XCTAssertEqual (backwardsVol.getDepth(), 0.50, accuracy: Point3D.Epsilon / 3.0)
+        
+        
+        let backwardsVol2 = OrthoVol(minX: 1.0, maxX: 5.0, minY: 1.2, maxY: -2.8, minZ: 3.0, maxZ: 3.5)
+        
+        XCTAssertEqual (backwardsVol2.getHeight(), 4.0, accuracy: Point3D.Epsilon / 3.0)
+        
+        
+        let backwardsVol3 = OrthoVol(minX: 1.0, maxX: 5.0, minY: 1.2, maxY: -2.8, minZ: 3.5, maxZ: 3.0)
+        
+        XCTAssertEqual (backwardsVol3.getDepth(), 0.5, accuracy: Point3D.Epsilon / 3.0)
+        
+        
+        
+        let skinnyVol = OrthoVol(minX: 1.0, maxX: 5.0, minY: -1.2, maxY: 2.8, minZ: 3.0, maxZ: 3.0)
+        
+        XCTAssertEqual (skinnyVol.getWidth(), 4.0, accuracy: Point3D.Epsilon / 3.0)
+        XCTAssertEqual (skinnyVol.getHeight(), 4.0, accuracy: Point3D.Epsilon / 3.0)
+        XCTAssertNotEqual (skinnyVol.getDepth(), 0.0, accuracy: Point3D.Epsilon / 3.0)
+        
+        
+        let skinnyVol2 = OrthoVol(minX: 1.0, maxX: 5.0, minY: -1.2, maxY: -1.2, minZ: 3.0, maxZ: 3.5)
+        
+        XCTAssertEqual (skinnyVol2.getWidth(), 4.0, accuracy: Point3D.Epsilon / 3.0)
+        XCTAssertNotEqual (skinnyVol2.getHeight(), 0.0, accuracy: Point3D.Epsilon / 3.0)
+        XCTAssertEqual (skinnyVol2.getDepth(), 0.5, accuracy: Point3D.Epsilon / 3.0)
+        
+        
+        let skinnyVol3 = OrthoVol(minX: 1.0, maxX: 1.0, minY: -1.2, maxY: 2.8, minZ: 3.0, maxZ: 3.5)
+        
+        XCTAssertNotEqual (skinnyVol3.getWidth(), 0.0, accuracy: Point3D.Epsilon / 3.0)
+        XCTAssertEqual (skinnyVol3.getHeight(), 4.0, accuracy: Point3D.Epsilon / 3.0)
+        XCTAssertEqual (skinnyVol3.getDepth(), 0.5, accuracy: Point3D.Epsilon / 3.0)
+        
+    }
+
     func testReverse()   {
         
         let corner1 = Point3D(x: -2.0, y: -2.0, z: -2.0)
@@ -270,4 +319,5 @@ class OrthoVolTests: XCTestCase {
         XCTAssertThrowsError(try OrthoVol(corner1: ptGamma, corner2: ptBeta))
         
     }
+    
 }

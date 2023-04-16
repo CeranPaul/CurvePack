@@ -245,11 +245,11 @@ public struct Line: Equatable {
         
         let localBdir = straightB.getDirection().transform(xirtam: scissorFromGlobal)
         
-        let dirFlag = localBdir.j < Vector3D.EpsilonV
+        let dirFlag = abs(localBdir.j) < Vector3D.EpsilonV
         
         let localBloc = straightB.getOrigin().transform(xirtam: scissorFromGlobal)
         
-        let locFlag = localBloc.y < Point3D.Epsilon
+        let locFlag = abs(localBloc.y) < Point3D.Epsilon
         
         let planarFlag = dirFlag && locFlag
 //        print(planarFlag)
