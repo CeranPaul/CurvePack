@@ -9,7 +9,7 @@
 import Foundation
 
 /// Exception for when the Loop can't be aligned
-class SplittingError: Error {
+public class SplittingError: Error {
     
     var coord: Double
     
