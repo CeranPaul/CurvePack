@@ -3,7 +3,7 @@
 //  CurvePack
 //
 //  Created by Paul on 2/14/16.
-//  Copyright © 2022 Ceran Digital Media. All rights reserved.  See LICENSE.md
+//  Copyright © 2023 Ceran Digital Media. All rights reserved.  See LICENSE.md
 //
 
 import Foundation
@@ -97,6 +97,7 @@ public struct Transform: Equatable   {
         t = 1.0
         
     }
+    
     
     /// Construct a matrix to do scaling
     /// - See: 'testScale' under TransformTests
@@ -202,7 +203,12 @@ public struct Transform: Equatable   {
         
     }
     
+    
     /// Create a transform from orthogonal vectors
+    /// - Parameters:
+    ///   - localX: Vector3D to be used as the new X axis
+    ///   - localY: Vector3D to be used as the new Y axis
+    ///   - localZ: Vector3D to be used as the new Z axis
     /// - Throws:
     ///   - NonUnitDirectionError for any bad input vector
     ///   - NonOrthogonalCSYSError if the inputs, as a set, aren't good
@@ -240,6 +246,32 @@ public struct Transform: Equatable   {
         self.s = 0.0
         self.t = 1.0
                 
+    }
+    
+    
+    ///Convenience method to translate in all three axes
+    public init(offset: Vector3D)   {
+        
+        a = 1.0
+        b = 0.0
+        c = 0.0
+        d = 0.0
+        
+        e = 0.0
+        f = 1.0
+        g = 0.0
+        h = 0.0
+        
+        j = 0.0
+        k = 0.0
+        m = 1.0
+        n = 0.0
+        
+        p = offset.i
+        r = offset.j
+        s = offset.k
+        t = 1.0
+        
     }
     
     

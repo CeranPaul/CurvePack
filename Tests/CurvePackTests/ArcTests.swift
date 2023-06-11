@@ -602,7 +602,45 @@ class ArcTests: XCTestCase {
         let whack2low = try! rainbow.intersect(ray: tooLow, accuracy: 0.001)
         XCTAssertEqual(0, whack2low.count)
         
+        
+        
+        let thumb = Point3D(x: -1.0, y: 1.5, z: 3.0)
+        let knuckle = Point3D(x: -1.0, y: 3.5, z: 3.0)
+        let tip = Point3D(x: -1.0, y: 1.5, z: 5.0)
+        
+        let grip2 = try! Arc(center: thumb, end1: knuckle, end2: tip, useSmallAngle: true)
+        
+        let oakley = Point3D(x: -1.45, y: -1.5, z: 3.0)
+        let wichita = Vector3D(i: 1.0, j: 0.0, k: 0.0)
+        
+        let wayOff = try! Line(spot: oakley, arrow: wichita)
+        
+        do   {
+            
+            let whacklow = try grip2.intersect(ray: wayOff, accuracy: -0.005)
+            XCTAssertEqual(2, whacklow.count)
+                        
+        } catch is NegativeAccuracyError   {
+            
+            XCTAssert(true)
+            
+        }   catch {
+            XCTAssert(false, "Code should never have gotten here")
+        }
+        
+        let missed1 = try! grip2.intersect(ray: wayOff, accuracy: 0.001)
+        XCTAssert(missed1.isEmpty)
+        
+        
+        let goodland = Vector3D(i: 0.0, j: 0.0, k: 1.0)
+        let parOffset = try! Line(spot: oakley, arrow: goodland)
+        
+        let missed2 = try! grip2.intersect(ray: parOffset, accuracy: 0.001)
+        XCTAssert(missed2.isEmpty)
+        
+
     }
+    
     
     func testConcentric()   {
         
@@ -769,6 +807,7 @@ class ArcTests: XCTestCase {
         
     }
         
+    
     func testArcPlane()   {
         
         let retnec = Point3D(x: 1.0, y: 1.0, z: 1.0)
@@ -898,7 +937,7 @@ class ArcTests: XCTestCase {
         
                 
         ///The resulting fillet
-        var heScores = try! Arc.lineFillet(ray: zig, filletRadius: 0.250, hump: adamArc, inside: true, firstCCW: true, lead: false)
+        let heScores = try! Arc.lineFillet(ray: zig, filletRadius: 0.250, hump: adamArc, inside: true, firstCCW: true, lead: false)
 
         let curl = heScores.getCenter()
         
@@ -909,6 +948,280 @@ class ArcTests: XCTestCase {
         XCTAssertEqual(targetSTTF, curl)
         XCTAssertEqual(sweepSTTF, heScores.getSweepAngle(), accuracy: 0.0001)
         
+        
+        ///The resulting fillet
+        let heScores2 = try! Arc.lineFillet(ray: zig, filletRadius: 0.250, hump: adamArc, inside: false, firstCCW: true, lead: false)
+
+        let curl2 = heScores2.getCenter()
+        
+        print(curl2.x)
+        print(curl2.y)
+        print(curl2.z)
+        print(heScores2.getSweepAngle())
+
+        
+        do   {
+            
+            var badFive = Vector3D(i: 0.5, j: -0.866, k: 0.2)
+            badFive.normalize()
+            
+            let badZig = try! Line(spot: hub, arrow: badFive)
+            
+            _ = try Arc.lineFillet(ray: badZig, filletRadius: 0.250, hump: adamArc, inside: true, firstCCW: true, lead: false)
+
+        } catch is NonCoPlanarLinesError   {
+            
+            XCTAssert(true)
+            
+        }   catch {
+            XCTAssert(false, "Code should never have gotten here")
+        }
+        
+        
+        do   {
+            
+            _ = try Arc.lineFillet(ray: zig, filletRadius: -0.080, hump: adamArc, inside: true, firstCCW: true, lead: false)
+
+        } catch is NegativeAccuracyError   {
+            
+            XCTAssert(true)
+            
+        }   catch {
+            XCTAssert(false, "Code should never have gotten here")
+        }
+        
+        
+        do   {
+            
+            let badHub = Point3D(x: -5.875, y: 0.50, z: 0.0)
+            
+            let badZig = try! Line(spot: badHub, arrow: five)
+            
+            _ = try Arc.lineFillet(ray: badZig, filletRadius: 0.250, hump: adamArc, inside: true, firstCCW: true, lead: false)
+
+        } catch is CoincidentLinesError   {
+            
+            XCTAssert(true)
+            
+        }   catch {
+            XCTAssert(false, "Code should never have gotten here")
+        }
+        
+        
     }
 
+    
+    func testShortFillet()   {
+        
+        let locat = Point3D(x: 2.0, y: 1.5, z: 1.0)
+        
+        let planePerp = Vector3D(i: 0.0, j: 1.0, k: 0.0)
+        let planeOrig = Point3D(x: 1.0, y: 1.35, z: 0.5)
+        let myFloor = try! Plane(spot: planeOrig, arrow: planePerp)
+        
+        let sep = Plane.resolveRelativeVec(flat: myFloor, pip: locat)
+        
+        XCTAssertEqual(0.15, sep.perp.length(), accuracy: 0.0001)
+        
+        let curvePerp = Vector3D(i: 0.0, j: 0.0, k: -1.0)
+        
+        let filletRad = 0.25
+        
+        XCTAssertNoThrow(try! Arc.shortFillet(spot: locat, toCtr: curvePerp, floor: myFloor, filletRadius: filletRad))
+        
+        
+        do   {
+            
+            let badRad = 0.0
+            _ = try Arc.shortFillet(spot: locat, toCtr: curvePerp, floor: myFloor, filletRadius: badRad)
+                        
+        } catch is NegativeAccuracyError   {
+            
+            XCTAssert(true)
+            
+        }   catch {
+            XCTAssert(false, "Code should never have gotten here")
+        }
+        
+        
+        do   {
+            
+            let badDir = Vector3D(i: 0.0, j: 0.0, k: 0.33)
+            _ = try Arc.shortFillet(spot: locat, toCtr: badDir, floor: myFloor, filletRadius: filletRad)
+                        
+        } catch is NonUnitDirectionError   {
+            
+            XCTAssert(true)
+            
+        }   catch {
+            XCTAssert(false, "Code should never have gotten here")
+        }
+        
+        
+        do   {
+            
+            var badDir = Vector3D(i: 0.0, j: 0.33, k: 0.33)
+            badDir.normalize()
+            _ = try Arc.shortFillet(spot: locat, toCtr: badDir, floor: myFloor, filletRadius: filletRad)
+                        
+        } catch is NonUnitDirectionError   {
+            
+            XCTAssert(true)
+            
+        }   catch {
+            XCTAssert(false, "Code should never have gotten here")
+        }
+        
+        
+        do   {
+            
+            let badSpot = Point3D(x: 2.0, y: 1.35, z: 2.0)
+            
+            _ = try Arc.shortFillet(spot: badSpot, toCtr: curvePerp, floor: myFloor, filletRadius: filletRad)
+            
+        } catch is CoincidentPointsError   {
+            
+            XCTAssert(true)
+            
+        }   catch {
+            XCTAssert(false, "Code should never have gotten here")
+        }
+        
+        
+    }
+    
+    
+    func testEdgeFillet()   {
+        
+        let locat = Point3D(x: 5.0, y: 1.0, z: 2.0)
+        
+        let normA = Vector3D(i: 0.0, j: 0.0, k: 1.0)
+        let normB = Vector3D(i: -1.0, j: 0.0, k: 0.0)
+        
+        let filletRad = 0.1875
+        
+        let allowableCrown = 0.004
+
+        XCTAssertNoThrow(try Arc.edgeFilletArc(pip: locat, faceNormalB: normB, faceNormalA: normA, filletRad: filletRad, convex: true, allowableCrown: allowableCrown))
+        
+        
+        do   {
+            
+            let badNormB = Vector3D(i: 3.0, j: 3.0, k: 3.0)
+                
+
+            _ = try Arc.edgeFilletArc(pip: locat, faceNormalB: badNormB, faceNormalA: normA, filletRad: filletRad, convex: true, allowableCrown: allowableCrown)
+            
+        } catch is NonUnitDirectionError   {
+            
+            XCTAssert(true)
+            
+        }   catch {
+            XCTAssert(false, "Code should never have gotten here")
+        }
+        
+        
+        do   {
+            
+            let badNormA = Vector3D(i: 3.0, j: 3.0, k: 3.0)
+                
+
+            _ = try Arc.edgeFilletArc(pip: locat, faceNormalB: normB, faceNormalA: badNormA, filletRad: filletRad, convex: true, allowableCrown: allowableCrown)
+            
+        } catch is NonUnitDirectionError   {
+            
+            XCTAssert(true)
+            
+        }   catch {
+            XCTAssert(false, "Code should never have gotten here")
+        }
+        
+        
+        do   {
+            
+            _ = try Arc.edgeFilletArc(pip: locat, faceNormalB: normB, faceNormalA: normA, filletRad: -0.25, convex: true, allowableCrown: allowableCrown)
+            
+        } catch is NegativeAccuracyError   {
+            
+            XCTAssert(true)
+            
+        }   catch {
+            XCTAssert(false, "Code should never have gotten here")
+        }
+        
+        
+        do   {
+            
+            _ = try Arc.edgeFilletArc(pip: locat, faceNormalB: normB, faceNormalA: normA, filletRad: filletRad, convex: true, allowableCrown: -0.0001)
+            
+        } catch is NegativeAccuracyError   {
+            
+            XCTAssert(true)
+            
+        }   catch {
+            XCTAssert(false, "Code should never have gotten here")
+        }
+        
+        
+        do   {
+            
+            var badNormB = Vector3D(i: 0.0, j: 0.8, k: -0.8)
+            badNormB.normalize()
+            
+            _ = try Arc.edgeFilletArc(pip: locat, faceNormalB: badNormB, faceNormalA: normA, filletRad: filletRad, convex: true, allowableCrown: allowableCrown)
+            
+
+        } catch is NonUnitDirectionError   {
+            
+            XCTAssert(true)
+            
+        }   catch {
+            XCTAssert(false, "Code should never have gotten here")
+        }
+        
+        
+
+    }
+    
+    func testSetSweep()   {
+        
+        let nexus = Point3D(x: 1.0, y: 1.0, z: 1.2)
+        let myAxis = Vector3D(i: 0.0, j: 1.0, k: 0.0)
+        let greenFlag = Point3D(x: 1.0, y: 1.0, z: 1.8)
+        
+        var semi = try! Arc(ctr: nexus, axis: myAxis, start: greenFlag, sweep: Double.pi / 2.0)
+        
+        try! semi.setSweep(freshSweep: Double.pi * 3.0 / 2.0)
+        XCTAssertEqual(Double.pi * 1.50, semi.getSweepAngle())
+        
+        
+        do   {
+                        
+            try semi.setSweep(freshSweep: Double.pi * 3.0)
+            
+
+        } catch is ParameterRangeError   {
+            
+            XCTAssert(true)
+            
+        }   catch {
+            XCTAssert(false, "Code should never have gotten here")
+        }
+        
+        do   {
+                        
+            try semi.setSweep(freshSweep: Double.pi * -4.0)
+            
+
+        } catch is ParameterRangeError   {
+            
+            XCTAssert(true)
+            
+        }   catch {
+            XCTAssert(false, "Code should never have gotten here")
+        }
+        
+    }
+    
+    
 }

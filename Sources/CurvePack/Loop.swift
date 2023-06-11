@@ -491,7 +491,7 @@ public class Loop   {
             markers = spots.filter( { $0.along > -1.0 * Point3D.Epsilon && $0.along < cap + Point3D.Epsilon })
         }
         
-        if markers.count > 2 { throw SplittingError() }
+        if markers.count > 2 { throw SplittingError(vert: 1.5) }
         
         return markers
     }

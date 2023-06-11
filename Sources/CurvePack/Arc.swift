@@ -240,6 +240,14 @@ public struct Arc: PenCurve, Equatable   {
         return self.sweepAngle
     }
     
+    public mutating func setSweep(freshSweep: Double) throws   {
+        
+        guard freshSweep <= Double.pi * 2.0  else  { throw ParameterRangeError(parA: freshSweep) }
+        guard freshSweep >= Double.pi * -2.0  else  { throw ParameterRangeError(parA: freshSweep) }
+
+        self.sweepAngle = freshSweep
+    }
+    
     
     /// Return a point based on its parameter, as contrasted to its angle.
     /// - Parameters:
@@ -613,6 +621,7 @@ public struct Arc: PenCurve, Equatable   {
     /// Mostly used for checking
     /// - Parameter scoop: Source Arc
     /// - Returns: Resulting plane
+    /// - See: 'testGenPlane' under ArcTests.
     public static func genPlane(scoop: Arc) -> Plane   {
         
         let ctr = scoop.getCenter()
@@ -649,6 +658,7 @@ public struct Arc: PenCurve, Equatable   {
     ///     - NonCoPlanarLinesError for a bad pair of Lines
     ///     - ParallelLinesError for inputs that would never intersect
     ///     - CoincidentLinesError
+    /// - See: 'testBuildFillet' under ArcTests.
     public static func buildFillet(straight1: Line, straight2: Line, rad: Double, keepNear1: Bool, keepNear2: Bool) throws -> Arc   {
         
         guard rad > 0.0  else  { throw NegativeAccuracyError(acc: rad) }
@@ -723,7 +733,7 @@ public struct Arc: PenCurve, Equatable   {
     /// Should this be expanded to cover tall fillets, and ones at an arbitrary angle?
     /// - Parameters:
     ///   - spot: Point on the elevated edge curve.
-    ///   - toCtr: Unit vector perpendicular to the guide curve and parallel to 'floor' at 'guidePip'.
+    ///   - toCtr: Unit vector perpendicular to the guide curve and parallel to 'floor' at 'spot'.
     ///   - floor: Plane for the tangency of the fillet
     ///   - filletRadius: Size of the Arc
     /// - Returns: Small Arc
@@ -731,6 +741,7 @@ public struct Arc: PenCurve, Equatable   {
     ///     - NegativeAccuracyError for a negative filletRadius
     ///     - NonUnitDirectionError for a bad 'toCtr' vector
     ///     - CoincidentPointsError for 'spot' that is on 'floor'
+    /// - See: 'testShortFillet' under ArcTests.
     public static func shortFillet(spot: Point3D, toCtr: Vector3D, floor: Plane, filletRadius: Double) throws -> Arc   {
         
         guard filletRadius > 0.0 else { throw NegativeAccuracyError(acc: filletRadius) }
@@ -778,6 +789,7 @@ public struct Arc: PenCurve, Equatable   {
     ///   - NegativeAccuracyError for a radius that is less than or equal to 0.0
     ///   - NonCoPlanarLinesError if 'ray' is not in the Plane of the Arc
     ///   - CoincidentLinesError if 'ray' does not intersect the Arc
+    /// - See: 'testLineFillet' under ArcTests.
     public static func lineFillet(ray: Line, filletRadius: Double, hump: Arc, inside: Bool, firstCCW: Bool, lead: Bool) throws -> Arc   {
         
         guard filletRadius > 0.0 else { throw NegativeAccuracyError(acc: filletRadius) }
@@ -929,6 +941,7 @@ public struct Arc: PenCurve, Equatable   {
     /// - Throws:
     ///     - NonUnitDirectioError for a bad faceNormal.
     ///     - NegativeAccuracyError for an improper filletRad or allowableCrown
+    /// - See: 'testEdgeFillet' under ArcTests.
     public static func edgeFilletArc(pip: Point3D, faceNormalB: Vector3D, faceNormalA: Vector3D, filletRad: Double, convex: Bool, allowableCrown: Double) throws -> Arc   {
         
         

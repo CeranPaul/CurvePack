@@ -11,9 +11,15 @@ import Foundation
 /// Exception for when the Loop can't be aligned
 class SplittingError: Error {
     
+    var coord: Double
     
     var description: String {
-        return "Wrong number of intersections!"
+        return "Wrong number of intersections!" + String(coord)
+    }
+    
+    public init(vert: Double)   {
+        
+        self.coord = vert
     }
     
 }
