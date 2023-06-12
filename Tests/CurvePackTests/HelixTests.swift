@@ -40,7 +40,10 @@ final class HelixTests: XCTestCase {
         let startTarget = Point3D(x: 1.0, y: 0.0, z: 2.0)
         XCTAssertEqual(startTarget, rotorTip.startPt)
         
+        let targetLength = 12.5258
         let run = rotorTip.length()
+        XCTAssertEqual(targetLength, run, accuracy: 0.001)
+        
     }
 
     func testGuard()   {
@@ -51,7 +54,7 @@ final class HelixTests: XCTestCase {
         
         do   {
                         
-            let badGyrate = try Helix(dia: -2.00, pitch: 0.50, wholeTurns: 2, partialTurns: 0.0, center: universe, axis: arrow, startPt: genesis)
+            _ = try Helix(dia: -2.00, pitch: 0.50, wholeTurns: 2, partialTurns: 0.0, center: universe, axis: arrow, startPt: genesis)
             
         } catch is NegativeAccuracyError   {
             
@@ -63,7 +66,7 @@ final class HelixTests: XCTestCase {
         
         do   {
                         
-            let badGyrate = try Helix(dia: 2.00, pitch: -0.50, wholeTurns: 2, partialTurns: 0.0, center: universe, axis: arrow, startPt: genesis)
+            _ = try Helix(dia: 2.00, pitch: -0.50, wholeTurns: 2, partialTurns: 0.0, center: universe, axis: arrow, startPt: genesis)
             
         } catch is NegativeAccuracyError   {
             
@@ -75,7 +78,7 @@ final class HelixTests: XCTestCase {
         
         do   {
                         
-            let badGyrate = try Helix(dia: 2.00, pitch: 0.50, wholeTurns: -13, partialTurns: 0.0, center: universe, axis: arrow, startPt: genesis)
+            _ = try Helix(dia: 2.00, pitch: 0.50, wholeTurns: -13, partialTurns: 0.0, center: universe, axis: arrow, startPt: genesis)
             
         } catch is NegativeAccuracyError   {
             
@@ -87,7 +90,7 @@ final class HelixTests: XCTestCase {
         
         do   {
                         
-            let badGyrate = try Helix(dia: 2.00, pitch: 0.50, wholeTurns: 3, partialTurns: -0.6, center: universe, axis: arrow, startPt: genesis)
+            _ = try Helix(dia: 2.00, pitch: 0.50, wholeTurns: 3, partialTurns: -0.6, center: universe, axis: arrow, startPt: genesis)
             
         } catch is NegativeAccuracyError   {
             
@@ -101,7 +104,7 @@ final class HelixTests: XCTestCase {
 
         do   {
                         
-            let badGyrate = try Helix(dia: 2.00, pitch: 0.50, wholeTurns: 3, partialTurns: 0.6, center: universe, axis: badArrow, startPt: genesis)
+            _ = try Helix(dia: 2.00, pitch: 0.50, wholeTurns: 3, partialTurns: 0.6, center: universe, axis: badArrow, startPt: genesis)
             
         } catch is NonUnitDirectionError   {
             

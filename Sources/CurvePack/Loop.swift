@@ -431,7 +431,8 @@ public class Loop   {
     
     
     
-    /// Intersections of a Line with the Loop
+    /// Intersections of a Line with the Loop.
+    /// Should this be modified to use concurrency when checking each curve?
     /// - Parameters:
     ///   - enil: Cutting line
     /// - Throws:
@@ -446,15 +447,21 @@ public class Loop   {
            // Iterate through the components of the Loop to generate the unsorted list.
         for (index, wire) in self.orderedCurves.enumerated()   {
             
-            /// Intersection points
-            let pointsOnly = try wire.intersect(ray: enil, accuracy: Point3D.Epsilon)
-            
-               // Generate a milestone for each intersection point.
-            for pip in pointsOnly   {
-                let spot = Point3D(x: pip.x, y: pip.y, z: pip.z)
-                let marker = try Milestone(spot: spot, refLine: enil, xedni: index)
-                rawMarkers.append(marker)
+            do   {
+                /// Intersection points
+                let pointsOnly = try wire.intersect(ray: enil, accuracy: Point3D.Epsilon)
+                
+                // Generate a milestone for each intersection point.
+                for pip in pointsOnly   {
+                    let spot = Point3D(x: pip.x, y: pip.y, z: pip.z)
+                    let marker = try Milestone(spot: spot, refLine: enil, xedni: index)
+                    rawMarkers.append(marker)
+                }
+                
+            }  catch is ParallelLinesError   {
+                
             }
+            
         }
         
         /// Set of Milestones
@@ -468,7 +475,36 @@ public class Loop   {
         
         return ordered
     }
+
     
+    /// Find the total length of a line intersecting a Loop.
+    /// Should this move to Loop? Yes, because you don't want to try this operation on a Loop that isn't closed.
+    /// - Parameters:
+    ///   - ray: Cutting line
+    ///   - perim: The Loop for analysis
+    /// - Throws:
+    ///     - SplittingError for a non-even number of intersections
+    /// - Returns: Sum of inside lengths
+    public func containedLength(ray: Line) throws -> Double   {
+        
+        let crossings = try! self.genMilestones(enil: ray)
+        
+        let crossingsEvenFlag = crossings.count % 2 == 0
+        if !crossingsEvenFlag { throw SplittingError(vert: 2.25) }
+        
+                
+        ///Cumulative length
+        var totalLength = 0.0
+        
+        for g in (stride(from: 0, through: crossings.count - 1, by: 2))   {
+            
+            let segmentLength = crossings[g + 1].along - crossings[g].along
+            totalLength += segmentLength
+        }
+        
+        return totalLength
+    }
+
     
     /// Closure to find any intersections on an edge.
     /// Used for masking triangles with a Loop
