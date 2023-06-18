@@ -771,6 +771,14 @@ public struct Milestone: Hashable   {
         self.along = dist * factor
     }
     
+    ///Needs to match the value selections used in the "hash" function.
+    public static func == (lhs: Milestone, rhs: Milestone) -> Bool   {
+        
+        let pointFlag = lhs.pip == rhs.pip
+        
+        return pointFlag
+    }
+    
     
     /// Generate the unique value using Swift 4.2 tools. For making a Set.
     /// Is a required func for a subclass of Hashable
