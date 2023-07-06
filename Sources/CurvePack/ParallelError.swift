@@ -8,6 +8,7 @@
 
 import Foundation
 
+///A flag when a Line and Plane are parallel, which is not desired.
 public class ParallelError: Error {
     
     var enil: Line

@@ -9,8 +9,7 @@
 import Foundation
 import CoreGraphics
 
-/// Simple representation of a position in space by the use of three orthogonal coordinates.
-/// As an 'open' class so that children can be created.
+/// A position in space specified by three orthogonal coordinates.
 open class Point3D: Hashable {
     
     public var x: Double 

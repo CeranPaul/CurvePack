@@ -7,6 +7,7 @@
 
 import Foundation
 
+/// A curve of constant radius that progresses along the axis.
 public struct Helix   {
     
     public var dia: Double

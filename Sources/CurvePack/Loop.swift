@@ -3,13 +3,13 @@
 //  CurvePack
 //
 //  Created by Paul on 2/3/18.
-//  Copyright © 2022 Ceran Digital Media. All rights reserved.
+//  Copyright © 2023 Ceran Digital Media. All rights reserved.
 //
 
 import Foundation
 
-/// An ordered collection of PenCurves that serves as a boundary. Assumed to lie on a plane.
-/// Not necessarily closed. Can be used either for the perimeter, or for a cutout.
+/// A collection of PenCurves that bound a region on a plane. It is a single path without branches or voids.
+/// Not necessarily closed. 
 public class Loop   {
     
     /// The unsorted component list
@@ -18,6 +18,7 @@ public class Loop   {
     /// The nose-to-tail component list. Filled by function 'align'.
     public var orderedCurves: [PenCurve]
     
+    /// An expected base for new curves?
     var refCoord: CoordinateSystem   // Should this change to become an optional plane?
     
 

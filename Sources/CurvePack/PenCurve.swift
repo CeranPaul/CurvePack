@@ -3,13 +3,15 @@
 //  CurvePack
 //
 //  Created by Paul on 10/30/15.
-//  Copyright © 2022 Ceran Digital Media. All Rights Reserved. See LICENSE.md
+//  Copyright © 2023 Ceran Digital Media. All Rights Reserved. See LICENSE.md
 //
 
 import Foundation
 import CoreGraphics
 
-/// The general framework for a curve.  Not limited to 2D.
+/// The common data and functions so that each member in a group of curves can be treated the same.
+///
+/// When in the course of human events it becomes necessary
 public protocol PenCurve   {
     
     /// A String that hints at the meaning of the curve
@@ -28,14 +30,17 @@ public protocol PenCurve   {
     /// Retrieve the finishing end
     func getOtherEnd() -> Point3D
     
-    /// Figure the volume that encloses the curve
-    /// Must have finite thickness in all three axes
+    /// Figure the volume that encloses the curve.
+    /// Must have finite thickness in all three axes.
     func getExtent() -> OrthoVol
     
+    /// Report the distance covered along the curve
     func getLength() -> Double
     
+    /// Break the curve into small line segments for plotting
     func approximate(allowableCrown: Double) throws -> [Point3D]
     
+    /// Find 0 to N points in common with a Line
     func intersect(ray: Line, accuracy: Double) throws -> [PointCrv]
         
     func isCoincident(speck: Point3D, accuracy: Double) throws -> (flag: Bool, param: Double?) 

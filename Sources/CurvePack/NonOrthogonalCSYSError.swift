@@ -8,6 +8,7 @@
 
 import Foundation
 
+/// A flag for unworkable inputs to a coordinate system.
 public class NonOrthogonalCSYSError: Error {
     
     var description: String {

@@ -20,7 +20,7 @@ public struct CoordinateSystem: Equatable   {
     private var axisZ: Vector3D
     
     
-    /// Construct an equivalent to the global CSYS.
+    /// Duplicate the global CSYS.
     /// Origin can be changed by static function 'relocate'.
     /// - See: 'testFidelity1' under CoordinateSystemTests
     public init()   {
@@ -146,6 +146,8 @@ public struct CoordinateSystem: Equatable   {
         
     }
     
+    //TODO: Doesn't this need a Transform function?
+    
     
     /// Simple getter
     public func getOrigin() -> Point3D   {
@@ -178,12 +180,12 @@ public struct CoordinateSystem: Equatable   {
     }
     
     
-    /// Check to see that these three vectors are mutually orthogonal
+    /// Check to see that these three vectors are mutually orthogonal.
+    /// Should this go in Vector3D?
     /// - Parameters:
     ///   - uno: Unit vector to serve as an axis
     ///   - dos: Another unit vector
     ///   - tres: The final unit vector
-    ///   Returns: Simple flag
     /// - Throws:
     ///   - NonUnitDirectionError for any bad input vector
     /// - Returns: Simple flag

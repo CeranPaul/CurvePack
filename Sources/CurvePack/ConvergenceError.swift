@@ -8,6 +8,7 @@
 
 import Foundation
 
+/// A flag about what appears to be an infinite loop.
 public class ConvergenceError: Error {
     
     var count: Int

@@ -8,7 +8,7 @@
 
 import Foundation
 
-/// Unbounded flat surface
+/// Unbounded flat surface.
 public struct Plane: Equatable   {
     
     /// A point to locate the plane

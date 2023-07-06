@@ -178,7 +178,7 @@ public struct Arc: PenCurve, Equatable   {
     /// Uses the same start point.
     /// - Parameters:
     ///   - basis: Original Arc
-    ///   - delta: Increase in size
+    ///   - delta: Change in size
     /// - Throws:
     ///   - CoincidentPointsError for a reduction that would leave nothing but a point.
     /// - See: 'testConcentric' under ArcTests

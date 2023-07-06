@@ -8,6 +8,7 @@
 
 import Foundation
 
+/// A flag when the passed array fails to have more than three members.
 public class TinyArrayError: Error {
     
     var count: Int
