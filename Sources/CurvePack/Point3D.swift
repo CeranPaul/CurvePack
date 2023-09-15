@@ -45,6 +45,28 @@ open class Point3D: Hashable {
     
     }
     
+    ///Create a new point from three strings
+    /// - Parameters:
+    ///   - xString: String for the coordinate value along the X axis
+    ///   - yString: String for coordinate value
+    ///   - zString: String for coordinate value
+    /// - Returns: Optional Point3D
+    public func fromStrings(xString: String, yString: String, zString: String) -> Point3D?   {
+        
+        var fresh: Point3D? = nil
+        
+        if let xLoc = Double(xString)   {
+            
+            if let yLoc = Double(yString)   {
+                
+                if let zLoc = Double(zString)   {
+                    fresh = Point3D(x: xLoc, y: yLoc, z: zLoc)
+                }
+            }
+        }
+        
+        return fresh
+    }
     
     
     /// Generate the unique value using Swift 4.2 tools

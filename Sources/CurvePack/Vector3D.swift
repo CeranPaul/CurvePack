@@ -67,6 +67,30 @@ public struct Vector3D: Equatable {
     }
     
     
+    ///Create a new vector from three strings
+    /// - Parameters:
+    ///   - iString: String for the length along the X axis
+    ///   - jString: String for coordinate value
+    ///   - kString: String for coordinate value
+    /// - Returns: Optional Point3D
+    public func fromStrings(iString: String, jString: String, kString: String) -> Vector3D?   {
+        
+        var fresh: Vector3D? = nil
+        
+        if let iLen = Double(iString)   {
+            
+            if let jLen = Double(jString)   {
+                
+                if let kLen = Double(kString)   {
+                    fresh = Vector3D(i: iLen, j: jLen, k: kLen)
+                }
+            }
+        }
+        
+        return fresh
+    }
+    
+    
     /// Destructively make this a unit vector
     /// - See: 'testNormalize' under Vector3DTests
     public mutating func normalize()   {
