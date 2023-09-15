@@ -73,7 +73,7 @@ public struct Vector3D: Equatable {
     ///   - jString: String for coordinate value
     ///   - kString: String for coordinate value
     /// - Returns: Optional Point3D
-    public func fromStrings(iString: String, jString: String, kString: String) -> Vector3D?   {
+    public static func fromStrings(iString: String, jString: String, kString: String) -> Vector3D?   {
         
         var fresh: Vector3D? = nil
         

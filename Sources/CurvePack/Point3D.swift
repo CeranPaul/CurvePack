@@ -51,7 +51,7 @@ open class Point3D: Hashable {
     ///   - yString: String for coordinate value
     ///   - zString: String for coordinate value
     /// - Returns: Optional Point3D
-    public func fromStrings(xString: String, yString: String, zString: String) -> Point3D?   {
+    public static func fromStrings(xString: String, yString: String, zString: String) -> Point3D?   {
         
         var fresh: Point3D? = nil
         
