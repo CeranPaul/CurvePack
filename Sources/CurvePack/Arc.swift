@@ -995,6 +995,95 @@ public struct Arc: PenCurve, Equatable   {
     }
     
     
+    /// Checks to see if an Arc (full circle) is fully inside another.
+    /// - Parameters:
+    ///   - bigUn: Large Arc - treated as a full circle
+    ///   - ltlUn: Smaller Arc
+    /// - Throws:
+    ///     - CoincidentPlanesError if the circles are not on the same plane.
+    /// - Returns: Simple flag
+    public func isSwallowed(bigUn: Arc, ltlUn: Arc) throws -> Bool   {
+        
+        //TODO: Consider adding verification that they are both full circles
+        
+        /// Plane that contains the circle
+        let flatA = Arc.genPlane(scoop: bigUn)
+        let flatB = Arc.genPlane(scoop: ltlUn)
+        
+        guard try! Plane.isCoincident(flatLeft: flatA, flatRight: flatB, accuracy: 0.001) else { throw CoincidentPlanesError(enalpA: flatA) }
+        
+        var flag = false
+        
+
+        let separation = Point3D.dist(pt1: bigUn.getCenter(), pt2: ltlUn.getCenter())
+        
+        let bigRadius = bigUn.getRadius()
+        let ltlRadius = ltlUn.getRadius()
+        if separation + ltlRadius <= bigRadius   { flag = true }
+        
+        return flag
+    }
+
+
+    /// Build a full Arc that inscribes the two inputs.
+    /// - Parameters:
+    ///   - circleA: One circle
+    ///   - circleB: Another circle
+    /// - Throws: <#description#>
+    ///     - ZeroSweepError if either figure isn't a full circle.
+    ///     - CoincidentPointsError if the two circles are identical.
+    ///     - CoincidentPlanesError if the circles are not on the same plane.
+    ///     - CoincidentPointsError if either circle is completely inside the other
+    /// - Returns: The inscribing circle
+    public func inscribeTwoArcs(circleA: Arc, circleB: Arc) throws   -> Arc {
+        
+        // Ensure that they both are full circles
+        guard circleA.getSweepAngle() == 2.0 * Double.pi else { throw ZeroSweepError(ctr: circleA.getCenter()) }
+              
+        guard circleB.getSweepAngle() == 2.0 * Double.pi else { throw ZeroSweepError(ctr: circleB.getCenter()) }
+        
+        
+        // Avoid identical circles
+        guard circleA != circleB else { throw CoincidentPointsError(dupePt: circleA.getCenter()) }
+              
+        
+        // Be certain that they are coplanar
+        
+        /// Plane that contains the circle
+        let flatA = Arc.genPlane(scoop: circleA)
+        let flatB = Arc.genPlane(scoop: circleB)
+        
+        guard try! Plane.isCoincident(flatLeft: flatA, flatRight: flatB, accuracy: Point3D.Epsilon) else { throw CoincidentPlanesError(enalpA: flatA) }
+        
+        
+        // Avoid cases where one circle is completely inside the other
+        var flagSwallow = try! isSwallowed(bigUn: circleA, ltlUn: circleB)
+        guard !flagSwallow else { throw CoincidentPointsError(dupePt: circleB.getCenter()) }
+
+        flagSwallow = try! isSwallowed(bigUn: circleB, ltlUn: circleA)
+        guard !flagSwallow else { throw CoincidentPointsError(dupePt: circleA.getCenter()) }
+        
+        /// Vector away from the common plane
+        let angel  = circleA.getAxisDir()
+        
+        /// Line segment that connects the two centers
+        let bridge = try! LineSeg(end1: circleA.getCenter(), end2: circleB.getCenter())
+        
+        /// Vector along bridge
+        var bridgeDir = bridge.getDirection()
+        bridgeDir.normalize()
+        
+        let insetA = Point3D(base: bridge.getOneEnd(), offset: bridgeDir * circleA.getRadius())
+        let insetB = Point3D(base: bridge.getOtherEnd(), offset: bridgeDir.reverse() * circleB.getRadius())
+            
+        let inscribedCenter = Point3D.midway(alpha: insetA, beta: insetB)
+        
+        /// Desired result
+        let touchingBoth = try! Arc(ctr: inscribedCenter, axis: angel, start: insetB, sweep: 2.0 * Double.pi)
+        
+        return touchingBoth
+    }
+
     
 
     /// Plot the circle segment.  This will be called by the UIView 'drawRect' function
