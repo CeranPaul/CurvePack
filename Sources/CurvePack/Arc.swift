@@ -995,6 +995,24 @@ public struct Arc: PenCurve, Equatable   {
     }
     
     
+    /// Checks to see if a Point3D is inside the circle. Should become a type function in Arc.
+    /// - Parameters:
+    ///   - cup: An Arc - treated as a full circle
+    ///   - pip: Test point
+    /// - Returns: Simple flag
+    public static func isInside(cup: Arc, pip: Point3D) -> Bool   {
+        
+        var flag = false
+        
+        let separation = Point3D.dist(pt1: pip, pt2: cup.getCenter())
+        let radius = cup.getRadius()
+        
+        if separation <= radius   { flag = true }
+        
+        return flag
+    }
+
+
     /// Checks to see if an Arc (full circle) is fully inside another.
     /// - Parameters:
     ///   - bigUn: Large Arc - treated as a full circle
@@ -1002,7 +1020,7 @@ public struct Arc: PenCurve, Equatable   {
     /// - Throws:
     ///     - CoincidentPlanesError if the circles are not on the same plane.
     /// - Returns: Simple flag
-    public func isSwallowed(bigUn: Arc, ltlUn: Arc) throws -> Bool   {
+    public static func isSwallowed(bigUn: Arc, ltlUn: Arc) throws -> Bool   {
         
         //TODO: Consider adding verification that they are both full circles
         
@@ -1035,7 +1053,7 @@ public struct Arc: PenCurve, Equatable   {
     ///     - CoincidentPlanesError if the circles are not on the same plane.
     ///     - CoincidentPointsError if either circle is completely inside the other
     /// - Returns: The inscribing circle
-    public func inscribeTwoArcs(circleA: Arc, circleB: Arc) throws   -> Arc {
+    public static func inscribeTwoArcs(circleA: Arc, circleB: Arc) throws   -> Arc {
         
         // Ensure that they both are full circles
         guard circleA.getSweepAngle() == 2.0 * Double.pi else { throw ZeroSweepError(ctr: circleA.getCenter()) }
