@@ -482,6 +482,7 @@ public struct Cubic: PenCurve   {
     /// Some notations show "u" as the parameter, instead of "t"
     /// - Parameters:
     ///   - t:  Curve parameter value.  Assumed 0 < t < 1.
+    ///   - ignoreTrim: Work on the entire curve, or the trimmed version
     /// - Returns: Point location at the parameter value
     /// - Throws:
     ///     - ParameterRangeError if the input is lame
@@ -1212,7 +1213,6 @@ public struct Cubic: PenCurve   {
     /// - Parameters:
     ///   - allowableCrown:  Acceptable deviation from curve
     ///   - currentT:  Present value of the driving parameter
-    ///   - increasing:  Whether the change in parameter should be up or down
     /// - Returns: New value for driving parameter
     /// - Throws:
     ///     - NegativeAccuracyError for bad allowable crown

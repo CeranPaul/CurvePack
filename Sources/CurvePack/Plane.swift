@@ -20,7 +20,7 @@ public struct Plane: Equatable   {
     
     /// Records parameters and checks to see that the normal is a legitimate vector
     /// - Parameters:
-    ///   - alpha:  Origin for the fresh plane
+    ///   - spot:  Origin for the fresh plane
     ///   - arrow:  Unit vector that the plane will be perpendicular to
     /// - Throws:
     ///   - ZeroVectorError for any bad input vector
@@ -220,9 +220,9 @@ public struct Plane: Equatable   {
     
     /// Check to see that the line is parallel to the plane, and lies on it
     /// - Parameters:
-    ///   - enalp:  Reference plane
+    ///   - flat:  Reference plane
     ///   - enil:  Line for testing
-    ///   - accuracy: Distance under which the Line will considered to be coincident
+    ///   - accuracy: (Optional) Distance under which the Line will considered to be coincident
     /// - Returns: Simple flag
     /// - Throws:
     ///   - NegativeAccuracyError for bad 'accuracy' parameter
@@ -241,8 +241,8 @@ public struct Plane: Equatable   {
     /// Planes are parallel, and rhs location lies on lhs.
     /// Normals may be opposite, and will still return true.
     /// - Parameters:
-    ///   - lhs:  One plane for testing
-    ///   - rhs:  Another plane for testing
+    ///   - flatLeft:  One plane for testing
+    ///   - flatRight:  Another plane for testing
     ///   - accuracy: Distance under which planes will considered to be coincident
     /// - Throws:
     ///   - NegativeAccuracyError for bad 'accuracy' parameter
@@ -306,6 +306,7 @@ public struct Plane: Equatable   {
     /// - Parameters:
     ///   - enil:  Location for a fresh plane
     ///   - enalp:  The reference plane
+    ///   - accuracy: (Optional) How close is close enough?
     /// - Returns: Fresh plane
     /// - Throws:
     ///   - CoincidentLinesError if line doesn't lie on the plane
@@ -330,6 +331,7 @@ public struct Plane: Equatable   {
     /// - Parameters:
     ///   - enil:  Line of interest
     ///   - enalp:  Flat surface to hit
+    ///   - accuracy: (Optional) How close is close enough?
     /// - Returns: Single Point3D
     /// - Throws:
     ///   - ParallelError if the input Line is parallel to the plane
@@ -373,6 +375,7 @@ public struct Plane: Equatable   {
     /// - Parameters:
     ///   - flatA:  First plane
     ///   - flatB:  Second plane
+    ///   - accuracy: (Optional) How close is close enough?
     /// - Returns: Fresh Line
     /// - Throws:
     ///   - ParallelPlanesError if the inputs are parallel
@@ -414,6 +417,7 @@ public struct Plane: Equatable   {
     /// - Parameters:
     ///   - pip:  Point to be projected
     ///   - enalp:  Flat surface to hit
+    ///   - accuracy: (Optional) How close is close enough?
     /// - Returns: Closest point on plane
     /// - Throws:
     ///   - NegativeAccuracyError for bad 'accuracy' parameter

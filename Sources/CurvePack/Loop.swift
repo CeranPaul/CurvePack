@@ -482,7 +482,6 @@ public class Loop   {
     /// Should this move to Loop? Yes, because you don't want to try this operation on a Loop that isn't closed.
     /// - Parameters:
     ///   - ray: Cutting line
-    ///   - perim: The Loop for analysis
     /// - Throws:
     ///     - SplittingError for a non-even number of intersections
     /// - Returns: Sum of inside lengths

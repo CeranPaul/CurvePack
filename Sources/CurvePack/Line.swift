@@ -305,7 +305,6 @@ public struct Line: Equatable {
     
     /// Move, rotate, and scale.
     /// - Parameters:
-    ///   - arrow: Source Line
     ///   - xirtam: Transform to be applied
     /// - Returns: Fresh line that has been rotated, moved, and scaled
     /// - See: 'testLineTransform' under LineTests

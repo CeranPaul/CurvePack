@@ -380,6 +380,7 @@ public struct Quadratic: PenCurve   {
     ///  What's the right thing to do here for a trimmed curve?
     /// - Parameters:
     ///   - speck:  Point near the curve.
+    ///   - accuracy: (Optional) How close is close enough?
     /// - Throws:
     ///     - ParameterRangeError for a bad parameter near the end of this code
     /// - Returns: Flag, and optional parameter value

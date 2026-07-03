@@ -106,7 +106,7 @@ public class Arc: PenCurve, Equatable   {
     /// Create from center and two endpoints.
     /// Use the other initializer for a half or whole circle.
     /// - Parameters:
-    ///   - ctr: Point to be used as origin
+    ///   - center: Point to be used as origin
     ///   - end1: Starting point
     ///   - end2: Final point
     ///   - useSmallAngle: Flag to indicate which of the two possible Arcs to use

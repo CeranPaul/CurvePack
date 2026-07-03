@@ -289,6 +289,19 @@ public struct OrthoVol   {
         return freshVol
     }
         
+    
+    /// Checks a point for inclusion.
+    /// - Parameters:
+    ///   - point: Location in question
+    ///   - volume: Target brick
+    /// - Returns: Simple flag
+    public static func isInside(point: Point3D, in volume: OrthoVol) -> Bool {
+        
+        return volume.rangeX.contains(point.x) && volume.rangeY.contains(point.y) && volume.rangeZ.contains(point.z)
+    }
+    
+    
+    
 }   // End of definition for struct OrthoVol
 
 

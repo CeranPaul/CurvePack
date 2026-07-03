@@ -24,15 +24,28 @@ open class Point3D: Hashable {
     /// The simplest constructor.  Needed because a default initializer has 'internal' access level.
     /// - See: 'testFidelity' under Point3DTests
     public init(x: Double, y: Double, z: Double)   {
+        
         self.x = x
         self.y = y
         self.z = z
+        
     }
     
     
+    /// Empty constructor.  Needed because a default initializer has 'internal' access level.
+    /// - See: '' under Point3DTests
+    public init()   {
+        
+        self.x = 0.0
+        self.y = 0.0
+        self.z = 0.0
+        
+    }
+    
+
     /// Create a new point by offsetting
     /// - Parameters:
-    ///   - pip: Original point
+    ///   - base: Original point
     ///   - offset: Vector to be used as the offset
     /// - Returns: New point
     /// - SeeAlso: transform
@@ -44,6 +57,22 @@ open class Point3D: Hashable {
         self.z = base.z + offset.k
     
     }
+    
+    
+    /// Random within a range. Uniform distribution.
+    /// - Parameters:
+    ///   - xRange: Boundaries in the X direction
+    ///   - yRange: Boundaries for Y
+    ///   - zRange: Limits to choices for Z
+    /// - See: '' under Point3DTests
+    public init(xRange: ClosedRange<Double>, yRange: ClosedRange<Double>, zRange: ClosedRange<Double>)   {
+        self.x = Double.random(in: xRange)
+        self.y = Double.random(in: yRange)
+        self.z = Double.random(in: zRange)
+    }
+    
+    //TODO: Similar with a Gaussian distribution
+
     
     ///Create a new point from three strings
     /// - Parameters:
@@ -98,18 +127,22 @@ open class Point3D: Hashable {
     /// - See: 'testTransform' under Point3DTests
     open func transform(xirtam: Transform) -> Point3D {
         
+        /// Row vector with four values
         let pip4 = RowMtx4(valOne: self.x, valTwo: self.y, valThree: self.z, valFour: 1.0)
+        
+        /// Transformed location as a row vector
         let tniop4 = pip4 * xirtam
         
+        /// Stripped to be just a point
         let transformed = tniop4.toPoint()
         return transformed
+        
     }
     
     
     /// Flip points to the opposite side of the plane
     /// - Parameters:
     ///   - flat:  Mirroring plane
-    ///   - pip:  Point to be flipped
     /// - Returns: New point
     /// - See: 'testMirrorPoint' and 'testMirrorPointB' under Point3DTests
     open func mirror(flat: Plane) -> Point3D   {
@@ -139,6 +172,7 @@ open class Point3D: Hashable {
         let sum = deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ
         
         return sqrt(sum)
+        
     }
     
     
@@ -151,6 +185,7 @@ open class Point3D: Hashable {
     public static func midway(alpha: Point3D, beta: Point3D) -> Point3D   {
         
         return Point3D(x: (alpha.x + beta.x) / 2.0, y: (alpha.y + beta.y) / 2.0, z: (alpha.z + beta.z) / 2.0)
+        
     }
     
     
@@ -176,7 +211,7 @@ open class Point3D: Hashable {
     /// Determine the angle (in radians) CCW from the positive X axis in the XY plane
     /// - Parameters:
     ///   - ctr: Pivot point
-    ///   - beta: Point of interest
+    ///   - tniop: Point of interest
     /// - Returns: Angle in radians in a range from -pi to pi
     /// - See: 'testAngleAbout' under Point3DTests
     /// - See: 'figCCWAngle'
@@ -234,7 +269,7 @@ open class Point3D: Hashable {
     }
     
 
-    /// Check that three points are not duplicate.  Useful for building triangles, or defining arcs
+    /// Check that three points contain no duplicates.  Useful for building triangles, planes, or for defining arcs
     /// - Parameters:
     ///   - alpha:  A test point
     ///   - beta:  Another test point

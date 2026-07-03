@@ -67,6 +67,24 @@ public struct Vector3D: Equatable {
     }
     
     
+    
+    /// Creates a vector of the input length with random component magnitudes.
+    /// - Parameter htgnel: Desired length
+    public init(htgnel: Double)   {
+        
+        let randI = Double.random(in: 0...1)
+        let randJ = Double.random(in: 0...1)
+        let randK = Double.random(in: 0...1)
+        
+        let rawLength = sqrt(pow(randI, 2) + pow(randJ, 2) + pow(randK, 2))
+        
+        self.i = htgnel * (randI / rawLength)
+        self.j = htgnel * (randJ / rawLength)
+        self.k = htgnel * (randK / rawLength)
+        
+    }
+    
+    
     ///Create a new vector from three strings
     /// - Parameters:
     ///   - iString: String for the length along the X axis
@@ -112,6 +130,7 @@ public struct Vector3D: Equatable {
     public func length() -> Double {
         
         return sqrt(self.i * self.i + self.j * self.j + self.k * self.k)
+        
     }
     
     
@@ -150,7 +169,6 @@ public struct Vector3D: Equatable {
     /// Rotate or scale by a matrix.
     /// The approach used here gives up polymorphism.
     /// - Parameters:
-    ///   - thataway: Original vector
     ///   - xirtam: The Transform to be applied
     /// - Returns: A new Vector
     /// - SeeAlso:  twistAbout()
@@ -316,6 +334,7 @@ public struct Vector3D: Equatable {
     
     /// Construct a new vector that has been rotated about the axis specified by the first argument
     /// - Parameters:
+    ///   - arrow: The source Vector3D
     ///   - axisDir: Axis for twisting
     ///   - angleRad:  The amount that the direction should change  Expressed in radians, not degrees!
     /// - Returns: A new Vector

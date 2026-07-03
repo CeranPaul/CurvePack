@@ -119,6 +119,7 @@ public struct LineSeg: PenCurve, Equatable {
     /// Some notations show "u" as the parameter, instead of "t"
     /// - Parameters:
     ///   - t:  Parameter value
+    ///   - ignoreTrim: Consider the entire curve, or just the trimmed portion
     /// - Throws:
     ///     - ParameterRangeError if the input is lame
     /// - Returns: Non-normalized vector
@@ -312,6 +313,7 @@ public struct LineSeg: PenCurve, Equatable {
     /// Check whether a point is or isn't perched on the curve.
     /// - Parameters:
     ///   - speck:  Point near the curve.
+    ///   - accuracy: How close should be considered to be on the LineSeg
     /// - Throws:
     ///   - NegativeAccuracyError for a goofy input.
     /// - Returns: Flag, and optional parameter value

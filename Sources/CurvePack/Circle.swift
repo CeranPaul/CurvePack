@@ -16,7 +16,6 @@ public class Circle: Arc, Hashable   {
     ///   - ctr: Point to be used as origin
     ///   - axis: Pivot direction for rotating
     ///   - start: Beginning point
-    ///   - sweep: Sweep angle in radians. Positive or negative.
     /// - Throws:
     ///   - NonUnitDirectionError for a bad set of inputs
     ///   - NonOrthogonalPointError for a bad start point
@@ -60,6 +59,8 @@ public class Circle: Arc, Hashable   {
         
     }
     
+    
+    //TODO: Figure out how to make a constructor when it is useful to have a zero radius.
 
     
     /// Checks to see if a Point3D is inside the circle.
@@ -110,64 +111,64 @@ public class Circle: Arc, Hashable   {
     }
 
 
-    /// Build a full Arc that inscribes the two inputs.
+    /// Build Circle that inscribes the two inputs.
     /// - Parameters:
-    ///   - circleA: One circle
-    ///   - circleB: Another circle
-    /// - Throws: <#description#>
+    ///   - able: One circle
+    ///   - baker: Another circle
+    /// - Throws:
     ///     - ZeroSweepError if either figure isn't a full circle.
     ///     - CoincidentPointsError if the two circles are identical.
     ///     - CoincidentPlanesError if the circles are not on the same plane.
     ///     - CoincidentPointsError if either circle is completely inside the other
     /// - Returns: The inscribing circle
-    public static func inscribeTwoArcs(circleA: Arc, circleB: Arc) throws   -> Arc {
+    public static func inscribeTwo(able: Circle, baker: Circle) throws   -> Circle {
         
-        // Ensure that they both are full circles
-        guard circleA.getSweepAngle() == 2.0 * Double.pi else { throw ZeroSweepError(ctr: circleA.getCenter()) }
-              
-        guard circleB.getSweepAngle() == 2.0 * Double.pi else { throw ZeroSweepError(ctr: circleB.getCenter()) }
-        
+        //TODO: Test in multiple plane orientations
         
         // Avoid identical circles
-        guard circleA != circleB else { throw CoincidentPointsError(dupePt: circleA.getCenter()) }
+        guard able != baker else { throw CoincidentPointsError(dupePt: able.getCenter()) }
               
         
         // Be certain that they are coplanar
         
         /// Plane that contains the circle
-        let flatA = Arc.genPlane(scoop: circleA)
-        let flatB = Arc.genPlane(scoop: circleB)
+        let flatA = Arc.genPlane(scoop: able)
+        let flatB = Arc.genPlane(scoop: baker)
         
         guard try! Plane.isCoincident(flatLeft: flatA, flatRight: flatB, accuracy: Point3D.Epsilon) else { throw CoincidentPlanesError(enalpA: flatA) }
         
         
         // Avoid cases where one circle is completely inside the other
-        var flagSwallow = try! isSwallowed(bigUn: circleA, ltlUn: circleB)
-        guard !flagSwallow else { throw CoincidentPointsError(dupePt: circleB.getCenter()) }
+        var flagSwallow = try! isSwallowed(bigUn: able, ltlUn: baker)
+        guard !flagSwallow else { throw CoincidentPointsError(dupePt: baker.getCenter()) }
 
-        flagSwallow = try! isSwallowed(bigUn: circleB, ltlUn: circleA)
-        guard !flagSwallow else { throw CoincidentPointsError(dupePt: circleA.getCenter()) }
+        flagSwallow = try! isSwallowed(bigUn: baker, ltlUn: able)
+        guard !flagSwallow else { throw CoincidentPointsError(dupePt: able.getCenter()) }
         
         /// Vector away from the common plane
-        let angel  = circleA.getAxisDir()
+        let angel  = able.getAxisDir()
         
         /// Line segment that connects the two centers
-        let bridge = try! LineSeg(end1: circleA.getCenter(), end2: circleB.getCenter())
+        let bridge = try! LineSeg(end1: able.getCenter(), end2: baker.getCenter())
         
         /// Vector along bridge
         var bridgeDir = bridge.getDirection()
         bridgeDir.normalize()
         
-        let insetA = Point3D(base: bridge.getOneEnd(), offset: bridgeDir * circleA.getRadius())
-        let insetB = Point3D(base: bridge.getOtherEnd(), offset: bridgeDir.reverse() * circleB.getRadius())
+        let insetA = Point3D(base: bridge.getOneEnd(), offset: bridgeDir * able.getRadius())
+        let insetB = Point3D(base: bridge.getOtherEnd(), offset: bridgeDir.reverse() * baker.getRadius())
             
         let inscribedCenter = Point3D.midway(alpha: insetA, beta: insetB)
         
         /// Desired result
-        let touchingBoth = try! Arc(ctr: inscribedCenter, axis: angel, start: insetB, sweep: 2.0 * Double.pi)
+        let touchingBoth = try! Circle(ctr: inscribedCenter, axis: angel, start: insetB)
         
         return touchingBoth
     }
+    
+    //TODO: Distribute points evenly around the circumference
+    
+    //TODO: Function to circumscribe a set of inputs - either Circles, or Point3D's
 
     
 

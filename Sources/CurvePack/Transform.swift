@@ -435,7 +435,7 @@ public func == (lhs: Transform, rhs: Transform) -> Bool  {
 /// Custom code that uses a slightly different order than simd.
 /// - Parameters:
 ///   - pre: Row matrix of length 4
-///   - rhs: Transform
+///   - mtx: Transform
 ///   Returns: RowMtx4
 /// - See:
 public func * (pre: RowMtx4, mtx: Transform) -> RowMtx4   {
