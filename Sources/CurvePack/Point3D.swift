@@ -154,6 +154,25 @@ open class Point3D: Hashable {
     }
     
     
+    /// Calculate the average of all the point coordinates.
+    /// - Parameter pool: Point cloud
+    /// - Returns: Middle point
+    public static func avgPoint(pool: [Point3D]) -> Point3D {
+        
+        // Consider adding a check for non-zero array size
+        
+        let xPool = pool.map(\.x)
+        let yPool = pool.map(\.y)
+        let zPool = pool.map(\.z)
+        
+        let xAvg = xPool.reduce(0, +) / Double(pool.count)
+        let yAvg = yPool.reduce(0, +) / Double(pool.count)
+        let zAvg = zPool.reduce(0, +) / Double(pool.count)
+        
+        return Point3D(x: xAvg, y: yAvg, z: zAvg)
+        
+    }
+
     /// Determine the angle (in radians) CCW from the positive X axis in the XY plane
     /// - Parameters:
     ///   - ctr: Pivot point
