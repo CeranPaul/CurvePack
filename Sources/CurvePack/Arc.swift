@@ -10,7 +10,7 @@ import Foundation
 import CoreGraphics
 
 /// Can represent a portion, or a complete circle
-public struct Arc: PenCurve, Equatable   {
+public class Arc: PenCurve, Equatable   {
     
     /// Anchor point for swinging
     var center: Point3D
@@ -190,9 +190,27 @@ public struct Arc: PenCurve, Equatable   {
         /// Normalized vector towards the start of the Arc.
         let thataway = Vector3D(from: basis.getCenter(), towards: basis.getOneEnd(), unit: true)
          
-        let startOffset = Point3D(base: basis.getOneEnd(), offset: thataway * delta)
+        self.startPt = Point3D(base: basis.getOneEnd(), offset: thataway * delta)
         
-        self = try Arc(ctr: basis.getCenter(), axis: basis.getAxisDir(), start: startOffset, sweep: basis.getSweepAngle())
+        self.center = basis.getCenter()
+        self.axis = basis.axis
+        self.radius = basis.radius + delta
+        
+        self.sweepAngle = basis.sweepAngle
+        
+        self.trimParameters = ClosedRange<Double>(uncheckedBounds: (lower: 0.0, upper: 1.0))
+        
+        self.usage = "Ordinary"
+        
+        /// What can be considered horizontal for the source Arc
+        let baseline = Vector3D(from: basis.center, towards: basis.getOneEnd(), unit: true)
+        
+        /// Coordinate system
+        let csys = try CoordinateSystem(origin: self.center, refDirection: baseline, normal: self.axis)
+        
+        self.toGlobal = try! Transform.genToGlobal(csys: csys)
+        
+        self.fromGlobal = Transform.genFromGlobal(csys: csys)
         
     }
     
@@ -200,7 +218,7 @@ public struct Arc: PenCurve, Equatable   {
     /// Attach new meaning to the curve
     /// - Parameter: purpose:PenTypes
     /// - See: 'testSetIntent' under ArcTests
-    public mutating func setIntent(purpose: String)   {
+    public func setIntent(purpose: String)   {
         
         self.usage = purpose
     }
@@ -240,7 +258,7 @@ public struct Arc: PenCurve, Equatable   {
         return self.sweepAngle
     }
     
-    public mutating func setSweep(freshSweep: Double) throws   {
+    public func setSweep(freshSweep: Double) throws   {
         
         guard freshSweep <= Double.pi * 2.0  else  { throw ParameterRangeError(parA: freshSweep) }
         guard freshSweep >= Double.pi * -2.0  else  { throw ParameterRangeError(parA: freshSweep) }
@@ -359,7 +377,7 @@ public struct Arc: PenCurve, Equatable   {
     /// - Throws:
     ///     - ParameterRangeError if the input is lame
     /// - See: 'testTrimFront' under ArcTests
-    mutating public func trimFront(lowParameter: Double) throws   {
+    public func trimFront(lowParameter: Double) throws   {
         
         guard lowParameter >= 0.0  else  { throw ParameterRangeError(parA: lowParameter)}
         
@@ -377,7 +395,7 @@ public struct Arc: PenCurve, Equatable   {
     /// - Throws:
     ///     - ParameterRangeError if the input is lame
     /// - See: 'testTrimBack' under ArcTests
-    mutating public func trimBack(highParameter: Double) throws   {
+    public func trimBack(highParameter: Double) throws   {
         
         guard highParameter <= 1.0  else  { throw ParameterRangeError(parA: highParameter)}
         
@@ -481,7 +499,7 @@ public struct Arc: PenCurve, Equatable   {
         let freshStart = self.startPt.transform(xirtam: xirtam)
         
         
-        var fresh = try Arc(ctr: freshCtr, axis: freshDir, start: freshStart, sweep: self.sweepAngle)
+        let fresh = try Arc(ctr: freshCtr, axis: freshDir, start: freshStart, sweep: self.sweepAngle)
         
         try! fresh.trimFront(lowParameter: self.trimParameters.lowerBound)   // Transfer the limits
         try! fresh.trimBack(highParameter: self.trimParameters.upperBound)
@@ -493,8 +511,9 @@ public struct Arc: PenCurve, Equatable   {
     
         
     /// Same start and end, but different direction. Used to align members of a Loop
+    ///  A requirement of protocol PenCurve
     /// - See: 'testReverse' under ArcTests.
-    public mutating func reverse() -> Void  {
+    public func reverse() -> Void  {
         
         let oldFinish = self.getOtherEnd()
         let freshSweep = -1.0 * self.sweepAngle
@@ -995,115 +1014,6 @@ public struct Arc: PenCurve, Equatable   {
     }
     
     
-    /// Checks to see if a Point3D is inside the circle. Should become a type function in Arc.
-    /// - Parameters:
-    ///   - cup: An Arc - treated as a full circle
-    ///   - pip: Test point
-    /// - Returns: Simple flag
-    public static func isInside(cup: Arc, pip: Point3D) -> Bool   {
-        
-        var flag = false
-        
-        let separation = Point3D.dist(pt1: pip, pt2: cup.getCenter())
-        let radius = cup.getRadius()
-        
-        if separation <= radius   { flag = true }
-        
-        return flag
-    }
-
-
-    /// Checks to see if an Arc (full circle) is fully inside another.
-    /// - Parameters:
-    ///   - bigUn: Large Arc - treated as a full circle
-    ///   - ltlUn: Smaller Arc
-    /// - Throws:
-    ///     - CoincidentPlanesError if the circles are not on the same plane.
-    /// - Returns: Simple flag
-    public static func isSwallowed(bigUn: Arc, ltlUn: Arc) throws -> Bool   {
-        
-        //TODO: Consider adding verification that they are both full circles
-        
-        /// Plane that contains the circle
-        let flatA = Arc.genPlane(scoop: bigUn)
-        let flatB = Arc.genPlane(scoop: ltlUn)
-        
-        guard try! Plane.isCoincident(flatLeft: flatA, flatRight: flatB, accuracy: 0.001) else { throw CoincidentPlanesError(enalpA: flatA) }
-        
-        var flag = false
-        
-
-        let separation = Point3D.dist(pt1: bigUn.getCenter(), pt2: ltlUn.getCenter())
-        
-        let bigRadius = bigUn.getRadius()
-        let ltlRadius = ltlUn.getRadius()
-        if separation + ltlRadius <= bigRadius   { flag = true }
-        
-        return flag
-    }
-
-
-    /// Build a full Arc that inscribes the two inputs.
-    /// - Parameters:
-    ///   - circleA: One circle
-    ///   - circleB: Another circle
-    /// - Throws: <#description#>
-    ///     - ZeroSweepError if either figure isn't a full circle.
-    ///     - CoincidentPointsError if the two circles are identical.
-    ///     - CoincidentPlanesError if the circles are not on the same plane.
-    ///     - CoincidentPointsError if either circle is completely inside the other
-    /// - Returns: The inscribing circle
-    public static func inscribeTwoArcs(circleA: Arc, circleB: Arc) throws   -> Arc {
-        
-        // Ensure that they both are full circles
-        guard circleA.getSweepAngle() == 2.0 * Double.pi else { throw ZeroSweepError(ctr: circleA.getCenter()) }
-              
-        guard circleB.getSweepAngle() == 2.0 * Double.pi else { throw ZeroSweepError(ctr: circleB.getCenter()) }
-        
-        
-        // Avoid identical circles
-        guard circleA != circleB else { throw CoincidentPointsError(dupePt: circleA.getCenter()) }
-              
-        
-        // Be certain that they are coplanar
-        
-        /// Plane that contains the circle
-        let flatA = Arc.genPlane(scoop: circleA)
-        let flatB = Arc.genPlane(scoop: circleB)
-        
-        guard try! Plane.isCoincident(flatLeft: flatA, flatRight: flatB, accuracy: Point3D.Epsilon) else { throw CoincidentPlanesError(enalpA: flatA) }
-        
-        
-        // Avoid cases where one circle is completely inside the other
-        var flagSwallow = try! isSwallowed(bigUn: circleA, ltlUn: circleB)
-        guard !flagSwallow else { throw CoincidentPointsError(dupePt: circleB.getCenter()) }
-
-        flagSwallow = try! isSwallowed(bigUn: circleB, ltlUn: circleA)
-        guard !flagSwallow else { throw CoincidentPointsError(dupePt: circleA.getCenter()) }
-        
-        /// Vector away from the common plane
-        let angel  = circleA.getAxisDir()
-        
-        /// Line segment that connects the two centers
-        let bridge = try! LineSeg(end1: circleA.getCenter(), end2: circleB.getCenter())
-        
-        /// Vector along bridge
-        var bridgeDir = bridge.getDirection()
-        bridgeDir.normalize()
-        
-        let insetA = Point3D(base: bridge.getOneEnd(), offset: bridgeDir * circleA.getRadius())
-        let insetB = Point3D(base: bridge.getOtherEnd(), offset: bridgeDir.reverse() * circleB.getRadius())
-            
-        let inscribedCenter = Point3D.midway(alpha: insetA, beta: insetB)
-        
-        /// Desired result
-        let touchingBoth = try! Arc(ctr: inscribedCenter, axis: angel, start: insetB, sweep: 2.0 * Double.pi)
-        
-        return touchingBoth
-    }
-
-    
-
     /// Plot the circle segment.  This will be called by the UIView 'drawRect' function
     /// - Parameters:
     ///   - context: In-use graphics framework

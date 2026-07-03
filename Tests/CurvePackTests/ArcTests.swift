@@ -348,7 +348,7 @@ class ArcTests: XCTestCase {
         let knuckle = Point3D(x: 5.5, y: 6.0, z: 0.0)
         let tip = Point3D(x: 3.5, y: 8.0, z: 0.0)
         
-        var grip2 = try! Arc(center: thumb, end1: knuckle, end2: tip, useSmallAngle: true)
+        let grip2 = try! Arc(center: thumb, end1: knuckle, end2: tip, useSmallAngle: true)
         
         try! grip2.trimFront(lowParameter: 0.25)
         try! grip2.trimBack(highParameter: 0.80)
@@ -368,7 +368,7 @@ class ArcTests: XCTestCase {
         let knuckle = Point3D(x: 5.5, y: 6.0, z: 0.0)
         let tip = Point3D(x: 3.5, y: 8.0, z: 0.0)
         
-        var grip2 = try! Arc(center: thumb, end1: knuckle, end2: tip, useSmallAngle: true)
+        let grip2 = try! Arc(center: thumb, end1: knuckle, end2: tip, useSmallAngle: true)
         
         try! grip2.trimFront(lowParameter: 0.25)
         try! grip2.trimBack(highParameter: 0.80)
@@ -473,7 +473,7 @@ class ArcTests: XCTestCase {
         XCTAssert(Line.isCoincident(straightA: ray3, pip: plop))
 
         
-        var grip2 = try! Arc(center: thumb, end1: knuckle, end2: tip, useSmallAngle: true)
+        let grip2 = try! Arc(center: thumb, end1: knuckle, end2: tip, useSmallAngle: true)
         
         try! grip2.trimFront(lowParameter: 0.25)
         try! grip2.trimBack(highParameter: 0.80)
@@ -483,7 +483,7 @@ class ArcTests: XCTestCase {
         
         do   {
             
-            var grip2 = try Arc(center: thumb, end1: knuckle, end2: tip, useSmallAngle: true)
+            let grip2 = try Arc(center: thumb, end1: knuckle, end2: tip, useSmallAngle: true)
             
             try grip2.trimFront(lowParameter: 0.25)
             try grip2.trimBack(highParameter: 0.80)
@@ -708,7 +708,7 @@ class ArcTests: XCTestCase {
         let start = Point3D(x: 1.5, y: 1.0, z: 2.0)
         let zee = Vector3D(i: 0.0, j: 0.0, k: 1.0)
         
-        var cup = try! Arc(ctr: ctr, axis: zee, start: start, sweep: Double.pi / 2.0)
+        let cup = try! Arc(ctr: ctr, axis: zee, start: start, sweep: Double.pi / 2.0)
         
         let lengthA = cup.getLength()
         
@@ -796,7 +796,7 @@ class ArcTests: XCTestCase {
         let earth = Point3D(x: 5.5, y: 6.0, z: 0.0)
         let atlantis = Point3D(x: 3.5, y: 8.0, z: 0.0)
         
-        var solarSystem1 = try! Arc(center: sun, end1: earth, end2: atlantis, useSmallAngle: false)
+        let solarSystem1 = try! Arc(center: sun, end1: earth, end2: atlantis, useSmallAngle: false)
         
 
         XCTAssert(solarSystem1.usage == "Ordinary")
@@ -1183,73 +1183,6 @@ class ArcTests: XCTestCase {
 
     }
     
-    func testInside() {
-        
-        /// Outward from the XY plane
-        let angel = Vector3D(i: 0.0, j: 0.0, k: 1.0)
-        
-        let ctrA = Point3D(x: 1.0, y: 1.5, z: -2.0)
-        let radA = 2.0
-        let startA = Point3D(x: ctrA.x + radA, y: ctrA.y, z: ctrA.z)
-        let circleA = try! Arc(ctr: ctrA, axis: angel, start: startA, sweep: 2.0 * Double.pi)
-        
-        let ctrB = Point3D(x: 2.0, y: 2.5, z: -2.0)
-        let radB = 1.25
-        let startB = Point3D(x: ctrB.x + radB, y: ctrB.y, z: ctrB.z)
-        let circleB = try! Arc(ctr: ctrB, axis: angel, start: startB, sweep: 2.0 * Double.pi)
-
-        let flag1 = Arc.isInside(cup: circleA, pip: circleB.getCenter())
-        XCTAssert(flag1)
-        
-        let flag2 = Arc.isInside(cup: circleB, pip: circleA.getCenter())
-        XCTAssertFalse(flag2)
-        
-
-    }
-    
-    /// Test a checking function
-    func testIsSwallowed() {
-        
-        /// Outward from the XY plane
-        let angel = Vector3D(i: 0.0, j: 0.0, k: 1.0)
-        
-        
-        let ctrA = Point3D(x: 1.0, y: 1.5, z: -1.2)
-        let radA = 2.0
-        let startA = Point3D(x: ctrA.x + radA, y: ctrA.y, z: ctrA.z)
-        
-        let largeA = try! Arc(ctr: ctrA, axis: angel, start: startA, sweep: 2.0 * Double.pi)
-
-        
-        let escape  = Vector3D(i: 0.0, j: 1.0, k: 0.0)
-        
-        let ctrD = Point3D(x: 1.0, y: 1.0, z: -2.2)
-        let radD = 0.375
-        let startD = Point3D(x: ctrD.x, y: ctrD.y, z: ctrD.z + radD)
-        
-        let twistD = try! Arc(ctr: ctrD, axis: escape, start: startD, sweep: 2.0 * Double.pi)
-
-        XCTAssertThrowsError(try Arc.isSwallowed(bigUn: largeA, ltlUn: twistD))
-        
-        
-        let ctrB = Point3D(x: 1.0, y: 1.0, z: -1.2)
-        let radB = 0.375
-        let startB = Point3D(x: ctrB.x + radB, y: ctrB.y, z: ctrB.z)
-        
-        let smallB = try! Arc(ctr: ctrB, axis: angel, start: startB, sweep: 2.0 * Double.pi)
-        
-        XCTAssert( try! Arc.isSwallowed(bigUn: largeA, ltlUn: smallB))
-        
-        let ctrC = Point3D(x: 1.0, y: -0.25, z: -1.2)
-        let radC = 0.625
-        let startC = Point3D(x: ctrC.x + radC, y: ctrC.y, z: ctrC.z)
-        
-        let mediumC = try! Arc(ctr: ctrC, axis: angel, start: startC, sweep: 2.0 * Double.pi)
-        
-        XCTAssertFalse(try! Arc.isSwallowed(bigUn: largeA, ltlUn: mediumC))
-        
-    }
-
 
     func testSetSweep()   {
         
@@ -1257,7 +1190,7 @@ class ArcTests: XCTestCase {
         let myAxis = Vector3D(i: 0.0, j: 1.0, k: 0.0)
         let greenFlag = Point3D(x: 1.0, y: 1.0, z: 1.8)
         
-        var semi = try! Arc(ctr: nexus, axis: myAxis, start: greenFlag, sweep: Double.pi / 2.0)
+        let semi = try! Arc(ctr: nexus, axis: myAxis, start: greenFlag, sweep: Double.pi / 2.0)
         
         try! semi.setSweep(freshSweep: Double.pi * 3.0 / 2.0)
         XCTAssertEqual(Double.pi * 1.50, semi.getSweepAngle())
