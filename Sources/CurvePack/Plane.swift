@@ -66,7 +66,7 @@ public struct Plane: Equatable   {
     }
     
     
-    /// Construct a plane from a line and point
+    /// Construct a plane from a line and a separate point
     /// - Parameters:
     ///   - straightA:  Input line
     ///   - pip: Off line location
@@ -77,14 +77,16 @@ public struct Plane: Equatable   {
         
         guard !Line.isCoincident(straightA: straightA, pip: pip)  else  { throw CoincidentPointsError(dupePt: pip) }
         
+        
         var between = straightA.resolveRelativeVec(yonder: pip)
         between.perp.normalize()
         
-        var planeNormal = try! Vector3D.crossProduct(lhs: straightA.getDirection(), rhs: between.perp)   // Protected by the guard statement
-        planeNormal.normalize()
+        /// Vector that points out of the plane
+        var planePerp = try! Vector3D.crossProduct(lhs: straightA.getDirection(), rhs: between.perp)   // Protected by the guard statement
+        planePerp.normalize()
         
         self.location = pip
-        self.normal = planeNormal
+        self.normal = planePerp
     }
 
     
@@ -93,7 +95,7 @@ public struct Plane: Equatable   {
     ///   - straightA:  First input line
     ///   - straightB:  Second input line
     /// - Throws:
-    ///   - CoincidentLinesError for duplicate  inputs
+    ///   - CoincidentLinesError for duplicate inputs
     ///   - NonCoPlanarLinesError for bad inputs
     /// - Returns: Fresh plane
     /// - See: 'testBuildTwoLines' under PlaneTests
@@ -108,6 +110,29 @@ public struct Plane: Equatable   {
         
         self.location = freshFlat.getLocation()
         self.normal = freshFlat.getNormal()
+        
+    }
+    
+    
+    
+    
+    /// Build it perpendicular to one of the Axis directions
+    /// - Parameters:
+    ///   - location: Chosen origin
+    ///   - perpendicularAxis: A choice from the Axis enumeration
+    public init(location: Point3D, perpendicularAxis: Axis)   {
+        
+        self.location = location
+        
+        switch perpendicularAxis  {
+            
+        case .x:
+            self.normal = .init(i: 1, j: 0, k: 0)
+        case .y:
+            self.normal = .init(i: 0, j: 1, k: 0)
+        case .z:
+            self.normal = .init(i: 0, j: 0, k: 1)
+        }
         
     }
 

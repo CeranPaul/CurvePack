@@ -19,3 +19,5 @@ When comparing the coordinate values for two points, the desired level of accura
 ### Scaling
 To be able to scale the geometry display, ``OrthoVol`` is a simple struct that represents a brick that is aligned with the global coordinate system. Each curve type that implements ``PenCurve`` has a method to specify the volume that surrounds itself. The initializers have code to build a small depth for planar figures. Volumes can easily be summed. This overall volume guides display on the allotted screen size. 
 
+### Axis
+An enumeration is provided to designate each of the three principal axes.

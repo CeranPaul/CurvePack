@@ -11,6 +11,10 @@ import Foundation
 /// Useful for analysis applications. Use Arc in most cases.
 public class Circle: Arc, Hashable   {
     
+    
+    /// Should the radius be treated as if it were negative?
+    var radNegative: Bool
+    
     /// Create a new one.
     /// - Parameters:
     ///   - ctr: Point to be used as origin
@@ -19,8 +23,7 @@ public class Circle: Arc, Hashable   {
     /// - Throws:
     ///   - NonUnitDirectionError for a bad set of inputs
     ///   - NonOrthogonalPointError for a bad start point
-    ///   - ParameterRangeError for a bad sweep value
-    /// - See: 'testFidelityCASS' under ArcTests
+    /// - See: '' under CircleTests
     public init(ctr: Point3D, axis: Vector3D, start: Point3D) throws   {
         
         guard axis.isUnit() else { throw NonUnitDirectionError(dir: axis) }
@@ -32,31 +35,54 @@ public class Circle: Arc, Hashable   {
         
         guard myDot < Vector3D.EpsilonV else { throw NonOrthogonalPointError(trats: start) }
         
+        
+        self.radNegative = false
+
+        
         try super.init(ctr: ctr, axis: axis, start: start, sweep: 2.0 * Double.pi)
+    }
+    
+    
+    
+    /// Construct one on a plane perpendicular to the axis input
+    /// - Parameters:
+    ///   - ctr: Desired location
+    ///   - radius: Size - can be positive,  negative, or zero.
+    ///   - perpAxis: Perpendicular to the where the Circle lies
+    public init(ctr: Point3D, radius: Double, perpAxis: Axis) throws  {
+
+        /// Absolute value of input radius
+        let absRad = abs(radius)
         
-//        self.center = ctr
-//        
-//        self.axis = axis
-//        
-//        self.startPt = start
-//        
-//        self.sweepAngle = 2.0 * Double.pi
-//        
-//        
-//        self.trimParameters = ClosedRange<Double>(uncheckedBounds: (lower: 0.0, upper: 1.0))
-//        
-//        self.radius = Point3D.dist(pt1: ctr, pt2: start)
-//        
-//        self.usage = "Ordinary"
-//        
-//        
-//        /// Coordinate system
-//        let csys = try CoordinateSystem(origin: self.center, refDirection: baseline, normal: self.axis)
-//        
-//        self.toGlobal = try! Transform.genToGlobal(csys: csys)
-//        
-//        self.fromGlobal = Transform.genFromGlobal(csys: csys)
+        /// Indication of whether or not the input radius is positive
+        var radSign = true        
+        if radius < 0.0   { radSign = false }
+                
+        self.radNegative = !radSign
+       
         
+        /// Axis of rotation
+        var myAxis: Vector3D
+        
+        /// Direction for setting the start point
+        var myPerp: Vector3D
+        
+        switch perpAxis  {
+            
+        case .x:
+            myAxis = Vector3D(i: 1, j: 0, k: 0)
+            myPerp = Vector3D(i: 0, j: 1, k: 0)
+        case .y:
+            myAxis = Vector3D(i: 0, j: 1, k: 0)
+            myPerp = Vector3D(i: 0, j: 0, k: 1)
+       case .z:
+            myAxis = Vector3D(i: 0, j: 0, k: 1)
+            myPerp = Vector3D(i: 1, j: 0, k: 0)
+        }
+        
+        let myStart = Point3D(base: ctr, offset: myPerp * absRad)
+        
+        try super.init(ctr: ctr, axis: myAxis, start: myStart, sweep: 2.0 * Double.pi)
     }
     
     
@@ -68,7 +94,7 @@ public class Circle: Arc, Hashable   {
     ///   - cup: A circle
     ///   - pip: Test point
     /// - Returns: Simple flag
-    public static func isInside(cup: Arc, pip: Point3D) -> Bool   {
+    public static func isInside(cup: Circle, pip: Point3D) -> Bool   {
         
         var flag = false
         
@@ -81,30 +107,30 @@ public class Circle: Arc, Hashable   {
     }
 
 
-    /// Checks to see if an Arc (full circle) is fully inside another.
+    /// Checks to see if one full circle is entirely inside another.
     /// - Parameters:
-    ///   - bigUn: Large Arc - treated as a full circle
-    ///   - ltlUn: Smaller Arc
+    ///   - larger: Large, full circle
+    ///   - smaller: Not as big Circle
     /// - Throws:
     ///     - CoincidentPlanesError if the circles are not on the same plane.
     /// - Returns: Simple flag
-    public static func isSwallowed(bigUn: Arc, ltlUn: Arc) throws -> Bool   {
+    public static func isSwallowed(larger: Circle, smaller: Circle) throws -> Bool   {
         
-        //TODO: Consider adding verification that they are both full circles
+        //TODO: Show test where they are not concentric
         
         /// Plane that contains the circle
-        let flatA = Arc.genPlane(scoop: bigUn)
-        let flatB = Arc.genPlane(scoop: ltlUn)
+        let flatA = Circle.genPlane(scoop: larger)
+        let flatB = Circle.genPlane(scoop: smaller)
         
         guard try! Plane.isCoincident(flatLeft: flatA, flatRight: flatB, accuracy: 0.001) else { throw CoincidentPlanesError(enalpA: flatA) }
         
+        
         var flag = false
-        
 
-        let separation = Point3D.dist(pt1: bigUn.getCenter(), pt2: ltlUn.getCenter())
+        let separation = Point3D.dist(pt1: larger.getCenter(), pt2: smaller.getCenter())
         
-        let bigRadius = bigUn.getRadius()
-        let ltlRadius = ltlUn.getRadius()
+        let bigRadius = larger.getRadius()
+        let ltlRadius = smaller.getRadius()
         if separation + ltlRadius <= bigRadius   { flag = true }
         
         return flag
@@ -139,11 +165,12 @@ public class Circle: Arc, Hashable   {
         
         
         // Avoid cases where one circle is completely inside the other
-        var flagSwallow = try! isSwallowed(bigUn: able, ltlUn: baker)
+        var flagSwallow = try isSwallowed(larger: able, smaller: baker)
         guard !flagSwallow else { throw CoincidentPointsError(dupePt: baker.getCenter()) }
 
-        flagSwallow = try! isSwallowed(bigUn: baker, ltlUn: able)
+        flagSwallow = try isSwallowed(larger: baker, smaller: able)
         guard !flagSwallow else { throw CoincidentPointsError(dupePt: able.getCenter()) }
+        
         
         /// Vector away from the common plane
         let angel  = able.getAxisDir()
@@ -155,13 +182,14 @@ public class Circle: Arc, Hashable   {
         var bridgeDir = bridge.getDirection()
         bridgeDir.normalize()
         
+        /// Point along 'bridge' on the perimeter of 'able'
         let insetA = Point3D(base: bridge.getOneEnd(), offset: bridgeDir * able.getRadius())
         let insetB = Point3D(base: bridge.getOtherEnd(), offset: bridgeDir.reverse() * baker.getRadius())
             
         let inscribedCenter = Point3D.midway(alpha: insetA, beta: insetB)
         
         /// Desired result
-        let touchingBoth = try! Circle(ctr: inscribedCenter, axis: angel, start: insetB)
+        let touchingBoth = try Circle(ctr: inscribedCenter, axis: angel, start: insetB)
         
         return touchingBoth
     }

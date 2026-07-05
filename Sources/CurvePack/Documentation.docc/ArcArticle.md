@@ -4,7 +4,7 @@ Full or partial circle.
 
 ## Overview
 
-A planar figure of constant radius. Has a local coordinate system. Conforms to protocol PenCurve.
+A planar figure of constant radius. Has a local coordinate system. Conforms to protocol PenCurve. Sub-type 'Circle' can be used for some analysis cases.
 
 ## Topics
 
