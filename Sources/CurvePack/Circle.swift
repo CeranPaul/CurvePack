@@ -42,6 +42,7 @@ public class Circle: Arc, Hashable   {
         try super.init(ctr: ctr, axis: axis, start: start, sweep: 2.0 * Double.pi)
     }
     
+    //TODO: Constructor from an Arc
     
     
     /// Construct one on a plane perpendicular to the axis input
