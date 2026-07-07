@@ -320,4 +320,22 @@ class OrthoVolTests: XCTestCase {
         
     }
     
+    func testIsInside() {
+        
+        let testBox = OrthoVol(minX: -1.0, maxX: 4.0, minY: 1.0, maxY: 5.0, minZ: 2.0, maxZ: 7.0)
+        
+        let ptA = Point3D(x: -0.5, y: 4.2, z: 6.1)
+        
+        let ptB = Point3D(x: -2.0, y: 3.63, z: 5.7)
+        let ptC = Point3D(x: 1.83, y: 5.78, z: 1.13)
+        let ptD = Point3D(x: 2.0, y: 4.62, z: 8.7)
+
+        XCTAssert(OrthoVol.isInside(point: ptA, in: testBox))
+        XCTAssertFalse(OrthoVol.isInside(point: ptB, in: testBox))
+        XCTAssertFalse(OrthoVol.isInside(point: ptC, in: testBox))
+        XCTAssertFalse(OrthoVol.isInside(point: ptD, in: testBox))
+        
+    }
+  
+    
 }

@@ -74,6 +74,21 @@ open class Point3D: Hashable {
     //TODO: Similar with a Gaussian distribution
 
     
+    /// Find the point that is closest to 'magnet'.
+    /// Interesting example of code written by the Coding Assistant.
+    /// - Parameters:
+    ///   - pool: Array of points to test
+    ///   - magnet: Point being targeted
+    /// - Returns: Closest neighbor
+    public static func chooseClosest(pool: [Point3D], magnet: Point3D) -> Point3D {
+        return pool.min(by: { Point3D.dist(pt1: magnet, pt2: $0) < Point3D.dist(pt1: magnet, pt2: $1) })!
+    }
+
+    //TODO: Decide if this brevity is desired.
+
+
+
+
     ///Create a new point from three strings
     /// - Parameters:
     ///   - xString: String for the coordinate value along the X axis

@@ -279,6 +279,35 @@ class Point3DTests: XCTestCase {
     }
     
     
+    func testRandomPt() {
+        
+        let xBounds: ClosedRange<Double> = -1.0...4.0
+//        let yRange: ClosedRange<Double> = 0.0...0.0   // Most interesting!
+        let yBounds: ClosedRange<Double> = 1.0...5.0
+        let zBounds: ClosedRange<Double> = 2.0...7.0
+
+
+        let testBox = OrthoVol(minX: -1.0, maxX: 4.0, minY: 1.0, maxY: 5.0, minZ: 2.0, maxZ: 7.0)
+        
+        var flags: [Bool] = []
+        
+        for _ in 1...100 {
+            
+            let pip = Point3D(xRange: xBounds, yRange: yBounds, zRange: zBounds)
+            
+            let flag = OrthoVol.isInside(point: pip, in: testBox)
+            flags.append(flag)
+            
+        }
+
+        /// Not quite the same as 'reduce'.
+        let overall = flags.allSatisfy( { $0 == true } )
+        
+        XCTAssert(overall)
+        
+    }
+ 
+    
     func testTransform()   {
         
         let pip = Point3D(x: 5.0, y: 2.0, z: 1.2)
