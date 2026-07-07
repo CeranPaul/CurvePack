@@ -90,6 +90,20 @@ public class Circle: Arc, Hashable   {
     //TODO: Figure out how to make a constructor when it is useful to have a zero radius.
 
     
+    
+    /// For the case when you want to use a negative radius
+    /// - Returns: Double
+    public func fetchRad() -> Double   {
+        
+        var rad: Double
+        
+        if radNegative   { rad = -getRadius() }
+        else             { rad = getRadius() }
+        
+        return rad
+    }
+    
+    
     /// Checks to see if a Point3D is inside the circle.
     /// - Parameters:
     ///   - cup: A circle
@@ -184,8 +198,8 @@ public class Circle: Arc, Hashable   {
         bridgeDir.normalize()
         
         /// Point along 'bridge' on the perimeter of 'able'
-        let insetA = Point3D(base: bridge.getOneEnd(), offset: bridgeDir * able.getRadius())
-        let insetB = Point3D(base: bridge.getOtherEnd(), offset: bridgeDir.reverse() * baker.getRadius())
+        let insetA = Point3D(base: bridge.getOneEnd(), offset: bridgeDir * able.fetchRad())
+        let insetB = Point3D(base: bridge.getOtherEnd(), offset: bridgeDir.reverse() * baker.fetchRad())
             
         let inscribedCenter = Point3D.midway(alpha: insetA, beta: insetB)
         
