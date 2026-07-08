@@ -264,11 +264,6 @@ class Vector3DTests: XCTestCase {
         XCTAssertEqual(outgoing.k, -1.0, accuracy: 0.0001)
         
         
-        let empty = Vector3D(i: 0.0, j: 0.0, k: 0.0)
-        XCTAssertThrowsError(try Vector3D.crossProduct(lhs: there, rhs: empty))
-        
-        XCTAssertThrowsError(try Vector3D.crossProduct(lhs: empty, rhs: there))
-
     }
     
     
@@ -462,5 +457,28 @@ class Vector3DTests: XCTestCase {
         XCTAssertThrowsError(try Vector3D.isScaled(lhs: heinous, rhs: pristine))
 
    }
+    
+    
+    func testRandomVector() {
+                
+        var flags: [Bool] = []
+        
+        for _ in 1...100 {
+            
+            /// A vector with random components
+            let arrow = Vector3D(htgnel: 1.0)
+            
+            let flag = arrow.isUnit()
+            flags.append(flag)
+            
+        }
+
+        /// Not quite the same as 'reduce'.
+        let overall = flags.allSatisfy( { $0 == true } )
+        
+        XCTAssert(overall)
+        
+    }
+    
     
 }

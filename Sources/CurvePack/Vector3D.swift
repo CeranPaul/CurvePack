@@ -20,7 +20,7 @@ public struct Vector3D: Equatable {
     public static var EpsilonV: Double = 0.0001
 
     
-    /// The simplest and only initializer.  Needed because a default initializer has 'internal' access level.
+    /// The simplest useful initializer.  Needed because a default initializer has 'internal' access level.
     /// What if the values are smaller than EpsilonV?
     public init(i: Double, j: Double, k: Double)   {
         self.i = i
@@ -29,7 +29,15 @@ public struct Vector3D: Equatable {
     }
     
 
+    /// Empty constructor
+    public init()   {
+        self.i = 0.0
+        self.j = 0.0
+        self.k = 0.0
+    }
     
+
+
     /// Construct vector from first input point towards the second
     /// Does not check for a zero vector
     /// - Parameters:
@@ -220,14 +228,14 @@ public struct Vector3D: Equatable {
     ///   - lhs:  One Vector
     ///   - rhs:  Another Vector
     /// - Throws:
-    ///   - ZeroVectorError if either of the inputs are zero.
     ///   - IdenticalVectorError if the inputs are identical or opposite.
     ///   - IdenticalVectorError if the inputs are scaled versions of each other.
     /// - See: 'testCross' under Vector3DTests
     public static func crossProduct(lhs: Vector3D, rhs: Vector3D) throws -> Vector3D   {
-        
-        guard(!lhs.isZero()) else {  throw ZeroVectorError(dir: lhs)  }
-        guard(!rhs.isZero()) else {  throw ZeroVectorError(dir: rhs)  }
+      
+        // Blocked legitimate results
+//        guard(!lhs.isZero()) else {  throw ZeroVectorError(dir: lhs)  }
+//        guard(!rhs.isZero()) else {  throw ZeroVectorError(dir: rhs)  }
         
         guard(lhs != rhs) else { throw IdenticalVectorError(dir: lhs)}
         guard(!Vector3D.isOpposite(lhs: lhs, rhs: rhs)) else { throw IdenticalVectorError(dir: lhs)}

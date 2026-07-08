@@ -15,6 +15,7 @@ public class Circle: Arc, Hashable   {
     /// Should the radius be treated as if it were negative?
     var radNegative: Bool
     
+    
     /// Create a new one.
     /// - Parameters:
     ///   - ctr: Point to be used as origin
@@ -48,16 +49,16 @@ public class Circle: Arc, Hashable   {
     /// Construct one on a plane perpendicular to the axis input
     /// - Parameters:
     ///   - ctr: Desired location
-    ///   - radius: Size - can be positive,  negative, or zero.
+    ///   - diam: Size - can be positive,  negative, or zero.
     ///   - perpAxis: Perpendicular to the where the Circle lies
-    public init(ctr: Point3D, radius: Double, perpAxis: Axis) throws  {
+    public init(ctr: Point3D, diam: Double, perpAxis: Axis) throws  {
 
         /// Absolute value of input radius
-        let absRad = abs(radius)
+        let absDiam = abs(diam)
         
         /// Indication of whether or not the input radius is positive
         var radSign = true        
-        if radius < 0.0   { radSign = false }
+        if diam < 0.0   { radSign = false }
                 
         self.radNegative = !radSign
        
@@ -81,7 +82,11 @@ public class Circle: Arc, Hashable   {
             myPerp = Vector3D(i: 1, j: 0, k: 0)
         }
         
-        let myStart = Point3D(base: ctr, offset: myPerp * absRad)
+        /// The amount that the start point should be offset
+        let hop = absDiam / 2.0
+        
+        /// Generated start point
+        let myStart = Point3D(base: ctr, offset: myPerp * hop)
         
         try super.init(ctr: ctr, axis: myAxis, start: myStart, sweep: 2.0 * Double.pi)
     }
@@ -152,6 +157,64 @@ public class Circle: Arc, Hashable   {
     }
 
 
+    /// Figure the gap between two Circles.
+    /// - Parameters:
+    ///   - able: A Circle
+    ///   - baker: Another circle
+    /// - Returns: Closest possible distance. Can be positive, zero, or negative.
+    public func determineGap(able: Circle, baker: Circle) -> Double   {
+        
+        /// Distance between centers
+        let separation = Point3D.dist(pt1: able.getCenter(), pt2: baker.getCenter())
+        
+        /// Distance between circles
+        let gap = separation - able.fetchRad() - baker.fetchRad()
+        
+        return gap
+    }
+    
+    
+    /// Build a circle with a changed radius. Should become an initializer in Circle.
+    /// - Parameters:
+    ///   - bareCircle: The basis of construction
+    ///   - padding: Delta in radius. Not always greater than 0.0
+    ///   - startDir: Optional supplied Vector3D for Circles of 0.0 radius
+    /// - Returns: Sparkling Circle with different radius
+    public func padCircle(bareCircle: Circle, padding: Double, startDir: Vector3D = Vector3D(i: 0.0, j: 0.0, k: 0.0)) throws   -> Circle {
+        
+        ///Center of the input Circle
+        let bareCenter = bareCircle.getCenter()
+        
+        /// Value to be used in construction
+        var freshDir: Vector3D
+        
+        
+        if bareCircle.fetchRad() == 0.0   {
+            
+            if startDir.isZero() {
+                throw ZeroVectorError(dir: Vector3D(i: 0.0, j: 0.0, k: 0.0))
+            }  else  {
+                freshDir = startDir
+            }
+            
+        }  else  {
+            
+            freshDir = Vector3D(from: bareCenter, towards: bareCircle.getOneEnd(), unit: true)
+            
+        }
+        
+        
+        let freshRadius = bareCircle.fetchRad() + padding
+        
+        let freshStartPt = Point3D(base: bareCenter, offset: freshDir * freshRadius)
+        
+        let padded = try Circle(ctr: bareCenter, axis: bareCircle.getAxisDir(), start: freshStartPt)
+        
+        return padded
+    }
+    
+    
+    
     /// Build Circle that inscribes the two inputs.
     /// - Parameters:
     ///   - able: One circle
@@ -240,5 +303,18 @@ public class Circle: Arc, Hashable   {
 
     }
 
+    /// Compare each component of the Circle for equality. Should move to become a type function in Circle.
+    /// Will override the Arc function.
+    /// - See: '' under CircleTests
+    public static func == (lhs: Circle, rhs: Circle) -> Bool   {
+        
+        let ctrFlag = lhs.getCenter() == rhs.getCenter()
+        let radFlag = abs(lhs.getRadius() - rhs.getRadius()) < Point3D.Epsilon
+        let axisFlag = lhs.getAxisDir() == rhs.getAxisDir()
+        
+        return ctrFlag && radFlag && axisFlag
+    }
+        
     
+
 }

@@ -17,7 +17,7 @@ public class Triangle {
     
     
     /// Simplest initializer
-    init(alpha: Point3D, beta: Point3D, gamma: Point3D) {
+    public init(alpha: Point3D, beta: Point3D, gamma: Point3D) {
         
         self.alpha = alpha
         self.beta = beta
@@ -80,7 +80,7 @@ public class Triangle {
     }
     
     /// Condense a tiny triangle to a point
-    func getCentroid() -> Point3D {
+    public func getCentroid() -> Point3D {
         
         let pip = Point3D.avgPoint(pool: [alpha, beta, gamma])
         
@@ -89,7 +89,7 @@ public class Triangle {
     
     
     /// Report the longest edge
-    func getLongestEdge() -> Double {
+    public func getLongestEdge() -> Double {
         
         var lengths = [Double]()
         
