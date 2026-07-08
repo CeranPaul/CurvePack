@@ -15,6 +15,7 @@ public class Circle: Arc, Hashable   {
     /// Should the radius be treated as if it were negative?
     var radNegative: Bool
     
+    
     /// Create a new one.
     /// - Parameters:
     ///   - ctr: Point to be used as origin
@@ -48,16 +49,16 @@ public class Circle: Arc, Hashable   {
     /// Construct one on a plane perpendicular to the axis input
     /// - Parameters:
     ///   - ctr: Desired location
-    ///   - radius: Size - can be positive,  negative, or zero.
+    ///   - diam: Size - can be positive,  negative, or zero.
     ///   - perpAxis: Perpendicular to the where the Circle lies
-    public init(ctr: Point3D, radius: Double, perpAxis: Axis) throws  {
+    public init(ctr: Point3D, diam: Double, perpAxis: Axis) throws  {
 
         /// Absolute value of input radius
-        let absRad = abs(radius)
+        let absDiam = abs(diam)
         
         /// Indication of whether or not the input radius is positive
         var radSign = true        
-        if radius < 0.0   { radSign = false }
+        if diam < 0.0   { radSign = false }
                 
         self.radNegative = !radSign
        
@@ -81,7 +82,11 @@ public class Circle: Arc, Hashable   {
             myPerp = Vector3D(i: 1, j: 0, k: 0)
         }
         
-        let myStart = Point3D(base: ctr, offset: myPerp * absRad)
+        /// The amount that the start point should be offset
+        let hop = absDiam / 2.0
+        
+        /// Generated start point
+        let myStart = Point3D(base: ctr, offset: myPerp * hop)
         
         try super.init(ctr: ctr, axis: myAxis, start: myStart, sweep: 2.0 * Double.pi)
     }

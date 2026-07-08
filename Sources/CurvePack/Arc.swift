@@ -58,6 +58,7 @@ public class Arc: PenCurve, Equatable   {
         
         guard axis.isUnit() else { throw NonUnitDirectionError(dir: axis) }
         
+        
         /// What can be considered horizontal for this Arc
         let baseline = Vector3D(from: ctr, towards: start, unit: true)
         
@@ -93,12 +94,21 @@ public class Arc: PenCurve, Equatable   {
         self.usage = "Ordinary"
         
         
-        /// Coordinate system
-        let csys = try CoordinateSystem(origin: self.center, refDirection: baseline, normal: self.axis)
-        
-        self.toGlobal = try! Transform.genToGlobal(csys: csys)
-        
-        self.fromGlobal = Transform.genFromGlobal(csys: csys)
+        if start != ctr {
+            
+            /// Coordinate system
+            let csys = try CoordinateSystem(origin: self.center, refDirection: baseline, normal: self.axis)
+            
+            self.toGlobal = try! Transform.genToGlobal(csys: csys)
+            
+            self.fromGlobal = Transform.genFromGlobal(csys: csys)
+            
+        }  else  {   // Perhaps from a zero radius
+            
+            self.toGlobal = Transform()
+            
+            self.fromGlobal = Transform()
+        }
         
     }
     

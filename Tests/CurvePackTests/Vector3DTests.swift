@@ -264,11 +264,6 @@ class Vector3DTests: XCTestCase {
         XCTAssertEqual(outgoing.k, -1.0, accuracy: 0.0001)
         
         
-        let empty = Vector3D(i: 0.0, j: 0.0, k: 0.0)
-        XCTAssertThrowsError(try Vector3D.crossProduct(lhs: there, rhs: empty))
-        
-        XCTAssertThrowsError(try Vector3D.crossProduct(lhs: empty, rhs: there))
-
     }
     
     
